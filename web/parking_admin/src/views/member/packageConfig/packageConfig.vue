@@ -34,8 +34,8 @@
             <Option :value="1">月卡</Option><Option :value="2">季卡</Option><Option :value="3">年卡</Option>
           </Select>
         </FormItem>
-        <FormItem label="有效期" prop="validDays"><InputNumber v-model="state.formData.validDays" :min="1" style="width:100%" /></FormItem>
-        <FormItem label="售价" prop="price"><InputNumber v-model="state.formData.price" :min="0" :precision="2" style="width:100%" /></FormItem>
+        <FormItem label="有效期" prop="validDays"><InputNumber v-model="state.formData.validDays" :min="1" style="minWidth: 100%" /></FormItem>
+        <FormItem label="售价" prop="price"><InputNumber v-model="state.formData.price" :min="0" :precision="2" style="minWidth: 100%" /></FormItem>
         <FormItem label="适用车场" prop="parkings">
           <CheckboxGroup v-model="state.formData.parkings">
             <Checkbox label="城西停车场"></Checkbox><Checkbox label="城东停车场"></Checkbox><Checkbox label="购物中心"></Checkbox>

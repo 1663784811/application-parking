@@ -3,57 +3,73 @@
     <!-- 筛选栏 -->
     <div class="filter-bar">
       <div class="filter-row">
-        <RangePicker
-          v-model="state.searchForm.dateRange"
-          :show-time="true"
-          format="YYYY-MM-DD HH:mm:ss"
-          placeholder="通行时间"
-          class="filter-date"
-        />
+        <div class="filter-item">
+          <RangePicker
+            v-model="state.searchForm.dateRange"
+            :show-time="true"
+            format="YYYY-MM-DD HH:mm:ss"
+            placeholder="通行时间"
+            class="filter-date"
+          />
+        </div>
 
-        <Select v-model="state.searchForm.parkingId" placeholder="选择车场" class="filter-select" clearable>
-          <Option v-for="item in state.parkingList" :key="item.id" :value="item.id">
-            {{ item.name }}
-          </Option>
-        </Select>
+        <div class="filter-item">
+          <Select v-model="state.searchForm.parkingId" placeholder="选择车场" class="filter-select" clearable>
+            <Option v-for="item in state.parkingList" :key="item.id" :value="item.id">
+              {{ item.name }}
+            </Option>
+          </Select>
+        </div>
 
-        <Select v-model="state.searchForm.passageType" placeholder="通行类型" class="filter-select" clearable>
-          <Option value="in">进场</Option>
-          <Option value="out">出场</Option>
-        </Select>
+        <div class="filter-item">
+          <Select v-model="state.searchForm.passageType" placeholder="通行类型" class="filter-select" clearable>
+            <Option value="in">进场</Option>
+            <Option value="out">出场</Option>
+          </Select>
+        </div>
 
-        <Select v-model="state.searchForm.carType" placeholder="车辆类型" class="filter-select" clearable>
-          <Option value="temp">临时车</Option>
-          <Option value="fixed">固定车</Option>
-        </Select>
+        <div class="filter-item">
+          <Select v-model="state.searchForm.carType" placeholder="车辆类型" class="filter-select" clearable>
+            <Option value="temp">临时车</Option>
+            <Option value="fixed">固定车</Option>
+          </Select>
+        </div>
 
-        <Input
-          v-model="state.searchForm.plate"
-          placeholder="输入车牌号"
-          class="filter-input"
-          clearable
-        />
+        <div class="filter-item">
+          <Input
+            v-model="state.searchForm.plate"
+            placeholder="输入车牌号"
+            class="filter-input"
+            clearable
+          />
+        </div>
       </div>
 
       <div class="filter-row">
-        <Select v-model="state.searchForm.hasPaid" placeholder="是否缴费" class="filter-select" clearable>
-          <Option :value="1">已缴费</Option>
-          <Option :value="0">未缴费</Option>
-        </Select>
+        <div class="filter-item">
+          <Select v-model="state.searchForm.hasPaid" placeholder="是否缴费" class="filter-select" clearable>
+            <Option :value="1">已缴费</Option>
+            <Option :value="0">未缴费</Option>
+          </Select>
+        </div>
 
-        <Select v-model="state.searchForm.hasException" placeholder="有无异常" class="filter-select" clearable>
-          <Option :value="1">有异常</Option>
-          <Option :value="0">正常</Option>
-        </Select>
+        <div class="filter-item">
+          <Select v-model="state.searchForm.hasException" placeholder="有无异常" class="filter-select" clearable>
+            <Option :value="1">有异常</Option>
+            <Option :value="0">正常</Option>
+          </Select>
+        </div>
 
-        <Select v-model="state.searchForm.channelId" placeholder="通道" class="filter-select" clearable>
-          <Option value="1">1号入口</Option>
-          <Option value="2">2号出口</Option>
-          <Option value="3">地下入口</Option>
-        </Select>
+        <div class="filter-item">
+          <Select v-model="state.searchForm.channelId" placeholder="通道" class="filter-select" clearable>
+            <Option value="1">1号入口</Option>
+            <Option value="2">2号出口</Option>
+            <Option value="3">地下入口</Option>
+          </Select>
+        </div>
 
-        <Button type="primary" @click="handleSearch">查询</Button>
-        <Button @click="handleReset">重置</Button>
+        <div class="filter-item"><Button type="primary" @click="handleSearch">查询</Button></div>
+        <div class="filter-item"><Button @click="handleReset">重置</Button></div>
       </div>
 
       <div class="filter-actions">
@@ -160,19 +176,19 @@ const state = reactive({
 })
 
 const columns = [
-  { type: 'selection', width: 60, align: 'center' },
-  { title: '抓拍图', key: 'captureImage', width: 100, align: 'center' },
-  { title: '车牌号', key: 'plate', width: 120 },
-  { title: '通道', key: 'channel', width: 100 },
-  { title: '通行类型', slot: 'passageType', width: 100 },
-  { title: '进场时间', key: 'inTime', width: 160 },
-  { title: '出场时间', key: 'outTime', width: 160 },
-  { title: '停留时长', key: 'duration', width: 100 },
-  { title: '车辆类型', slot: 'carType', width: 100 },
-  { title: '收费金额', key: 'amount', width: 100, align: 'right' },
-  { title: '是否缴费', slot: 'hasPaid', width: 100, align: 'center' },
-  { title: '状态', slot: 'status', width: 100, align: 'center' },
-  { title: '操作', slot: 'action', width: 150, fixed: 'right' }
+  { type: 'selection', minWidth: 60, align: 'center' },
+  { title: '抓拍图', key: 'captureImage', minWidth: 100, align: 'center' },
+  { title: '车牌号', key: 'plate', minWidth: 120 },
+  { title: '通道', key: 'channel', minWidth: 100 },
+  { title: '通行类型', slot: 'passageType', minWidth: 100 },
+  { title: '进场时间', key: 'inTime', minWidth: 160 },
+  { title: '出场时间', key: 'outTime', minWidth: 160 },
+  { title: '停留时长', key: 'duration', minWidth: 100 },
+  { title: '车辆类型', slot: 'carType', minWidth: 100 },
+  { title: '收费金额', key: 'amount', minWidth: 100, align: 'right' },
+  { title: '是否缴费', slot: 'hasPaid', minWidth: 100, align: 'center' },
+  { title: '状态', slot: 'status', minWidth: 100, align: 'center' },
+  { title: '操作', slot: 'action', minWidth: 150, fixed: 'right' }
 ]
 
 const getCarTypeText = (type) => {
@@ -346,6 +362,10 @@ initData()
 
       &:last-of-type {
         margin-bottom: var(--spacing-lg);
+      }
+
+      .filter-item {
+        flex-shrink: 0;
       }
 
       .filter-date {

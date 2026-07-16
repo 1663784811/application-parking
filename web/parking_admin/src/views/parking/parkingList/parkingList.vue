@@ -3,38 +3,44 @@
     <!-- 搜索筛选栏 -->
     <div class="filter-bar">
       <div class="filter-row">
-        <Input
-          v-model="state.searchForm.name"
-          placeholder="搜索车场名称"
-          class="filter-input"
-          clearable
-          @on-enter="handleSearch"
-        >
-          <template #prefix>
-            <Icon type="ios-search" />
-          </template>
-        </Input>
+        <div class="filter-item">
+          <Input
+            v-model="state.searchForm.name"
+            placeholder="搜索车场名称"
+            class="filter-input"
+            clearable
+            @on-enter="handleSearch"
+          >
+            <template #prefix>
+              <Icon type="ios-search" />
+            </template>
+          </Input>
+        </div>
 
-        <Select
-          v-model="state.searchForm.status"
-          placeholder="运营状态"
-          class="filter-select"
-          clearable
-        >
-          <Option :value="1">启用</Option>
-          <Option :value="0">停用</Option>
-        </Select>
+        <div class="filter-item">
+          <Select
+            v-model="state.searchForm.status"
+            placeholder="运营状态"
+            class="filter-select"
+            clearable
+          >
+            <Option :value="1">启用</Option>
+            <Option :value="0">停用</Option>
+          </Select>
+        </div>
 
-        <DatePicker
-          v-model="state.searchForm.dateRange"
-          type="daterange"
-          placeholder="创建时间"
-          class="filter-date"
-          format="yyyy-MM-dd"
-        />
+        <div class="filter-item">
+          <DatePicker
+            v-model="state.searchForm.dateRange"
+            type="daterange"
+            placeholder="创建时间"
+            class="filter-date"
+            format="yyyy-MM-dd"
+          />
+        </div>
 
-        <Button type="primary" @click="handleSearch">查询</Button>
-        <Button @click="handleReset">重置</Button>
+        <div class="filter-item"><Button type="primary" @click="handleSearch">查询</Button></div>
+        <div class="filter-item"><Button @click="handleReset">重置</Button></div>
       </div>
 
       <div class="filter-actions">
@@ -124,7 +130,7 @@
             v-model="state.formData.totalSpaces"
             :min="1"
             placeholder="请输入总车位数"
-            style="width: 100%"
+            style="minWidth: 100%"
           />
         </FormItem>
 
@@ -246,18 +252,18 @@ const state = reactive({
 const columns = [
   {
     type: 'selection',
-    width: 60,
+    minWidth: 60,
     align: 'center'
   },
   {
     title: '车场ID',
     key: 'id',
-    width: 100
+    minWidth: 100
   },
   {
     title: '车场名称',
     key: 'name',
-    width: 180
+    minWidth: 180
   },
   {
     title: '地址',
@@ -268,40 +274,40 @@ const columns = [
   {
     title: '总车位',
     key: 'totalSpaces',
-    width: 100,
+    minWidth: 100,
     align: 'center'
   },
   {
     title: '空闲车位',
     key: 'freeSpaces',
-    width: 100,
+    minWidth: 100,
     align: 'center'
   },
   {
     title: '管理员',
     key: 'contact',
-    width: 120
+    minWidth: 120
   },
   {
     title: '联系电话',
     key: 'phone',
-    width: 130
+    minWidth: 130
   },
   {
     title: '创建时间',
     key: 'createTime',
-    width: 160
+    minWidth: 160
   },
   {
     title: '状态',
     slot: 'status',
-    width: 100,
+    minWidth: 100,
     align: 'center'
   },
   {
     title: '操作',
     slot: 'action',
-    width: 180,
+    minWidth: 180,
     fixed: 'right',
     align: 'center'
   }
@@ -504,6 +510,10 @@ initData()
       flex-wrap: wrap;
       gap: var(--spacing-md);
       margin-bottom: var(--spacing-lg);
+
+      .filter-item {
+        flex-shrink: 0;
+      }
 
       .filter-input {
         width: 240px;

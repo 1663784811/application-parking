@@ -263,18 +263,18 @@ const passageColumns = [
   {
     title: '车牌号',
     key: 'plate',
-    width: 100,
+    minWidth: 100,
     fixed: 'left'
   },
   {
     title: '通道',
     key: 'channel',
-    width: 100
+    minWidth: 100
   },
   {
     title: '类型',
     key: 'type',
-    width: 80,
+    minWidth: 80,
     render: (h, params) => {
       const types = { in: '进场', out: '出场' }
       return h('span', types[params.row.type] || '-')
@@ -283,17 +283,17 @@ const passageColumns = [
   {
     title: '进场时间',
     key: 'inTime',
-    width: 150
+    minWidth: 150
   },
   {
     title: '状态',
     slot: 'status',
-    width: 100
+    minWidth: 100
   },
   {
     title: '操作',
     slot: 'action',
-    width: 120,
+    minWidth: 120,
     fixed: 'right'
   }
 ]
@@ -398,7 +398,7 @@ const initRevenueChart = () => {
       smooth: true,
       symbol: 'circle',
       symbolSize: 8,
-      lineStyle: { color: '#165DFF', width: 2 },
+      lineStyle: { color: '#165DFF', minWidth: 2 },
       itemStyle: { color: '#165DFF' },
       areaStyle: {
         color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
@@ -549,7 +549,7 @@ onUnmounted(() => {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 56px;
+    minWidth: 56px;
     height: 56px;
     border-radius: var(--border-radius-lg);
     margin-right: var(--spacing-lg);
@@ -697,7 +697,7 @@ onUnmounted(() => {
         color: var(--text-color-secondary);
 
         .legend-dot {
-          width: 8px;
+          minWidth: 8px;
           height: 8px;
           border-radius: 50%;
           margin-right: var(--spacing-xs);
@@ -718,7 +718,7 @@ onUnmounted(() => {
     height: 260px;
 
     .chart-container {
-      width: 100%;
+      minWidth: 100%;
       height: 100%;
     }
   }
@@ -775,7 +775,7 @@ onUnmounted(() => {
       color: var(--text-color-secondary);
 
       .legend-block {
-        width: 12px;
+        minWidth: 12px;
         height: 12px;
         border-radius: 2px;
         margin-right: var(--spacing-xs);
@@ -847,7 +847,7 @@ onUnmounted(() => {
     color: var(--success-color);
 
     .pulse {
-      width: 8px;
+      minWidth: 8px;
       height: 8px;
       background-color: var(--success-color);
       border-radius: 50%;
@@ -881,7 +881,7 @@ onUnmounted(() => {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    width: 80px;
+    minWidth: 80px;
     height: 80px;
     background-color: var(--bg-color);
     border-radius: var(--border-radius-base);

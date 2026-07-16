@@ -48,15 +48,15 @@ const state = reactive({
 })
 
 const columns = [
-  { title: 'ID', key: 'id', width: 80 },
-  { title: '用户名', key: 'username', width: 120 },
-  { title: '真实姓名', key: 'name', width: 120 },
-  { title: '手机号', key: 'phone', width: 130 },
-  { title: '角色', slot: 'role', width: 120 },
-  { title: '创建时间', key: 'createTime', width: 160 },
-  { title: '最后登录', key: 'lastLogin', width: 160 },
-  { title: '状态', slot: 'status', width: 80, align: 'center' },
-  { title: '操作', slot: 'action', width: 180 }
+  { title: 'ID', key: 'id', minWidth: 80 },
+  { title: '用户名', key: 'username', minWidth: 120 },
+  { title: '真实姓名', key: 'name', minWidth: 120 },
+  { title: '手机号', key: 'phone', minWidth: 130 },
+  { title: '角色', slot: 'role', minWidth: 120 },
+  { title: '创建时间', key: 'createTime', minWidth: 160 },
+  { title: '最后登录', key: 'lastLogin', minWidth: 160 },
+  { title: '状态', slot: 'status', minWidth: 80, align: 'center' },
+  { title: '操作', slot: 'action', minWidth: 180 }
 ]
 
 const initData = () => {

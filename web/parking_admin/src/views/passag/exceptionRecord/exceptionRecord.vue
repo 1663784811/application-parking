@@ -3,26 +3,33 @@
     <!-- 筛选栏 -->
     <div class="filter-bar">
       <div class="filter-row">
-        <Select v-model="state.searchForm.exceptionType" placeholder="异常类型" class="filter-select" clearable>
-          <Option value="noPlate">无牌车辆</Option>
-          <Option value="blacklist">黑名单</Option>
-          <Option value="overtime">超时滞留</Option>
-          <Option value="unpaid">逃费车辆</Option>
-        </Select>
+        <div class="filter-item">
+          <Select v-model="state.searchForm.exceptionType" placeholder="异常类型" class="filter-select" clearable>
+            <Option value="noPlate">无牌车辆</Option>
+            <Option value="blacklist">黑名单</Option>
+            <Option value="overtime">超时滞留</Option>
+            <Option value="unpaid">逃费车辆</Option>
+          </Select>
+        </div>
 
-        <RangePicker
-          v-model="state.searchForm.dateRange"
-          placeholder="发生时间"
-          class="filter-date"
-        />
+        <div class="filter-item">
+          <DatePicker
+            v-model="state.searchForm.dateRange"
+            type="daterange"
+            placeholder="发生时间"
+            class="filter-date"
+          />
+        </div>
 
-        <Select v-model="state.searchForm.parkingId" placeholder="车场" class="filter-select" clearable>
-          <Option value="1">城西停车场</Option>
-          <Option value="2">城东停车场</Option>
-        </Select>
+        <div class="filter-item">
+          <Select v-model="state.searchForm.parkingId" placeholder="车场" class="filter-select" clearable>
+            <Option value="1">城西停车场</Option>
+            <Option value="2">城东停车场</Option>
+          </Select>
+        </div>
 
-        <Button type="primary" @click="handleSearch">查询</Button>
-        <Button @click="handleReset">重置</Button>
+        <div class="filter-item"><Button type="primary" @click="handleSearch">查询</Button></div>
+        <div class="filter-item"><Button @click="handleReset">重置</Button></div>
       </div>
 
       <div class="filter-actions">
@@ -92,10 +99,9 @@
           </span>
         </template>
         <template #status="{ row }">
-          <Badge
-            :status="row.status === 'pending' ? 'error' : 'success'"
-            :text="row.status === 'pending' ? '待处理' : '已处理'"
-          />
+          <span :class="row.status === 'pending' ? 'text-error' : 'text-success'">
+            {{ row.status === 'pending' ? '待处理' : '已处理' }}
+          </span>
         </template>
         <template #action="{ row }">
           <Button type="text" size="small" @click="handleViewDetail(row)">详情</Button>
@@ -128,12 +134,11 @@ import { reactive, ref } from 'vue'
 import {
   Select,
   Option,
-  RangePicker,
+  DatePicker,
   Button,
   Icon,
   Table,
   Tag,
-  Badge,
   Page,
   Modal,
   Message
@@ -165,16 +170,16 @@ const state = reactive({
 })
 
 const columns = [
-  { type: 'selection', width: 60, align: 'center' },
-  { title: '车牌号', key: 'plate', width: 120 },
-  { title: '异常类型', slot: 'exceptionType', width: 120 },
-  { title: '发生时间', key: 'exceptionTime', width: 160 },
-  { title: '车场', key: 'parkingName', width: 150 },
-  { title: '通道', key: 'channel', width: 100 },
+  { type: 'selection', minWidth: 60, align: 'center' },
+  { title: '车牌号', key: 'plate', minWidth: 120 },
+  { title: '异常类型', slot: 'exceptionType', minWidth: 120 },
+  { title: '发生时间', key: 'exceptionTime', minWidth: 160 },
+  { title: '车场', key: 'parkingName', minWidth: 150 },
+  { title: '通道', key: 'channel', minWidth: 100 },
   { title: '异常描述', key: 'description', minWidth: 200, tooltip: true },
-  { title: '待缴费金额', key: 'unpaidAmount', width: 120, align: 'right' },
-  { title: '处理状态', slot: 'status', width: 100, align: 'center' },
-  { title: '操作', slot: 'action', width: 250, fixed: 'right' }
+  { title: '待缴费金额', key: 'unpaidAmount', minWidth: 120, align: 'right' },
+  { title: '处理状态', slot: 'status', minWidth: 100, align: 'center' },
+  { title: '操作', slot: 'action', minWidth: 250, fixed: 'right' }
 ]
 
 const getExceptionTypeText = (type) => {
@@ -333,6 +338,10 @@ initData()
       gap: var(--spacing-md);
       margin-bottom: var(--spacing-md);
 
+      .filter-item {
+        flex-shrink: 0;
+      }
+
       .filter-select {
         width: 150px;
       }
@@ -378,7 +387,7 @@ initData()
       }
 
       .stat-icon {
-        width: 48px;
+        minWidth: 48px;
         height: 48px;
         border-radius: var(--border-radius-base);
         display: flex;

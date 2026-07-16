@@ -355,12 +355,12 @@ const state = reactive({
     {
       title: '时间',
       key: 'time',
-      width: 180
+      minWidth: 180
     },
     {
       title: '操作类型',
       slot: 'actionType',
-      width: 120
+      minWidth: 120
     },
     {
       title: '操作内容',
@@ -369,12 +369,12 @@ const state = reactive({
     {
       title: 'IP地址',
       key: 'ip',
-      width: 140
+      minWidth: 140
     },
     {
       title: '设备',
       key: 'device',
-      width: 160
+      minWidth: 160
     }
   ]
 })
@@ -511,7 +511,7 @@ onMounted(() => {
 
 // 左侧导航
 .profile-nav {
-  width: 280px;
+  minWidth: 280px;
   flex-shrink: 0;
 
   .user-card {
@@ -528,7 +528,7 @@ onMounted(() => {
       margin-bottom: var(--spacing-lg);
 
       .avatar {
-        width: 80px;
+        minWidth: 80px;
         height: 80px;
         border-radius: 50%;
         background: linear-gradient(135deg, #165DFF, #4080FF);
@@ -546,7 +546,7 @@ onMounted(() => {
         position: absolute;
         top: 0;
         left: 0;
-        width: 100%;
+        minWidth: 100%;
         height: 100%;
         border-radius: 50%;
         background-color: rgba(0, 0, 0, 0.5);
@@ -617,7 +617,7 @@ onMounted(() => {
 // 右侧内容
 .profile-content {
   flex: 1;
-  min-width: 0;
+  min-minWidth: 0;
 }
 
 .content-panel {
@@ -644,7 +644,7 @@ onMounted(() => {
 // 信息表单
 .info-form,
 .password-form {
-  max-width: 500px;
+  max-minWidth: 500px;
 }
 
 // 安全设置
@@ -664,7 +664,7 @@ onMounted(() => {
     align-items: center;
 
     .security-icon {
-      width: 44px;
+      minWidth: 44px;
       height: 44px;
       border-radius: var(--border-radius-base);
       display: flex;

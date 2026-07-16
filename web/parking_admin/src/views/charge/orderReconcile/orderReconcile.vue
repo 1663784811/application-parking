@@ -3,21 +3,29 @@
     <!-- 筛选栏 -->
     <div class="filter-bar">
       <div class="filter-row">
-        <DatePicker
-          v-model="state.searchForm.date"
-          format="yyyy-MM-dd"
-          type="date"
-          placeholder="对账日期"
-          class="filter-date"
-        />
+        <div class="filter-item">
+          <DatePicker
+            v-model="state.searchForm.date"
+            format="yyyy-MM-dd"
+            type="date"
+            placeholder="对账日期"
+            class="filter-date"
+          />
+        </div>
 
-        <Select v-model="state.searchForm.parkingId" placeholder="选择车场" class="filter-select" clearable>
-          <Option value="1">城西停车场</Option>
-          <Option value="2">城东停车场</Option>
-        </Select>
+        <div class="filter-item">
+          <Select v-model="state.searchForm.parkingId" placeholder="选择车场" class="filter-select" clearable>
+            <Option value="1">城西停车场</Option>
+            <Option value="2">城东停车场</Option>
+          </Select>
+        </div>
 
-        <Button type="primary" @click="handleSearch">查询</Button>
-        <Button @click="handleReset">重置</Button>
+        <div class="filter-item">
+          <Button type="primary" @click="handleSearch">查询</Button>
+        </div>
+        <div class="filter-item">
+          <Button @click="handleReset">重置</Button>
+        </div>
       </div>
     </div>
 
@@ -131,15 +139,15 @@ const state = reactive({
 })
 
 const columns = [
-  { title: '车场名称', key: 'parkingName', width: 180 },
-  { title: '对账日期', key: 'reconcileDate', width: 120 },
-  { title: '线上订单数', key: 'onlineOrders', width: 120, align: 'center' },
-  { title: '线上金额', key: 'onlineAmount', width: 120, align: 'right' },
-  { title: '线下订单数', key: 'offlineOrders', width: 120, align: 'center' },
-  { title: '线下金额', key: 'offlineAmount', width: 120, align: 'right' },
-  { title: '差异金额', key: 'diffAmount', width: 100, align: 'right' },
-  { title: '对账状态', slot: 'status', width: 100, align: 'center' },
-  { title: '操作', slot: 'action', width: 150, fixed: 'right' }
+  { title: '车场名称', key: 'parkingName', minWidth: 180 },
+  { title: '对账日期', key: 'reconcileDate', minWidth: 120 },
+  { title: '线上订单数', key: 'onlineOrders', minWidth: 120, align: 'center' },
+  { title: '线上金额', key: 'onlineAmount', minWidth: 120, align: 'right' },
+  { title: '线下订单数', key: 'offlineOrders', minWidth: 120, align: 'center' },
+  { title: '线下金额', key: 'offlineAmount', minWidth: 120, align: 'right' },
+  { title: '差异金额', key: 'diffAmount', minWidth: 100, align: 'right' },
+  { title: '对账状态', slot: 'status', minWidth: 100, align: 'center' },
+  { title: '操作', slot: 'action', minWidth: 150, fixed: 'right' }
 ]
 
 const getStatusText = (status) => {
@@ -236,6 +244,10 @@ initData()
       flex-wrap: wrap;
       gap: var(--spacing-md);
 
+      .filter-item {
+        flex-shrink: 0;
+      }
+
       .filter-date {
         width: 200px;
       }
@@ -260,7 +272,7 @@ initData()
       box-shadow: var(--shadow-base);
 
       .summary-icon {
-        width: 56px;
+        minWidth: 56px;
         height: 56px;
         border-radius: var(--border-radius-base);
         display: flex;

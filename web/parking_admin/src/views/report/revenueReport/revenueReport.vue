@@ -44,14 +44,14 @@ const state = reactive({
 })
 
 const columns = [
-  { title: '日期', key: 'date', width: 120 },
-  { title: '车场', key: 'parkingName', width: 150 },
-  { title: '线上金额', key: 'onlineAmount', width: 120, align: 'right' },
-  { title: '线下金额', key: 'offlineAmount', width: 120, align: 'right' },
-  { title: '优惠抵扣', key: 'discountAmount', width: 120, align: 'right' },
-  { title: '合计', key: 'totalAmount', width: 120, align: 'right' },
-  { title: '订单数', key: 'orderCount', width: 80, align: 'center' },
-  { title: '操作', slot: 'action', width: 100 }
+  { title: '日期', key: 'date', minWidth: 120 },
+  { title: '车场', key: 'parkingName', minWidth: 150 },
+  { title: '线上金额', key: 'onlineAmount', minWidth: 120, align: 'right' },
+  { title: '线下金额', key: 'offlineAmount', minWidth: 120, align: 'right' },
+  { title: '优惠抵扣', key: 'discountAmount', minWidth: 120, align: 'right' },
+  { title: '合计', key: 'totalAmount', minWidth: 120, align: 'right' },
+  { title: '订单数', key: 'orderCount', minWidth: 80, align: 'center' },
+  { title: '操作', slot: 'action', minWidth: 100 }
 ]
 
 const initChart = () => {
@@ -91,5 +91,5 @@ onMounted(() => { initData(); initChart() })
 </script>
 
 <style lang="less" scoped>
-.report-page { .report-toolbar { display: flex; gap: var(--spacing-md); margin-bottom: var(--spacing-lg); padding: var(--spacing-xl); background: var(--bg-color); border-radius: var(--border-radius-base); box-shadow: var(--shadow-base); .filter-select { width: 180px; } } .summary-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--spacing-lg); margin-bottom: var(--spacing-lg); .summary-card { padding: var(--spacing-xl); background: var(--bg-color); border-radius: var(--border-radius-base); box-shadow: var(--shadow-base); .sc-label { font-size: var(--font-size-sm); color: var(--text-color-secondary); } .sc-value { font-size: 28px; font-weight: 600; color: var(--text-color-title); margin: var(--spacing-sm) 0; } .sc-trend { font-size: var(--font-size-sm); &.up { color: var(--success-color); } } .sc-detail { font-size: var(--font-size-xs); color: var(--text-color-secondary); } } } .chart-section { margin-bottom: var(--spacing-lg); .chart-card { background: var(--bg-color); border-radius: var(--border-radius-base); box-shadow: var(--shadow-base); padding: var(--spacing-xl); .chart-header { margin-bottom: var(--spacing-lg); h3 { font-size: var(--font-size-md); font-weight: 600; } } .chart-body { height: 300px; } } } .table-section { background: var(--bg-color); border-radius: var(--border-radius-base); box-shadow: var(--shadow-base); padding: var(--spacing-xl); .section-title { font-size: var(--font-size-md); font-weight: 600; margin-bottom: var(--spacing-lg); } .pagination-wrapper { display: flex; justify-content: flex-end; margin-top: var(--spacing-xl); } } }
+.report-page { .report-toolbar { display: flex; gap: var(--spacing-md); margin-bottom: var(--spacing-lg); padding: var(--spacing-xl); background: var(--bg-color); border-radius: var(--border-radius-base); box-shadow: var(--shadow-base); .filter-select { minWidth: 180px; } } .summary-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--spacing-lg); margin-bottom: var(--spacing-lg); .summary-card { padding: var(--spacing-xl); background: var(--bg-color); border-radius: var(--border-radius-base); box-shadow: var(--shadow-base); .sc-label { font-size: var(--font-size-sm); color: var(--text-color-secondary); } .sc-value { font-size: 28px; font-weight: 600; color: var(--text-color-title); margin: var(--spacing-sm) 0; } .sc-trend { font-size: var(--font-size-sm); &.up { color: var(--success-color); } } .sc-detail { font-size: var(--font-size-xs); color: var(--text-color-secondary); } } } .chart-section { margin-bottom: var(--spacing-lg); .chart-card { background: var(--bg-color); border-radius: var(--border-radius-base); box-shadow: var(--shadow-base); padding: var(--spacing-xl); .chart-header { margin-bottom: var(--spacing-lg); h3 { font-size: var(--font-size-md); font-weight: 600; } } .chart-body { height: 300px; } } } .table-section { background: var(--bg-color); border-radius: var(--border-radius-base); box-shadow: var(--shadow-base); padding: var(--spacing-xl); .section-title { font-size: var(--font-size-md); font-weight: 600; margin-bottom: var(--spacing-lg); } .pagination-wrapper { display: flex; justify-content: flex-end; margin-top: var(--spacing-xl); } } }
 </style>

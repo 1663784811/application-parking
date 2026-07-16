@@ -2,16 +2,22 @@
   <div class="invoice-manage-page">
     <div class="filter-bar">
       <div class="filter-row">
-        <Input v-model="state.searchForm.keyword" placeholder="搜索发票抬头/税号" class="filter-input" clearable @on-enter="handleSearch" />
-        <DatePicker v-model="state.searchForm.dateRange" type="daterange" placeholder="开票日期" class="filter-date" />
-        <Select v-model="state.searchForm.status" placeholder="开票状态" class="filter-select" clearable>
-          <Option value="pending">待开票</Option>
-          <Option value="processing">开票中</Option>
-          <Option value="completed">已完成</Option>
-          <Option value="cancelled">已取消</Option>
-        </Select>
-        <Button type="primary" @click="handleSearch">查询</Button>
-        <Button @click="handleReset">重置</Button>
+        <div class="filter-item">
+          <Input v-model="state.searchForm.keyword" placeholder="搜索发票抬头/税号" class="filter-input" clearable @on-enter="handleSearch" />
+        </div>
+        <div class="filter-item">
+          <DatePicker v-model="state.searchForm.dateRange" type="daterange" placeholder="开票日期" class="filter-date" />
+        </div>
+        <div class="filter-item">
+          <Select v-model="state.searchForm.status" placeholder="开票状态" class="filter-select" clearable>
+            <Option value="pending">待开票</Option>
+            <Option value="processing">开票中</Option>
+            <Option value="completed">已完成</Option>
+            <Option value="cancelled">已取消</Option>
+          </Select>
+        </div>
+        <div class="filter-item"><Button type="primary" @click="handleSearch">查询</Button></div>
+        <div class="filter-item"><Button @click="handleReset">重置</Button></div>
       </div>
       <div class="filter-actions">
         <Button @click="handleBatchRed" :disabled="state.selectedRows.length === 0">
@@ -71,14 +77,14 @@ const state = reactive({
 })
 
 const columns = [
-  { type: 'selection', width: 60, align: 'center' },
-  { title: '发票抬头', key: 'title', width: 180 },
-  { title: '税号', key: 'taxNo', width: 180 },
-  { title: '发票金额', key: 'amount', width: 120, align: 'right' },
-  { title: '订单号', key: 'orderNo', width: 180 },
-  { title: '开票时间', key: 'createTime', width: 160 },
-  { title: '状态', slot: 'status', width: 100, align: 'center' },
-  { title: '操作', slot: 'action', width: 120 }
+  { type: 'selection', minWidth: 60, align: 'center' },
+  { title: '发票抬头', key: 'title', minWidth: 180 },
+  { title: '税号', key: 'taxNo', minWidth: 180 },
+  { title: '发票金额', key: 'amount', minWidth: 120, align: 'right' },
+  { title: '订单号', key: 'orderNo', minWidth: 180 },
+  { title: '开票时间', key: 'createTime', minWidth: 160 },
+  { title: '状态', slot: 'status', minWidth: 100, align: 'center' },
+  { title: '操作', slot: 'action', minWidth: 120 }
 ]
 
 const getStatusText = (s) => ({ pending: '待开票', processing: '开票中', completed: '已完成', cancelled: '已冲红' }[s] || s)
@@ -112,7 +118,7 @@ initData()
 <style lang="less" scoped>
 .invoice-manage-page {
   .filter-bar { padding: var(--spacing-xl); background: var(--bg-color); border-radius: var(--border-radius-base); margin-bottom: var(--spacing-lg); box-shadow: var(--shadow-base); }
-  .filter-row { display: flex; flex-wrap: wrap; gap: var(--spacing-md); margin-bottom: var(--spacing-md); .filter-input { width: 220px; } .filter-date { width: 260px; } .filter-select { width: 150px; } }
+  .filter-row { display: flex; flex-wrap: wrap; gap: var(--spacing-md); margin-bottom: var(--spacing-md); .filter-item { flex-shrink: 0; } .filter-input { width: 220px; } .filter-date { width: 260px; } .filter-select { width: 150px; } }
   .filter-actions { display: flex; gap: var(--spacing-md); }
   .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--spacing-lg); margin-bottom: var(--spacing-lg); .stat-item { padding: var(--spacing-xl); background: var(--bg-color); border-radius: var(--border-radius-base); box-shadow: var(--shadow-base); display: flex; flex-direction: column; .stat-label { font-size: var(--font-size-sm); color: var(--text-color-secondary); margin-bottom: var(--spacing-xs); } .stat-value { font-size: 24px; font-weight: 600; color: var(--text-color-title); } } }
   .table-container { background: var(--bg-color); border-radius: var(--border-radius-base); padding: var(--spacing-xl); box-shadow: var(--shadow-base); .text-danger { color: var(--error-color); } .pagination-wrapper { display: flex; justify-content: flex-end; margin-top: var(--spacing-xl); } }

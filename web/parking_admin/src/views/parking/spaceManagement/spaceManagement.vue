@@ -3,53 +3,61 @@
     <!-- 筛选栏 -->
     <div class="filter-bar">
       <div class="filter-row">
-        <Select
-          v-model="state.searchForm.parkingId"
-          placeholder="选择车场"
-          class="filter-select"
-          clearable
-        >
-          <Option v-for="item in state.parkingList" :key="item.id" :value="item.id">
-            {{ item.name }}
-          </Option>
-        </Select>
+        <div class="filter-item">
+          <Select
+            v-model="state.searchForm.parkingId"
+            placeholder="选择车场"
+            class="filter-select"
+            clearable
+          >
+            <Option v-for="item in state.parkingList" :key="item.id" :value="item.id">
+              {{ item.name }}
+            </Option>
+          </Select>
+        </div>
 
-        <Select
-          v-model="state.searchForm.status"
-          placeholder="车位状态"
-          class="filter-select"
-          clearable
-        >
-          <Option :value="0">空闲</Option>
-          <Option :value="1">占用</Option>
-          <Option :value="2">故障</Option>
-        </Select>
+        <div class="filter-item">
+          <Select
+            v-model="state.searchForm.status"
+            placeholder="车位状态"
+            class="filter-select"
+            clearable
+          >
+            <Option :value="0">空闲</Option>
+            <Option :value="1">占用</Option>
+            <Option :value="2">故障</Option>
+          </Select>
+        </div>
 
-        <Select
-          v-model="state.searchForm.type"
-          placeholder="车位类型"
-          class="filter-select"
-          clearable
-        >
-          <Option :value="1">固定</Option>
-          <Option :value="2">临时</Option>
-          <Option :value="3">无障碍</Option>
-        </Select>
+        <div class="filter-item">
+          <Select
+            v-model="state.searchForm.type"
+            placeholder="车位类型"
+            class="filter-select"
+            clearable
+          >
+            <Option :value="1">固定</Option>
+            <Option :value="2">临时</Option>
+            <Option :value="3">无障碍</Option>
+          </Select>
+        </div>
 
-        <Input
-          v-model="state.searchForm.keyword"
-          placeholder="搜索车位编号"
-          class="filter-input"
-          clearable
-          @on-enter="handleSearch"
-        >
-          <template #prefix>
-            <Icon type="ios-search" />
-          </template>
-        </Input>
+        <div class="filter-item">
+          <Input
+            v-model="state.searchForm.keyword"
+            placeholder="搜索车位编号"
+            class="filter-input"
+            clearable
+            @on-enter="handleSearch"
+          >
+            <template #prefix>
+              <Icon type="ios-search" />
+            </template>
+          </Input>
+        </div>
 
-        <Button type="primary" @click="handleSearch">查询</Button>
-        <Button @click="handleReset">重置</Button>
+        <div class="filter-item"><Button type="primary" @click="handleSearch">查询</Button></div>
+        <div class="filter-item"><Button @click="handleReset">重置</Button></div>
       </div>
 
       <div class="filter-actions">
@@ -171,7 +179,7 @@
             v-model="state.assignForm.expireDate"
             type="date"
             placeholder="请选择有效期"
-            style="width: 100%"
+            style="minWidth: 100%"
           />
         </FormItem>
       </Form>
@@ -253,37 +261,37 @@ const columns = [
   {
     title: '车位编号',
     key: 'no',
-    width: 120
+    minWidth: 120
   },
   {
     title: '所属区域',
     key: 'area',
-    width: 120
+    minWidth: 120
   },
   {
     title: '车位类型',
     slot: 'type',
-    width: 100
+    minWidth: 100
   },
   {
     title: '绑定车主',
     key: 'memberName',
-    width: 120
+    minWidth: 120
   },
   {
     title: '当前车辆',
     key: 'plate',
-    width: 120
+    minWidth: 120
   },
   {
     title: '状态',
     slot: 'status',
-    width: 100
+    minWidth: 100
   },
   {
     title: '操作',
     slot: 'action',
-    width: 180
+    minWidth: 180
   }
 ]
 
@@ -421,6 +429,10 @@ initData()
       gap: var(--spacing-md);
       margin-bottom: var(--spacing-lg);
 
+      .filter-item {
+        flex-shrink: 0;
+      }
+
       .filter-select {
         width: 150px;
       }
@@ -455,7 +467,7 @@ initData()
       box-shadow: var(--shadow-base);
 
       .stat-dot {
-        width: 12px;
+        minWidth: 12px;
         height: 12px;
         border-radius: 50%;
         margin-right: var(--spacing-sm);

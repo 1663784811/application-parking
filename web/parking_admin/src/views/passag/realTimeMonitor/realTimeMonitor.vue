@@ -152,12 +152,12 @@ const state = reactive({
 })
 
 const passageColumns = [
-  { title: '车牌号', key: 'plate', width: 120 },
-  { title: '通行类型', slot: 'type', width: 80 },
-  { title: '通道', key: 'channel', width: 100 },
-  { title: '通行时间', key: 'time', width: 160 },
-  { title: '状态', slot: 'status', width: 100 },
-  { title: '操作', slot: 'action', width: 120 }
+  { title: '车牌号', key: 'plate', minWidth: 120 },
+  { title: '通行类型', slot: 'type', minWidth: 80 },
+  { title: '通道', key: 'channel', minWidth: 100 },
+  { title: '通行时间', key: 'time', minWidth: 160 },
+  { title: '状态', slot: 'status', minWidth: 100 },
+  { title: '操作', slot: 'action', minWidth: 120 }
 ]
 
 const getStatusText = (status) => {
@@ -245,7 +245,7 @@ loadPassageList()
   }
 
   .channel-sidebar {
-    width: 200px;
+    minWidth: 200px;
     flex-shrink: 0;
     background-color: var(--bg-color);
     border-radius: var(--border-radius-base);

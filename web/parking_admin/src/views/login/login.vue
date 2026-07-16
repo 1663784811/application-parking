@@ -189,7 +189,7 @@ onMounted(() => {
 
 .login-container {
   display: flex;
-  width: 900px;
+  minWidth: 900px;
   height: 580px;
   background-color: var(--bg-color);
   border-radius: var(--border-radius-lg);
@@ -198,7 +198,7 @@ onMounted(() => {
 }
 
 .login-left {
-  width: 400px;
+  minWidth: 400px;
   background: linear-gradient(135deg, #165DFF 0%, #0D47A1 100%);
   padding: 60px 40px;
 
@@ -254,8 +254,8 @@ onMounted(() => {
   padding: 40px;
 
   .login-form-wrapper {
-    width: 100%;
-    max-width: 320px;
+    minWidth: 100%;
+    max-minWidth: 320px;
 
     .login-form-header {
       margin-bottom: 32px;
@@ -284,7 +284,7 @@ onMounted(() => {
         }
 
         .captcha-code {
-          width: 100px;
+          minWidth: 100px;
           height: 40px;
           border: 1px solid var(--border-color);
           border-radius: var(--border-radius-sm);
@@ -292,7 +292,7 @@ onMounted(() => {
           cursor: pointer;
 
           img {
-            width: 100%;
+            minWidth: 100%;
             height: 100%;
             object-fit: cover;
           }

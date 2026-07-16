@@ -38,12 +38,12 @@ const state = reactive({
 })
 
 const columns = [
-  { title: '时段', key: 'period', width: 150 },
-  { title: '入园', key: 'inCount', width: 100, align: 'center' },
-  { title: '出园', key: 'outCount', width: 100, align: 'center' },
-  { title: '在场', key: 'inPark', width: 100, align: 'center' },
-  { title: '入场峰值', key: 'inPeak', width: 120, align: 'center' },
-  { title: '出场峰值', key: 'outPeak', width: 120, align: 'center' }
+  { title: '时段', key: 'period', minWidth: 150 },
+  { title: '入园', key: 'inCount', minWidth: 100, align: 'center' },
+  { title: '出园', key: 'outCount', minWidth: 100, align: 'center' },
+  { title: '在场', key: 'inPark', minWidth: 100, align: 'center' },
+  { title: '入场峰值', key: 'inPeak', minWidth: 120, align: 'center' },
+  { title: '出场峰值', key: 'outPeak', minWidth: 120, align: 'center' }
 ]
 
 const initCharts = () => {
@@ -85,5 +85,5 @@ onMounted(() => { initData(); initCharts() })
 </script>
 
 <style lang="less" scoped>
-.report-page { .report-toolbar { display: flex; gap: var(--spacing-md); margin-bottom: var(--spacing-lg); padding: var(--spacing-xl); background: var(--bg-color); border-radius: var(--border-radius-base); box-shadow: var(--shadow-base); .filter-select { width: 180px; } .filter-select-sm { width: 120px; } } .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--spacing-lg); margin-bottom: var(--spacing-lg); .stat-card { padding: var(--spacing-xl); background: var(--bg-color); border-radius: var(--border-radius-base); box-shadow: var(--shadow-base); text-align: center; .stat-label { font-size: var(--font-size-sm); color: var(--text-color-secondary); } .stat-value { font-size: 28px; font-weight: 600; color: var(--primary-color); margin-top: var(--spacing-sm); } } } .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-lg); margin-bottom: var(--spacing-lg); .chart-card { background: var(--bg-color); border-radius: var(--border-radius-base); box-shadow: var(--shadow-base); padding: var(--spacing-xl); .chart-title { font-size: var(--font-size-md); font-weight: 600; margin-bottom: var(--spacing-lg); } .chart-body { height: 250px; } } } .table-section { background: var(--bg-color); border-radius: var(--border-radius-base); box-shadow: var(--shadow-base); padding: var(--spacing-xl); } }
+.report-page { .report-toolbar { display: flex; gap: var(--spacing-md); margin-bottom: var(--spacing-lg); padding: var(--spacing-xl); background: var(--bg-color); border-radius: var(--border-radius-base); box-shadow: var(--shadow-base); .filter-select { minWidth: 180px; } .filter-select-sm { minWidth: 120px; } } .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--spacing-lg); margin-bottom: var(--spacing-lg); .stat-card { padding: var(--spacing-xl); background: var(--bg-color); border-radius: var(--border-radius-base); box-shadow: var(--shadow-base); text-align: center; .stat-label { font-size: var(--font-size-sm); color: var(--text-color-secondary); } .stat-value { font-size: 28px; font-weight: 600; color: var(--primary-color); margin-top: var(--spacing-sm); } } } .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-lg); margin-bottom: var(--spacing-lg); .chart-card { background: var(--bg-color); border-radius: var(--border-radius-base); box-shadow: var(--shadow-base); padding: var(--spacing-xl); .chart-title { font-size: var(--font-size-md); font-weight: 600; margin-bottom: var(--spacing-lg); } .chart-body { height: 250px; } } } .table-section { background: var(--bg-color); border-radius: var(--border-radius-base); box-shadow: var(--shadow-base); padding: var(--spacing-xl); } }
 </style>

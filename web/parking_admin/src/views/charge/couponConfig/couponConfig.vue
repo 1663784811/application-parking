@@ -40,18 +40,18 @@
           </Select>
         </FormItem>
         <FormItem label="使用门槛" prop="threshold">
-          <InputNumber v-model="state.formData.threshold" :min="0" style="width: 100%" />
+          <InputNumber v-model="state.formData.threshold" :min="0" style="minWidth: 100%" />
           <span class="form-tip">消费满此金额即可使用，设为0则无门槛</span>
         </FormItem>
         <FormItem label="优惠金额" prop="discount">
-          <InputNumber v-model="state.formData.discount" :min="0" style="width: 100%" />
+          <InputNumber v-model="state.formData.discount" :min="0" style="minWidth: 100%" />
           <span class="form-tip">满减金额、折扣率或免费时长（分钟）</span>
         </FormItem>
         <FormItem label="发放数量" prop="totalCount">
-          <InputNumber v-model="state.formData.totalCount" :min="1" style="width: 100%" />
+          <InputNumber v-model="state.formData.totalCount" :min="1" style="minWidth: 100%" />
         </FormItem>
         <FormItem label="有效期" prop="validDays">
-          <InputNumber v-model="state.formData.validDays" :min="1" style="width: 100%" />
+          <InputNumber v-model="state.formData.validDays" :min="1" style="minWidth: 100%" />
           <span class="form-tip">领取后多少天内有效</span>
         </FormItem>
         <FormItem label="状态" prop="status">
@@ -94,15 +94,15 @@ const state = reactive({
 })
 
 const columns = [
-  { title: '优惠券名称', key: 'name', width: 200 },
-  { title: '类型', slot: 'type', width: 120 },
-  { title: '使用门槛', key: 'threshold', width: 120, render: (h, p) => h('span', p.row.threshold > 0 ? `满${p.row.threshold}元` : '无门槛') },
-  { title: '优惠内容', key: 'discount', width: 150, render: (h, p) => h('span', getDiscountText(p.row)) },
-  { title: '发放数量', key: 'totalCount', width: 100, align: 'center' },
-  { title: '已使用', key: 'usedCount', width: 100, align: 'center' },
-  { title: '有效期', key: 'validDays', width: 100, render: (h, p) => h('span', `领取后${p.row.validDays}天`) },
-  { title: '状态', slot: 'status', width: 80, align: 'center' },
-  { title: '操作', slot: 'action', width: 120 }
+  { title: '优惠券名称', key: 'name', minWidth: 200 },
+  { title: '类型', slot: 'type', minWidth: 120 },
+  { title: '使用门槛', key: 'threshold', minWidth: 120, render: (h, p) => h('span', p.row.threshold > 0 ? `满${p.row.threshold}元` : '无门槛') },
+  { title: '优惠内容', key: 'discount', minWidth: 150, render: (h, p) => h('span', getDiscountText(p.row)) },
+  { title: '发放数量', key: 'totalCount', minWidth: 100, align: 'center' },
+  { title: '已使用', key: 'usedCount', minWidth: 100, align: 'center' },
+  { title: '有效期', key: 'validDays', minWidth: 100, render: (h, p) => h('span', `领取后${p.row.validDays}天`) },
+  { title: '状态', slot: 'status', minWidth: 80, align: 'center' },
+  { title: '操作', slot: 'action', minWidth: 120 }
 ]
 
 const getTypeText = (type) => {

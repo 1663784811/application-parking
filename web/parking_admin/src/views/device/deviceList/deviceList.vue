@@ -2,17 +2,26 @@
   <div class="device-list-page">
     <div class="filter-bar">
       <div class="filter-row">
-        <Select v-model="state.searchForm.type" placeholder="设备类型" class="filter-select" clearable>
-          <Option value="camera">摄像头</Option><Option value="gate">道闸</Option><Option value="screen">显示屏</Option><Option value="sensor">地感</Option>
-        </Select>
-        <Select v-model="state.searchForm.parkingId" placeholder="车场" class="filter-select" clearable>
-          <Option value="1">城西停车场</Option><Option value="2">城东停车场</Option>
-        </Select>
-        <Select v-model="state.searchForm.onlineStatus" placeholder="在线状态" class="filter-select" clearable>
-          <Option :value="1">在线</Option><Option :value="0">离线</Option>
-        </Select>
-        <Input v-model="state.searchForm.keyword" placeholder="设备名称/编号" class="filter-input" clearable @on-enter="handleSearch" />
-        <Button type="primary" @click="handleSearch">查询</Button><Button @click="handleReset">重置</Button>
+        <div class="filter-item">
+          <Select v-model="state.searchForm.type" placeholder="设备类型" class="filter-select" clearable>
+            <Option value="camera">摄像头</Option><Option value="gate">道闸</Option><Option value="screen">显示屏</Option><Option value="sensor">地感</Option>
+          </Select>
+        </div>
+        <div class="filter-item">
+          <Select v-model="state.searchForm.parkingId" placeholder="车场" class="filter-select" clearable>
+            <Option value="1">城西停车场</Option><Option value="2">城东停车场</Option>
+          </Select>
+        </div>
+        <div class="filter-item">
+          <Select v-model="state.searchForm.onlineStatus" placeholder="在线状态" class="filter-select" clearable>
+            <Option :value="1">在线</Option><Option :value="0">离线</Option>
+          </Select>
+        </div>
+        <div class="filter-item">
+          <Input v-model="state.searchForm.keyword" placeholder="设备名称/编号" class="filter-input" clearable @on-enter="handleSearch" />
+        </div>
+        <div class="filter-item"><Button type="primary" @click="handleSearch">查询</Button></div>
+        <div class="filter-item"><Button @click="handleReset">重置</Button></div>
       </div>
       <div class="filter-actions"><Button type="primary" @click="handleAdd"><Icon type="ios-add" />添加设备</Button></div>
     </div>
@@ -51,15 +60,15 @@ const state = reactive({
 })
 
 const columns = [
-  { title: '设备编号', key: 'code', width: 120 },
-  { title: '设备名称', key: 'name', width: 150 },
-  { title: '设备类型', slot: 'type', width: 100 },
-  { title: '所属车场', key: 'parkingName', width: 150 },
-  { title: '安装通道', key: 'channel', width: 100 },
-  { title: 'IP地址', key: 'ip', width: 140 },
-  { title: '在线状态', slot: 'onlineStatus', width: 100, align: 'center' },
-  { title: '最后在线', key: 'lastOnline', width: 160 },
-  { title: '操作', slot: 'action', width: 200, fixed: 'right' }
+  { title: '设备编号', key: 'code', minWidth: 120 },
+  { title: '设备名称', key: 'name', minWidth: 150 },
+  { title: '设备类型', slot: 'type', minWidth: 100 },
+  { title: '所属车场', key: 'parkingName', minWidth: 150 },
+  { title: '安装通道', key: 'channel', minWidth: 100 },
+  { title: 'IP地址', key: 'ip', minWidth: 140 },
+  { title: '在线状态', slot: 'onlineStatus', minWidth: 100, align: 'center' },
+  { title: '最后在线', key: 'lastOnline', minWidth: 160 },
+  { title: '操作', slot: 'action', minWidth: 200, fixed: 'right' }
 ]
 
 const getTypeText = (t) => ({ camera: '摄像头', gate: '道闸', screen: '显示屏', sensor: '地感' }[t] || t)
@@ -95,7 +104,7 @@ initData()
 <style lang="less" scoped>
 .device-list-page {
   .filter-bar { padding: var(--spacing-xl); background: var(--bg-color); border-radius: var(--border-radius-base); margin-bottom: var(--spacing-lg); box-shadow: var(--shadow-base); }
-  .filter-row { display: flex; flex-wrap: wrap; gap: var(--spacing-md); margin-bottom: var(--spacing-md); .filter-select { width: 150px; } .filter-input { width: 200px; } }
+  .filter-row { display: flex; flex-wrap: wrap; gap: var(--spacing-md); margin-bottom: var(--spacing-md); .filter-item { flex-shrink: 0; } .filter-select { width: 150px; } .filter-input { width: 200px; } }
   .filter-actions { display: flex; gap: var(--spacing-md); }
   .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--spacing-lg); margin-bottom: var(--spacing-lg); .stat-item { padding: var(--spacing-xl); background: var(--bg-color); border-radius: var(--border-radius-base); box-shadow: var(--shadow-base); display: flex; flex-direction: column; .stat-label { font-size: var(--font-size-sm); color: var(--text-color-secondary); margin-bottom: var(--spacing-xs); } .stat-value { font-size: 24px; font-weight: 600; color: var(--text-color-title); } &.online .stat-value { color: var(--success-color); } &.offline .stat-value { color: var(--text-color-secondary); } &.fault .stat-value { color: var(--error-color); } } }
   .table-container { background: var(--bg-color); border-radius: var(--border-radius-base); padding: var(--spacing-xl); box-shadow: var(--shadow-base); .device-type { padding: 2px 8px; background: rgba(22,93,255,0.1); color: #165DFF; border-radius: var(--border-radius-sm); font-size: var(--font-size-xs); } .text-danger { color: var(--error-color); } .text-warning { color: var(--warning-color); } .pagination-wrapper { display: flex; justify-content: flex-end; margin-top: var(--spacing-xl); } }

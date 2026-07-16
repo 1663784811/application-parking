@@ -3,38 +3,52 @@
     <!-- 筛选栏 -->
     <div class="filter-bar">
       <div class="filter-row">
-        <RangePicker
-          v-model="state.searchForm.dateRange"
-          :show-time="true"
-          format="YYYY-MM-DD HH:mm:ss"
-          placeholder="通行时间"
-          class="filter-date"
-        />
+        <div class="filter-item">
+          <RangePicker
+            v-model="state.searchForm.dateRange"
+            :show-time="true"
+            format="YYYY-MM-DD HH:mm:ss"
+            placeholder="通行时间"
+            class="filter-date"
+          />
+        </div>
 
-        <Select v-model="state.searchForm.parkingId" placeholder="选择车场" class="filter-select" clearable>
-          <Option value="1">城西停车场</Option>
-          <Option value="2">城东停车场</Option>
-        </Select>
+        <div class="filter-item">
+          <Select v-model="state.searchForm.parkingId" placeholder="选择车场" class="filter-select" clearable>
+            <Option value="1">城西停车场</Option>
+            <Option value="2">城东停车场</Option>
+          </Select>
+        </div>
 
-        <Input v-model="state.searchForm.plate" placeholder="输入车牌号" class="filter-input" clearable />
+        <div class="filter-item">
+          <Input v-model="state.searchForm.plate" placeholder="输入车牌号" class="filter-input" clearable />
+        </div>
 
-        <Select v-model="state.searchForm.payType" placeholder="支付方式" class="filter-select" clearable>
-          <Option value="wechat">微信支付</Option>
-          <Option value="alipay">支付宝</Option>
-          <Option value="cash">现金</Option>
-          <Option value="card">月卡抵扣</Option>
-        </Select>
+        <div class="filter-item">
+          <Select v-model="state.searchForm.payType" placeholder="支付方式" class="filter-select" clearable>
+            <Option value="wechat">微信支付</Option>
+            <Option value="alipay">支付宝</Option>
+            <Option value="cash">现金</Option>
+            <Option value="card">月卡抵扣</Option>
+          </Select>
+        </div>
       </div>
 
       <div class="filter-row">
-        <Select v-model="state.searchForm.orderStatus" placeholder="订单状态" class="filter-select" clearable>
-          <Option value="pending">待支付</Option>
-          <Option value="paid">已结清</Option>
-          <Option value="refund">已退款</Option>
-        </Select>
+        <div class="filter-item">
+          <Select v-model="state.searchForm.orderStatus" placeholder="订单状态" class="filter-select" clearable>
+            <Option value="pending">待支付</Option>
+            <Option value="paid">已结清</Option>
+            <Option value="refund">已退款</Option>
+          </Select>
+        </div>
 
-        <Button type="primary" @click="handleSearch">查询</Button>
-        <Button @click="handleReset">重置</Button>
+        <div class="filter-item">
+          <Button type="primary" @click="handleSearch">查询</Button>
+        </div>
+        <div class="filter-item">
+          <Button @click="handleReset">重置</Button>
+        </div>
       </div>
     </div>
 
@@ -145,18 +159,18 @@ const state = reactive({
 })
 
 const columns = [
-  { title: '订单号', key: 'orderNo', width: 180 },
-  { title: '车牌号', key: 'plate', width: 120 },
-  { title: '进场时间', key: 'inTime', width: 160 },
-  { title: '出场时间', key: 'outTime', width: 160 },
-  { title: '停车时长', key: 'duration', width: 100 },
-  { title: '应付金额', key: 'payableAmount', width: 100, align: 'right' },
-  { title: '实付金额', key: 'paidAmount', width: 100, align: 'right' },
-  { title: '优惠金额', key: 'discountAmount', width: 100, align: 'right' },
-  { title: '支付方式', slot: 'payType', width: 100 },
-  { title: '操作员', key: 'operator', width: 100 },
-  { title: '订单状态', slot: 'orderStatus', width: 100, align: 'center' },
-  { title: '操作', slot: 'action', width: 150, fixed: 'right' }
+  { title: '订单号', key: 'orderNo', minWidth: 180 },
+  { title: '车牌号', key: 'plate', minWidth: 120 },
+  { title: '进场时间', key: 'inTime', minWidth: 160 },
+  { title: '出场时间', key: 'outTime', minWidth: 160 },
+  { title: '停车时长', key: 'duration', minWidth: 100 },
+  { title: '应付金额', key: 'payableAmount', minWidth: 100, align: 'right' },
+  { title: '实付金额', key: 'paidAmount', minWidth: 100, align: 'right' },
+  { title: '优惠金额', key: 'discountAmount', minWidth: 100, align: 'right' },
+  { title: '支付方式', slot: 'payType', minWidth: 100 },
+  { title: '操作员', key: 'operator', minWidth: 100 },
+  { title: '订单状态', slot: 'orderStatus', minWidth: 100, align: 'center' },
+  { title: '操作', slot: 'action', minWidth: 150, fixed: 'right' }
 ]
 
 const getOrderStatusText = (status) => {
@@ -300,6 +314,10 @@ initData()
 
       &:last-of-type {
         margin-bottom: 0;
+      }
+
+      .filter-item {
+        flex-shrink: 0;
       }
 
       .filter-date {
