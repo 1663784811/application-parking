@@ -14,7 +14,7 @@
         <div class="package-price">¥<span class="price-value">{{ item.price }}</span>/{{ getUnitText(item.type) }}</div>
         <div class="package-features">
           <div class="feature-item"><Icon type="ios-checkmark-circle" />有效期{{ item.validDays}}天</div>
-          <div class="feature-item"><Icon type="ios-checkmark-circle" />适用车场：{{ item.parkingNames }}</div>
+          <div class="feature-item"><Icon type="ios-checkmark-circle" />适用停车场：{{ item.parkingNames }}</div>
           <div class="feature-item"><Icon type="ios-checkmark-circle" />免费出场</div>
         </div>
         <div class="package-footer">
@@ -36,7 +36,7 @@
         </FormItem>
         <FormItem label="有效期" prop="validDays"><InputNumber v-model="state.formData.validDays" :min="1" style="minWidth: 100%" /></FormItem>
         <FormItem label="售价" prop="price"><InputNumber v-model="state.formData.price" :min="0" :precision="2" style="minWidth: 100%" /></FormItem>
-        <FormItem label="适用车场" prop="parkings">
+        <FormItem label="适用停车场" prop="parkings">
           <CheckboxGroup v-model="state.formData.parkings">
             <Checkbox label="城西停车场"></Checkbox><Checkbox label="城东停车场"></Checkbox><Checkbox label="购物中心"></Checkbox>
           </CheckboxGroup>
@@ -64,10 +64,10 @@ const getUnitText = (t) => ({ 1: '月', 2: '季', 3: '年' }[t] || '')
 
 const initData = () => {
   state.tableData = [
-    { id: 1, name: '月卡套餐A', type: 1, validDays: 30, price: 300, parkingNames: '全部车场', sales: 156 },
+    { id: 1, name: '月卡套餐A', type: 1, validDays: 30, price: 300, parkingNames: '全部停车场', sales: 156 },
     { id: 2, name: '月卡套餐B', type: 1, validDays: 30, price: 280, parkingNames: '城西停车场', sales: 89 },
-    { id: 3, name: '季卡套餐', type: 2, validDays: 90, price: 800, parkingNames: '全部车场', sales: 45 },
-    { id: 4, name: '年卡套餐', type: 3, validDays: 365, price: 2800, parkingNames: '全部车场', sales: 28 }
+    { id: 3, name: '季卡套餐', type: 2, validDays: 90, price: 800, parkingNames: '全部停车场', sales: 45 },
+    { id: 4, name: '年卡套餐', type: 3, validDays: 365, price: 2800, parkingNames: '全部停车场', sales: 28 }
   ]
 }
 

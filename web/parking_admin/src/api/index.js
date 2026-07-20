@@ -3,17 +3,17 @@
  */
 import request from './axiosRequest'
 
-// ========== 车场管理 ==========
+// ========== 停车场管理 ==========
 export const parkingApi = {
-  // 车场列表
+  // 停车场列表
   getParkingList: (params) => request.get('/parking/list', { params }),
-  // 新增车场
+  // 新增停车场
   addParking: (data) => request.post('/parking/add', data),
-  // 编辑车场
+  // 编辑停车场
   editParking: (data) => request.put('/parking/edit', data),
-  // 删除车场
+  // 删除停车场
   deleteParking: (id) => request.delete(`/parking/delete/${id}`),
-  // 车场详情
+  // 停车场详情
   getParkingDetail: (id) => request.get(`/parking/detail/${id}`)
 }
 

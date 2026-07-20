@@ -2,8 +2,8 @@
   <div class="report-page">
     <div class="report-toolbar">
       <DatePicker v-model="state.dateRange" type="daterange" format="yyyy-MM-dd" @on-change="handleDateChange" />
-      <Select v-model="state.parkingId" placeholder="选择车场" class="filter-select" clearable>
-        <Option value="1">全部车场</Option><Option value="2">城西停车场</Option><Option value="3">城东停车场</Option>
+      <Select v-model="state.parkingId" placeholder="选择停车场" class="filter-select" clearable>
+        <Option value="1">全部停车场</Option><Option value="2">城西停车场</Option><Option value="3">城东停车场</Option>
       </Select>
       <Button type="primary" @click="handleSearch">查询</Button>
       <Button @click="handleExport">导出Excel</Button><Button @click="handleExportPdf">导出PDF</Button>
@@ -45,7 +45,7 @@ const state = reactive({
 
 const columns = [
   { title: '日期', key: 'date', minWidth: 120 },
-  { title: '车场', key: 'parkingName', minWidth: 150 },
+  { title: '停车场', key: 'parkingName', minWidth: 150 },
   { title: '线上金额', key: 'onlineAmount', minWidth: 120, align: 'right' },
   { title: '线下金额', key: 'offlineAmount', minWidth: 120, align: 'right' },
   { title: '优惠抵扣', key: 'discountAmount', minWidth: 120, align: 'right' },

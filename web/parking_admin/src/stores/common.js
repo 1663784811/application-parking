@@ -8,9 +8,9 @@ export const useCommonStore = defineStore('common', () => {
   const state = reactive({
     // 侧边栏折叠状态
     siderCollapsed: false,
-    // 当前选中的车场
+    // 当前选中的停车场
     currentParking: null,
-    // 车场列表
+    // 停车场列表
     parkingList: [],
     // 全局加载状态
     globalLoading: false,
@@ -30,12 +30,12 @@ export const useCommonStore = defineStore('common', () => {
     state.siderCollapsed = collapsed
   }
 
-  // 设置当前车场
+  // 设置当前停车场
   const setCurrentParking = (parking) => {
     state.currentParking = parking
   }
 
-  // 设置车场列表
+  // 设置停车场列表
   const setParkingList = (list) => {
     state.parkingList = list
   }

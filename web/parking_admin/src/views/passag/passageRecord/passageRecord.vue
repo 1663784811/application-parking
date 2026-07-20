@@ -14,7 +14,7 @@
         </div>
 
         <div class="filter-item">
-          <Select v-model="state.searchForm.parkingId" placeholder="选择车场" class="filter-select" clearable>
+          <Select v-model="state.searchForm.parkingId" placeholder="选择停车场" class="filter-select" clearable>
             <Option v-for="item in state.parkingList" :key="item.id" :value="item.id">
               {{ item.name }}
             </Option>

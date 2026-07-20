@@ -22,7 +22,7 @@
         </div>
 
         <div class="filter-item">
-          <Select v-model="state.searchForm.parkingId" placeholder="车场" class="filter-select" clearable>
+          <Select v-model="state.searchForm.parkingId" placeholder="停车场" class="filter-select" clearable>
             <Option value="1">城西停车场</Option>
             <Option value="2">城东停车场</Option>
           </Select>
@@ -174,7 +174,7 @@ const columns = [
   { title: '车牌号', key: 'plate', minWidth: 120 },
   { title: '异常类型', slot: 'exceptionType', minWidth: 120 },
   { title: '发生时间', key: 'exceptionTime', minWidth: 160 },
-  { title: '车场', key: 'parkingName', minWidth: 150 },
+  { title: '停车场', key: 'parkingName', minWidth: 150 },
   { title: '通道', key: 'channel', minWidth: 100 },
   { title: '异常描述', key: 'description', minWidth: 200, tooltip: true },
   { title: '待缴费金额', key: 'unpaidAmount', minWidth: 120, align: 'right' },

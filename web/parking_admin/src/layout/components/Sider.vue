@@ -79,11 +79,11 @@ const menuList = [
   {
     name: 'parking',
     icon: 'ios-car',
-    title: '车场管理',
+    title: '停车场管理',
     children: [
       {
         name: 'parkingList',
-        title: '车场列表',
+        title: '停车场列表',
         path: '/parking/parkingList'
       },
       {

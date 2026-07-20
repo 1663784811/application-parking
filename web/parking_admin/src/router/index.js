@@ -10,7 +10,7 @@ const Login = () => import('@/views/login/login.vue')
 // 工作台
 const Home = () => import('@/views/home/home.vue')
 
-// 车场管理
+// 停车场管理
 const ParkingList = () => import('@/views/parking/parkingList/parkingList.vue')
 const SpaceManagement = () => import('@/views/parking/spaceManagement/spaceManagement.vue')
 
@@ -74,13 +74,13 @@ const routes = [
         }
       },
 
-      // 车场管理
+      // 停车场管理
       {
         path: '/parking/parkingList',
         name: 'parkingList',
         component: ParkingList,
         meta: {
-          title: '车场列表'
+          title: '停车场列表'
         }
       },
       {

@@ -14,7 +14,7 @@
         </div>
 
         <div class="filter-item">
-          <Select v-model="state.searchForm.parkingId" placeholder="选择车场" class="filter-select" clearable>
+          <Select v-model="state.searchForm.parkingId" placeholder="选择停车场" class="filter-select" clearable>
             <Option value="1">城西停车场</Option>
             <Option value="2">城东停车场</Option>
           </Select>
@@ -139,7 +139,7 @@ const state = reactive({
 })
 
 const columns = [
-  { title: '车场名称', key: 'parkingName', minWidth: 180 },
+  { title: '停车场名称', key: 'parkingName', minWidth: 180 },
   { title: '对账日期', key: 'reconcileDate', minWidth: 120 },
   { title: '线上订单数', key: 'onlineOrders', minWidth: 120, align: 'center' },
   { title: '线上金额', key: 'onlineAmount', minWidth: 120, align: 'right' },

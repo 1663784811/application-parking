@@ -22,9 +22,9 @@
         <FormItem label="真实姓名" prop="name"><Input v-model="state.formData.name" placeholder="请输入真实姓名" /></FormItem>
         <FormItem label="手机号" prop="phone"><Input v-model="state.formData.phone" placeholder="请输入手机号" /></FormItem>
         <FormItem label="角色" prop="roleId">
-          <Select v-model="state.formData.roleId"><Option value="1">超级管理员</Option><Option value="2">财务</Option><Option value="3">车场值守</Option><Option value="4">巡检员</Option></Select>
+          <Select v-model="state.formData.roleId"><Option value="1">超级管理员</Option><Option value="2">财务</Option><Option value="3">停车场值守</Option><Option value="4">巡检员</Option></Select>
         </FormItem>
-        <FormItem label="所属车场" prop="parkings">
+        <FormItem label="所属停车场" prop="parkings">
           <CheckboxGroup v-model="state.formData.parkings"><Checkbox label="城西停车场"></Checkbox><Checkbox label="城东停车场"></Checkbox><Checkbox label="购物中心"></Checkbox></CheckboxGroup>
         </FormItem>
         <FormItem label="状态" prop="status"><RadioGroup v-model="state.formData.status"><Radio :label="1">启用</Radio><Radio :label="0">停用</Radio></RadioGroup></FormItem>
@@ -65,7 +65,7 @@ const initData = () => {
     state.tableData = [
       { id: 1, username: 'admin', name: '系统管理员', phone: '13800138001', roleId: 1, roleName: '超级管理员', createTime: '2024-01-01', lastLogin: '2024-01-15 14:00', status: 1 },
       { id: 2, username: 'finance', name: '财务经理', phone: '13800138002', roleId: 2, roleName: '财务', createTime: '2024-01-05', lastLogin: '2024-01-15 10:00', status: 1 },
-      { id: 3, username: 'guard1', name: '张保安', phone: '13800138003', roleId: 3, roleName: '车场值守', createTime: '2024-01-10', lastLogin: '2024-01-14 22:00', status: 1 },
+      { id: 3, username: 'guard1', name: '张保安', phone: '13800138003', roleId: 3, roleName: '停车场值守', createTime: '2024-01-10', lastLogin: '2024-01-14 22:00', status: 1 },
       { id: 4, username: 'inspector', name: '巡检员', phone: '13800138004', roleId: 4, roleName: '巡检员', createTime: '2024-01-12', lastLogin: '-', status: 0 }
     ]
     state.loading = false

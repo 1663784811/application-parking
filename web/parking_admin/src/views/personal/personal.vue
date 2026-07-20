@@ -214,7 +214,7 @@
               <div class="notification-item">
                 <div class="notification-info">
                   <h4>异常告警</h4>
-                  <p>车场设备异常时接收通知</p>
+                  <p>停车场设备异常时接收通知</p>
                 </div>
                 <i-switch v-model="state.notifications.alert" />
               </div>
@@ -453,7 +453,7 @@ const loadLogList = () => {
   state.logLoading = true
   setTimeout(() => {
     state.logList = [
-      { time: '2024-01-15 14:32:15', actionType: 'edit', content: '修改了车场「中心停车场」的基本信息', ip: '192.168.1.100', device: 'Windows Chrome' },
+      { time: '2024-01-15 14:32:15', actionType: 'edit', content: '修改了停车场「中心停车场」的基本信息', ip: '192.168.1.100', device: 'Windows Chrome' },
       { time: '2024-01-15 10:15:00', actionType: 'export', content: '导出了2024年1月的营收报表', ip: '192.168.1.100', device: 'Windows Chrome' },
       { time: '2024-01-14 16:45:30', actionType: 'login', content: '管理员登录系统', ip: '192.168.1.100', device: 'Windows Chrome' },
       { time: '2024-01-14 09:20:00', actionType: 'edit', content: '添加了新设备「2号入口相机」', ip: '192.168.1.100', device: 'Windows Chrome' },

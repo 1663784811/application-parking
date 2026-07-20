@@ -25,7 +25,7 @@
       </div>
     </div>
     <div class="table-container">
-      <Table :columns="columns" :data="state.tableData" :loading="state.loading" :height="500">
+      <Table :columns="columns" :data="state.tableData" :loading="state.loading">
         <template #operator="{ row }"><span class="operator-cell">{{ row.operator }}</span></template>
         <template #action="{ row }">
           <Button type="text" size="small" @click="handleViewDetail(row)">详情</Button>

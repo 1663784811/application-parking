@@ -50,12 +50,12 @@ const initData = () => {
   state.tableData = [
     { id: 1, name: '超级管理员', description: '拥有系统所有权限', memberCount: 1, isSystem: true },
     { id: 2, name: '财务', description: '财务人员，拥有收费、对账相关权限', memberCount: 2, isSystem: false },
-    { id: 3, name: '车场值守', description: '车场值班人员，具有通行记录查看、开闸等权限', memberCount: 5, isSystem: false },
+    { id: 3, name: '停车场值守', description: '停车场值班人员，具有通行记录查看、开闸等权限', memberCount: 5, isSystem: false },
     { id: 4, name: '巡检员', description: '设备巡检人员，具有设备查看、故障上报权限', memberCount: 3, isSystem: false }
   ]
   state.permissionData = [
     { title: '工作台', expand: true, children: [{ title: '首页查看' }, { title: '数据统计' }] },
-    { title: '车场管理', expand: true, children: [{ title: '车场列表' }, { title: '车位管理' }] },
+    { title: '停车场管理', expand: true, children: [{ title: '停车场列表' }, { title: '车位管理' }] },
     { title: '车辆通行', expand: true, children: [{ title: '实时监控' }, { title: '通行记录' }, { title: '异常记录' }] },
     { title: '收费管理', children: [{ title: '收费流水' }, { title: '订单对账' }, { title: '优惠配置' }, { title: '发票管理' }] },
     { title: '会员管理', children: [{ title: '会员列表' }, { title: '套餐配置' }, { title: '续费记录' }] },

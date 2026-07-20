@@ -11,7 +11,7 @@
         <input
           type="text"
           class="search-input"
-          placeholder="搜索车牌、订单号、车场名..."
+          placeholder="搜索车牌、订单号、停车场名..."
           v-model="state.searchKeyword"
           @keyup.enter="handleSearch"
         />
@@ -26,7 +26,7 @@
         </Badge>
       </div>
 
-      <!-- 切换车场 -->
+      <!-- 切换停车场 -->
       <div class="header-action parking-selector">
         <Dropdown @on-click="handleParkingChange">
           <div class="parking-selector-inner">
@@ -85,17 +85,17 @@ const state = reactive({
   searchKeyword: ''
 })
 
-// 车场选项（模拟数据，实际应该从接口获取）
+// 停车场选项（模拟数据，实际应该从接口获取）
 const parkingOptions = [
-  { id: 1, name: '全部车场' },
+  { id: 1, name: '全部停车场' },
   { id: 2, name: '城西停车场' },
   { id: 3, name: '城东停车场' },
   { id: 4, name: '购物中心停车场' }
 ]
 
-// 当前车场名称
+// 当前停车场名称
 const currentParkingName = computed(() => {
-  return commonStore.state.currentParking?.name || '全部车场'
+  return commonStore.state.currentParking?.name || '全部停车场'
 })
 
 // 消息通知数
@@ -132,7 +132,7 @@ const handleNotification = () => {
   // TODO: 打开消息通知面板
 }
 
-// 切换车场
+// 切换停车场
 const handleParkingChange = (id) => {
   const parking = parkingOptions.find(item => item.id === id)
   if (parking) {

@@ -14,8 +14,8 @@
           <DatePicker v-model="state.dateRange" type="daterange" placeholder="时间范围" class="filter-date"/>
         </div>
         <div class="filter-item">
-          <Select v-model="state.parkingId" placeholder="车场" class="filter-select" clearable>
-            <Option value="1">全部车场</Option>
+          <Select v-model="state.parkingId" placeholder="停车场" class="filter-select" clearable>
+            <Option value="1">全部停车场</Option>
             <Option value="2">城西停车场</Option>
           </Select>
         </div>
@@ -53,7 +53,7 @@ const state = reactive({
 
 const columns = [
   {title: '日期', key: 'date', minWidth: 120},
-  {title: '车场', key: 'parking', minWidth: 150},
+  {title: '停车场', key: 'parking', minWidth: 150},
   {title: '临时收入', key: 'tempIncome', minWidth: 120, align: 'right'},
   {title: '月卡收入', key: 'memberIncome', minWidth: 120, align: 'right'},
   {title: '优惠减免', key: 'discount', minWidth: 100, align: 'right'},

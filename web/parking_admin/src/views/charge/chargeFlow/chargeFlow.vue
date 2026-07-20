@@ -14,7 +14,7 @@
         </div>
 
         <div class="filter-item">
-          <Select v-model="state.searchForm.parkingId" placeholder="选择车场" class="filter-select" clearable>
+          <Select v-model="state.searchForm.parkingId" placeholder="选择停车场" class="filter-select" clearable>
             <Option value="1">城西停车场</Option>
             <Option value="2">城东停车场</Option>
           </Select>

@@ -6,7 +6,7 @@
         <div class="filter-item">
           <Input
             v-model="state.searchForm.name"
-            placeholder="搜索车场名称"
+            placeholder="搜索停车场名称"
             class="filter-input"
             clearable
             @on-enter="handleSearch"
@@ -46,7 +46,7 @@
       <div class="filter-actions">
         <Button type="primary" @click="handleAdd">
           <Icon type="ios-add" />
-          新增车场
+          新增停车场
         </Button>
         <Button @click="handleBatchEnable" :disabled="state.selectedRows.length === 0">
           批量启用
@@ -102,7 +102,7 @@
     <!-- 新增/编辑弹窗 -->
     <Modal
       v-model="state.modalVisible"
-      :title="state.modalType === 'add' ? '新增车场' : '编辑车场'"
+      :title="state.modalType === 'add' ? '新增停车场' : '编辑停车场'"
       width="600"
       :footer-hide="false"
       @on-cancel="handleModalCancel"
@@ -113,8 +113,8 @@
         :rules="state.rules"
         :label-width="120"
       >
-        <FormItem label="车场名称" prop="name">
-          <Input v-model="state.formData.name" placeholder="请输入车场名称" />
+        <FormItem label="停车场名称" prop="name">
+          <Input v-model="state.formData.name" placeholder="请输入停车场名称" />
         </FormItem>
 
         <FormItem label="所在区域" prop="region">
@@ -234,7 +234,7 @@ const state = reactive({
   // 表单验证规则
   rules: {
     name: [
-      { required: true, message: '请输入车场名称', trigger: 'blur' }
+      { required: true, message: '请输入停车场名称', trigger: 'blur' }
     ],
     region: [
       { required: true, message: '请输入所在区域', trigger: 'blur' }
@@ -256,12 +256,12 @@ const columns = [
     align: 'center'
   },
   {
-    title: '车场ID',
+    title: '停车场ID',
     key: 'id',
     minWidth: 100
   },
   {
-    title: '车场名称',
+    title: '停车场名称',
     key: 'name',
     minWidth: 180
   },
@@ -420,7 +420,7 @@ const handleEdit = (row) => {
 const handleDelete = (row) => {
   Modal.confirm({
     title: '确认删除',
-    content: `确定要删除车场"${row.name}"吗？删除后无法恢复。`,
+    content: `确定要删除停车场"${row.name}"吗？删除后无法恢复。`,
     onOk: () => {
       Message.success('删除成功')
       initData()
@@ -440,13 +440,13 @@ const handleSelectionChange = (selection) => {
 
 // 批量启用
 const handleBatchEnable = () => {
-  Message.success(`已启用 ${state.selectedRows.length} 个车场`)
+  Message.success(`已启用 ${state.selectedRows.length} 个停车场`)
   initData()
 }
 
 // 批量停用
 const handleBatchDisable = () => {
-  Message.success(`已停用 ${state.selectedRows.length} 个车场`)
+  Message.success(`已停用 ${state.selectedRows.length} 个停车场`)
   initData()
 }
 

@@ -195,7 +195,7 @@
     <div class="quick-actions">
       <div class="quick-btn" @click="goToAddParking">
         <Icon type="ios-add-circle-outline" />
-        <span>新增车场</span>
+        <span>新增停车场</span>
       </div>
       <div class="quick-btn" @click="handleExportBill">
         <Icon type="ios-download-outline" />

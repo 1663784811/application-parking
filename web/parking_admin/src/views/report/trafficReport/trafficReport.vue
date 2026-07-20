@@ -4,7 +4,7 @@
       <Select v-model="state.timeType" class="filter-select-sm" @on-change="handleSearch">
         <Option value="day">按日</Option><Option value="week">按周</Option><Option value="month">按月</Option>
       </Select>
-      <Select v-model="state.parkingId" placeholder="选择车场" class="filter-select" clearable><Option value="1">全部车场</Option><Option value="2">城西停车场</Option></Select>
+      <Select v-model="state.parkingId" placeholder="选择停车场" class="filter-select" clearable><Option value="1">全部停车场</Option><Option value="2">城西停车场</Option></Select>
       <Button type="primary" @click="handleSearch">查询</Button><Button @click="handleExport">导出</Button>
     </div>
     <div class="stats-row">

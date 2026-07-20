@@ -62,7 +62,7 @@ const columns = [
   { title: '设备名称', key: 'deviceName', minWidth: 150 },
   { title: '设备类型', key: 'deviceType', minWidth: 100 },
   { title: '故障类型', key: 'faultType', minWidth: 120 },
-  { title: '车场', key: 'parkingName', minWidth: 150 },
+  { title: '停车场', key: 'parkingName', minWidth: 150 },
   { title: '上报时间', key: 'reportTime', minWidth: 160 },
   { title: '处理人', key: 'repairer', minWidth: 100 },
   { title: '处理状态', slot: 'status', minWidth: 100, align: 'center' },

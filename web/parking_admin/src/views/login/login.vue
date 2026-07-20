@@ -9,7 +9,7 @@
             <div class="banner-features">
               <div class="feature-item">
                 <Icon type="ios-car" />
-                <span>车场管理</span>
+                <span>停车场管理</span>
               </div>
               <div class="feature-item">
                 <Icon type="ios-camera" />

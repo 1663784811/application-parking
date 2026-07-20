@@ -2,7 +2,7 @@
   <div class="report-page">
     <div class="report-toolbar">
       <DatePicker v-model="state.date" type="date" @on-change="handleSearch" />
-      <Select v-model="state.parkingId" placeholder="选择车场" class="filter-select" clearable><Option value="1">全部车场</Option><Option value="2">城西停车场</Option></Select>
+      <Select v-model="state.parkingId" placeholder="选择停车场" class="filter-select" clearable><Option value="1">全部停车场</Option><Option value="2">城西停车场</Option></Select>
       <Button type="primary" @click="handleSearch">查询</Button><Button @click="handleExport">导出</Button>
     </div>
     <div class="summary-row">

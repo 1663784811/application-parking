@@ -8,7 +8,7 @@
           </Select>
         </div>
         <div class="filter-item">
-          <Select v-model="state.searchForm.parkingId" placeholder="车场" class="filter-select" clearable>
+          <Select v-model="state.searchForm.parkingId" placeholder="停车场" class="filter-select" clearable>
             <Option value="1">城西停车场</Option><Option value="2">城东停车场</Option>
           </Select>
         </div>
@@ -63,7 +63,7 @@ const columns = [
   { title: '设备编号', key: 'code', minWidth: 120 },
   { title: '设备名称', key: 'name', minWidth: 150 },
   { title: '设备类型', slot: 'type', minWidth: 100 },
-  { title: '所属车场', key: 'parkingName', minWidth: 150 },
+  { title: '所属停车场', key: 'parkingName', minWidth: 150 },
   { title: '安装通道', key: 'channel', minWidth: 100 },
   { title: 'IP地址', key: 'ip', minWidth: 140 },
   { title: '在线状态', slot: 'onlineStatus', minWidth: 100, align: 'center' },
