@@ -1,0 +1,186 @@
+/**
+ * CSS 变量 - 遵循 B 端设计简洁、高效、醒目的原则
+ */
+
+:root {
+  /* 颜色体系 */
+  /* 主色：科技蓝 */
+  --color-primary: #165DFF;
+  --color-primary-light: #4080FF;
+  --color-primary-dark: #1046E0;
+
+  /* 警示色：红色 */
+  --color-danger: #F53F3F;
+  --color-danger-light: #FF7875;
+  --color-danger-dark: #CB2B2B;
+
+  /* 成功色：绿色 */
+  --color-success: #00B42A;
+  --color-success-light: #23C343;
+  --color-success-dark: #009918;
+
+  /* 预警色：橙色 */
+  --color-warning: #FF7D00;
+  --color-warning-light: #FF9A3C;
+  --color-warning-dark: #E56A00;
+
+  /* 中性色 */
+  --color-title: #1D2129;
+  --color-body: #4E5969;
+  --color-text-secondary: #86909C;
+  --color-bg: #F2F3F5;
+  --color-bg-card: #FFFFFF;
+  --color-border: #E5E6EB;
+  --color-border-light: #F2F3F5;
+
+  /* 字体大小 */
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-md: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-title: 22px;
+
+  /* 字体粗细 */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 600;
+
+  /* 间距 */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 20px;
+  --spacing-xxl: 24px;
+
+  /* 布局尺寸 */
+  --top-bar-height: 60px;
+  --side-bar-width: 200px;
+
+  /* 圆角 */
+  --border-radius-sm: 2px;
+  --border-radius-base: 4px;
+  --border-radius-lg: 8px;
+  --border-radius-xl: 12px;
+
+  /* 阴影 */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-base: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.16);
+
+  /* 过渡 */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.2s ease;
+  --transition-slow: 0.3s ease;
+
+  /* z-index 层级 */
+  --z-index-sider: 100;
+  --z-index-header: 110;
+  --z-index-modal: 1000;
+  --z-index-tooltip: 2000;
+  --z-index-loading: 3000;
+}
+
+/* 全局样式重置 */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  font-family: 'Microsoft YaHei', '微软雅黑', 'PingFang SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  color: var(--color-body);
+  background-color: var(--color-bg);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#app {
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-secondary);
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* 通用工具类 */
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+
+.text-title { color: var(--color-title); font-weight: var(--font-weight-bold); }
+.text-body { color: var(--color-body); }
+.text-secondary { color: var(--color-text-secondary); }
+.text-primary { color: var(--color-primary); }
+.text-success { color: var(--color-success); }
+.text-danger { color: var(--color-danger); }
+.text-warning { color: var(--color-warning); }
+
+.flex { display: flex; }
+.flex-center { display: flex; align-items: center; justify-content: center; }
+.flex-between { display: flex; align-items: center; justify-content: space-between; }
+
+/* 状态标签样式 */
+.status-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-xs);
+  line-height: 1.5;
+}
+
+.status-tag.normal {
+  background-color: rgba(0, 180, 42, 0.1);
+  color: var(--color-success);
+}
+
+.status-tag.abnormal, .status-tag.danger {
+  background-color: rgba(245, 63, 63, 0.1);
+  color: var(--color-danger);
+}
+
+.status-tag.warning, .status-tag.pending {
+  background-color: rgba(255, 125, 0, 0.1);
+  color: var(--color-warning);
+}
+
+.status-tag.offline, .status-tag.disabled {
+  background-color: rgba(134, 144, 156, 0.1);
+  color: var(--color-text-secondary);
+}
+
+/* 卡片基础样式 */
+.card {
+  background-color: var(--color-bg-card);
+  border-radius: var(--border-radius-base);
+  box-shadow: var(--shadow-base);
+  padding: var(--spacing-lg);
+}
+
+/* 按钮尺寸增强 */
+.btn-action {
+  min-width: 48px;
+  min-height: 48px;
+  font-size: 16px;
+}

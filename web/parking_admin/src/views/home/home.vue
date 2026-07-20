@@ -119,95 +119,42 @@
       </div>
     </div>
 
-    <!-- 下方分区 -->
-    <div class="bottom-row">
-      <!-- 车位状态可视化 -->
-      <div class="card space-status-card">
-        <div class="card-header">
-          <h3 class="card-title">车位状态</h3>
-          <span class="card-more" @click="goToSpaceManagement">查看详情 →</span>
+    <!-- 实时通行抓拍列表 -->
+    <div class="realtime-passage-card">
+      <div class="card-header">
+        <h3 class="card-title">实时通行抓拍列表</h3>
+        <div class="realtime-indicator">
+          <span class="pulse"></span>
+          实时更新中
         </div>
-        <div class="card-content">
-          <div class="space-legend">
-            <span class="legend-item">
-              <span class="legend-block legend-free"></span>
-              空闲 {{ state.spaceStats.free }}
-            </span>
-            <span class="legend-item">
-              <span class="legend-block legend-fixed"></span>
-              固定车 {{ state.spaceStats.fixed }}
-            </span>
-            <span class="legend-item">
-              <span class="legend-block legend-temp"></span>
-              临时车 {{ state.spaceStats.temp }}
-            </span>
-            <span class="legend-item">
-              <span class="legend-block legend-fault"></span>
-              故障 {{ state.spaceStats.fault }}
-            </span>
-          </div>
-          <div class="space-grid">
-            <div
-              v-for="(space, index) in state.spaceList"
-              :key="index"
-              class="space-item"
-              :class="'space-' + space.status"
-              :title="'车位号: ' + space.no"
-            >
-              {{ space.no }}
+      </div>
+      <div class="card-content">
+        <Table
+          :columns="passageColumns"
+          :data="state.passageList"
+          :loading="state.passageLoading"
+          size="small"
+        >
+          <template #captureImage="{ row }">
+            <div class="capture-thumbnail">
+              <Icon type="ios-image" />
             </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 实时通行列表 -->
-      <div class="card realtime-passage-card">
-        <div class="card-header">
-          <h3 class="card-title">实时通行</h3>
-          <div class="realtime-indicator">
-            <span class="pulse"></span>
-            实时更新中
-          </div>
-        </div>
-        <div class="card-content">
-          <Table
-            :columns="passageColumns"
-            :data="state.passageList"
-            :loading="state.passageLoading"
-            size="small"
-            :height="280"
-          >
-            <template #status="{ row }">
-              <span class="status-tag" :class="'status-tag--' + getStatusTag(row.status)">
-                {{ getStatusText(row.status) }}
-              </span>
-            </template>
-            <template #action="{ row }">
-              <Button type="text" size="small" @click="handleViewDetail(row)">详情</Button>
-              <Button type="text" size="small" @click="handleOpenGate(row)" v-if="row.canOpen">开闸</Button>
-            </template>
-          </Table>
-        </div>
-      </div>
-    </div>
-
-    <!-- 右下角快捷操作按钮 -->
-    <div class="quick-actions">
-      <div class="quick-btn" @click="goToAddParking">
-        <Icon type="ios-add-circle-outline" />
-        <span>新增停车场</span>
-      </div>
-      <div class="quick-btn" @click="handleExportBill">
-        <Icon type="ios-download-outline" />
-        <span>导出账单</span>
-      </div>
-      <div class="quick-btn" @click="goToDeviceInspection">
-        <Icon type="ios-checkbox-outline" />
-        <span>设备巡检</span>
-      </div>
-      <div class="quick-btn" @click="goToBatchRenewal">
-        <Icon type="ios-refresh-circle-outline" />
-        <span>批量续费</span>
+          </template>
+          <template #passageType="{ row }">
+            <Tag :color="row.passageType === 'in' ? 'blue' : 'green'">
+              {{ row.passageType === 'in' ? '进场' : '出场' }}
+            </Tag>
+          </template>
+          <template #status="{ row }">
+            <span class="status-tag" :class="'status-tag--' + getStatusTag(row.status)">
+              {{ getStatusText(row.status) }}
+            </span>
+          </template>
+          <template #action="{ row }">
+            <Button type="text" size="small" @click="handleViewDetail(row)">查看详情</Button>
+            <Button type="text" size="small" @click="handleOpenGate(row)" v-if="row.canOpen">开闸</Button>
+          </template>
+        </Table>
       </div>
     </div>
   </div>
@@ -216,7 +163,7 @@
 <script setup>
 import { reactive, ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { Icon, RadioGroup, Radio, Progress, Table, Button, Message } from 'view-ui-plus'
+import { Icon, RadioGroup, Radio, Progress, Table, Button, Tag, Message } from 'view-ui-plus'
 import * as echarts from 'echarts'
 
 const router = useRouter()
@@ -242,17 +189,6 @@ const state = reactive({
   // 营收图表类型
   revenueChartType: '日',
 
-  // 车位统计
-  spaceStats: {
-    free: 144,
-    fixed: 98,
-    temp: 50,
-    fault: 8
-  },
-
-  // 车位列表（模拟）
-  spaceList: [],
-
   // 实时通行列表
   passageList: [],
   passageLoading: false
@@ -261,10 +197,20 @@ const state = reactive({
 // 通行记录表格列
 const passageColumns = [
   {
-    title: '车牌号',
+    title: '抓拍图片',
+    slot: 'captureImage',
+    width: 90,
+    align: 'center'
+  },
+  {
+    title: '车牌',
     key: 'plate',
-    minWidth: 100,
-    fixed: 'left'
+    minWidth: 120
+  },
+  {
+    title: '进场时间',
+    key: 'inTime',
+    minWidth: 160
   },
   {
     title: '通道',
@@ -272,18 +218,13 @@ const passageColumns = [
     minWidth: 100
   },
   {
-    title: '类型',
-    key: 'type',
-    minWidth: 80,
+    title: '车辆类型',
+    key: 'carType',
+    minWidth: 90,
     render: (h, params) => {
-      const types = { in: '进场', out: '出场' }
-      return h('span', types[params.row.type] || '-')
+      const types = { temp: '临时车', fixed: '固定车' }
+      return h('span', types[params.row.carType] || '-')
     }
-  },
-  {
-    title: '进场时间',
-    key: 'inTime',
-    minWidth: 150
   },
   {
     title: '状态',
@@ -293,45 +234,22 @@ const passageColumns = [
   {
     title: '操作',
     slot: 'action',
-    minWidth: 120,
+    minWidth: 150,
     fixed: 'right'
   }
 ]
-
-// 初始化车位列表
-const initSpaceList = () => {
-  const list = []
-  const statuses = ['free', 'fixed', 'temp', 'fault']
-  const statusCounts = {
-    free: 15,
-    fixed: 10,
-    temp: 8,
-    fault: 3
-  }
-
-  statuses.forEach(status => {
-    for (let i = 0; i < statusCounts[status]; i++) {
-      list.push({
-        no: list.length + 1,
-        status: status
-      })
-    }
-  })
-
-  state.spaceList = list
-}
 
 // 初始化实时通行列表
 const initPassageList = () => {
   state.passageLoading = true
   setTimeout(() => {
     state.passageList = [
-      { id: 1, plate: '京A12345', channel: '1号入口', type: 'in', inTime: '2024-01-15 09:23:15', status: 'normal', canOpen: true },
-      { id: 2, plate: '京B67890', channel: '2号出口', type: 'out', inTime: '2024-01-15 08:15:00', status: 'normal', canOpen: true },
-      { id: 3, plate: '无牌车', channel: '3号入口', type: 'in', inTime: '2024-01-15 09:18:00', status: 'noPlate', canOpen: false },
-      { id: 4, plate: '京C11111', channel: '1号入口', type: 'in', inTime: '2024-01-15 09:12:00', status: 'normal', canOpen: false },
-      { id: 5, plate: '京D22222', channel: '地下入口', type: 'in', inTime: '2024-01-15 09:05:00', status: 'normal', canOpen: false },
-      { id: 6, plate: '黑名单', channel: '2号出口', type: 'out', inTime: '2024-01-14 22:30:00', status: 'blacklist', canOpen: false }
+      { id: 1, plate: '京A12345', channel: '1号入口', passageType: 'in', inTime: '2024-01-15 09:23:15', carType: 'fixed', status: 'normal', canOpen: true },
+      { id: 2, plate: '京B67890', channel: '2号出口', passageType: 'out', inTime: '2024-01-15 08:15:00', carType: 'temp', status: 'normal', canOpen: true },
+      { id: 3, plate: '无牌车', channel: '3号入口', passageType: 'in', inTime: '2024-01-15 09:18:00', carType: 'temp', status: 'noPlate', canOpen: false },
+      { id: 4, plate: '京C11111', channel: '1号入口', passageType: 'in', inTime: '2024-01-15 09:12:00', carType: 'fixed', status: 'normal', canOpen: false },
+      { id: 5, plate: '京D22222', channel: '地下入口', passageType: 'in', inTime: '2024-01-15 09:05:00', carType: 'temp', status: 'normal', canOpen: false },
+      { id: 6, plate: '黑名单', channel: '2号出口', passageType: 'out', inTime: '2024-01-14 22:30:00', carType: 'temp', status: 'blacklist', canOpen: false }
     ]
     state.passageLoading = false
   }, 500)
@@ -473,10 +391,6 @@ const goToChargeFlow = () => router.push({ name: 'chargeFlow' })
 const goToSpaceManagement = () => router.push({ name: 'spaceManagement' })
 const goToPassageRecord = () => router.push({ name: 'passageRecord' })
 const goToExceptionRecord = () => router.push({ name: 'exceptionRecord' })
-const goToAddParking = () => router.push({ name: 'parkingList' })
-const goToDeviceInspection = () => router.push({ name: 'deviceList' })
-const goToBatchRenewal = () => router.push({ name: 'memberList' })
-const handleExportBill = () => Message.info('导出功能开发中')
 const handleViewDetail = (row) => console.log('查看详情', row)
 const handleOpenGate = (row) => {
   Message.success(`正在为 ${row.plate} 开闸...`)
@@ -486,7 +400,6 @@ const handleOpenGate = (row) => {
 let refreshTimer = null
 
 onMounted(() => {
-  initSpaceList()
   initPassageList()
 
   nextTick(() => {
@@ -519,8 +432,7 @@ onUnmounted(() => {
 
 <style lang="less" scoped>
 .home-page {
-  position: relative;
-  padding-bottom: 80px;
+  height: 100%;
 }
 
 // 顶部统计卡片行
@@ -724,14 +636,8 @@ onUnmounted(() => {
   }
 }
 
-// 下方分区
-.bottom-row {
-  display: grid;
-  grid-template-columns: 1fr 1.5fr;
-  gap: var(--spacing-xl);
-}
-
-.card {
+// 实时通行卡片
+.realtime-passage-card {
   background-color: var(--bg-color);
   border-radius: var(--border-radius-base);
   box-shadow: var(--shadow-base);
@@ -759,87 +665,7 @@ onUnmounted(() => {
       }
     }
   }
-}
 
-// 车位状态卡片
-.space-status-card {
-  .space-legend {
-    display: flex;
-    gap: var(--spacing-lg);
-    margin-bottom: var(--spacing-lg);
-
-    .legend-item {
-      display: flex;
-      align-items: center;
-      font-size: var(--font-size-sm);
-      color: var(--text-color-secondary);
-
-      .legend-block {
-        minWidth: 12px;
-        height: 12px;
-        border-radius: 2px;
-        margin-right: var(--spacing-xs);
-      }
-
-      .legend-free {
-        background-color: #00B42A;
-      }
-
-      .legend-fixed {
-        background-color: #165DFF;
-      }
-
-      .legend-temp {
-        background-color: #FF7D00;
-      }
-
-      .legend-fault {
-        background-color: #86909C;
-      }
-    }
-  }
-
-  .space-grid {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 8px;
-
-    .space-item {
-      aspect-ratio: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: var(--font-size-xs);
-      color: #fff;
-      border-radius: var(--border-radius-sm);
-      cursor: pointer;
-      transition: transform 0.2s;
-
-      &:hover {
-        transform: scale(1.1);
-      }
-
-      &.space-free {
-        background-color: #00B42A;
-      }
-
-      &.space-fixed {
-        background-color: #165DFF;
-      }
-
-      &.space-temp {
-        background-color: #FF7D00;
-      }
-
-      &.space-fault {
-        background-color: #86909C;
-      }
-    }
-  }
-}
-
-// 实时通行卡片
-.realtime-passage-card {
   .realtime-indicator {
     display: flex;
     align-items: center;
@@ -847,13 +673,24 @@ onUnmounted(() => {
     color: var(--success-color);
 
     .pulse {
-      minWidth: 8px;
+      width: 8px;
       height: 8px;
       background-color: var(--success-color);
       border-radius: 50%;
       margin-right: var(--spacing-xs);
       animation: pulse 1.5s ease-in-out infinite;
     }
+  }
+
+  .capture-thumbnail {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 40px;
+    background-color: var(--bg-color-page);
+    border-radius: var(--border-radius-sm);
+    color: var(--text-color-secondary);
   }
 }
 
@@ -865,50 +702,6 @@ onUnmounted(() => {
   50% {
     opacity: 0.5;
     transform: scale(1.2);
-  }
-}
-
-// 右下角快捷操作
-.quick-actions {
-  position: fixed;
-  right: var(--spacing-xl);
-  bottom: var(--spacing-xl);
-  display: flex;
-  gap: var(--spacing-md);
-
-  .quick-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    minWidth: 80px;
-    height: 80px;
-    background-color: var(--bg-color);
-    border-radius: var(--border-radius-base);
-    box-shadow: var(--shadow-medium);
-    cursor: pointer;
-    transition: all 0.3s;
-
-    &:hover {
-      transform: translateY(-4px);
-      box-shadow: var(--shadow-heavy);
-      color: var(--primary-color);
-
-      .ivu-icon {
-        color: var(--primary-color);
-      }
-    }
-
-    .ivu-icon {
-      font-size: 28px;
-      color: var(--text-color);
-      margin-bottom: var(--spacing-xs);
-    }
-
-    span {
-      font-size: var(--font-size-xs);
-      color: var(--text-color-secondary);
-    }
   }
 }
 </style>
