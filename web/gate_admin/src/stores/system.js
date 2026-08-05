@@ -3,7 +3,6 @@
  */
 
 import { defineStore } from 'pinia'
-import { DEVICE_STATUS } from '@/constants'
 
 export const useSystemStore = defineStore('system', {
   state: () => ({
@@ -23,10 +22,10 @@ export const useSystemStore = defineStore('system', {
 
     // 通道列表
     channels: [
-      { id: 1, name: '入口1', direction: 'in', status: DEVICE_STATUS.ONLINE },
-      { id: 2, name: '入口2', direction: 'in', status: DEVICE_STATUS.ONLINE },
-      { id: 3, name: '出口1', direction: 'out', status: DEVICE_STATUS.ONLINE },
-      { id: 4, name: '出口2', direction: 'out', status: DEVICE_STATUS.FAULT }
+      { id: 1, name: '入口1', direction: 'in', status: 'online' },
+      { id: 2, name: '入口2', direction: 'in', status: 'online' },
+      { id: 3, name: '出口1', direction: 'out', status: 'online' },
+      { id: 4, name: '出口2', direction: 'out', status: 'fault' }
     ],
 
     // 通知消息
@@ -44,13 +43,13 @@ export const useSystemStore = defineStore('system', {
 
   getters: {
     // 在线设备数
-    onlineDeviceCount: (state) => state.devices.filter(d => d.status === DEVICE_STATUS.ONLINE).length,
+    onlineDeviceCount: (state) => state.devices.filter(d => d.status === 'online').length,
 
     // 离线设备数
-    offlineDeviceCount: (state) => state.devices.filter(d => d.status === DEVICE_STATUS.OFFLINE).length,
+    offlineDeviceCount: (state) => state.devices.filter(d => d.status === 'offline').length,
 
     // 故障设备数
-    faultDeviceCount: (state) => state.devices.filter(d => d.status === DEVICE_STATUS.FAULT).length,
+    faultDeviceCount: (state) => state.devices.filter(d => d.status === 'fault').length,
 
     // 未读通知数
     unreadNotificationCount: (state) => state.notifications.filter(n => !n.read).length,

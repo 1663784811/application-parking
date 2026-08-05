@@ -3,7 +3,6 @@
  */
 
 import { defineStore } from 'pinia'
-import { USER_ROLE } from '@/constants'
 
 export const useUserStore = defineStore('user', {
   state: () => ({
@@ -11,7 +10,6 @@ export const useUserStore = defineStore('user', {
     userInfo: {
       id: null,
       name: '',
-      role: USER_ROLE.GUARD,
       phone: '',
       parkingName: '',
       parkingId: null
@@ -24,11 +22,11 @@ export const useUserStore = defineStore('user', {
 
   getters: {
     // 是否为管理员
-    isAdmin: (state) => state.userInfo.role === USER_ROLE.ADMIN,
+    isAdmin: (state) => state.userInfo.role === 'admin',
 
     // 是否有权限
     hasPermission: (state) => (permission) => {
-      if (state.userInfo.role === USER_ROLE.ADMIN) return true
+      if (state.userInfo.role === 'admin') return true
       return state.permissions.includes(permission)
     }
   },
@@ -45,7 +43,7 @@ export const useUserStore = defineStore('user', {
       this.userInfo = {
         id: null,
         name: '',
-        role: USER_ROLE.GUARD,
+        role: 'guard',
         phone: '',
         parkingName: '',
         parkingId: null
@@ -59,7 +57,7 @@ export const useUserStore = defineStore('user', {
       this.setUserInfo({
         id: 1,
         name: userData.name || '值守员张三',
-        role: userData.role || USER_ROLE.GUARD,
+        role: userData.role || 'guard',
         phone: '13800138000',
         parkingName: '城西停车场',
         parkingId: 1

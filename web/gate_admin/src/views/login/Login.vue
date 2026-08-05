@@ -6,7 +6,7 @@
           <div class="login-logo">
             <Icon type="ios-car" size="40" color="#fff" />
           </div>
-          <h1 class="login-title">停车场门口管理端</h1>
+          <h1 class="login-title">停车场管理系统</h1>
           <p class="login-subtitle">请输入账号密码登录</p>
         </div>
 
@@ -19,7 +19,7 @@
           <FormItem prop="username">
             <Input
               v-model="formData.username"
-              placeholder="请输入账号"
+              placeholder="请输入保安账号"
               size="large"
               prefix="ios-person-outline"
             >
@@ -45,8 +45,14 @@
           </FormItem>
 
           <FormItem>
-            <Button type="primary" size="large" long @click="handleLogin">
-              登 录
+            <Label value=" remember" class="remember-label">
+              <Checkbox v-model="formData.rememberMe">记住账号</Checkbox>
+            </Label>
+          </FormItem>
+
+          <FormItem>
+            <Button type="primary" size="large" block @click="handleLogin">
+              登录
             </Button>
           </FormItem>
         </Form>
@@ -64,9 +70,9 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { reactive, ref, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { Form, FormItem, Input, Button, Icon, Message } from 'view-ui-plus'
+import { Form, FormItem, Input, Button, Icon, Message, Label, Checkbox } from 'view-ui-plus'
 import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
@@ -76,13 +82,32 @@ const formRef = ref(null)
 
 const formData = reactive({
   username: '',
-  password: ''
+  password: '',
+  rememberMe: false
 })
 
 const rules = {
-  username: [{ required: true, message: '请输入账号', trigger: 'blur' }],
+  username: [{ required: true, message: '请输入保安账号', trigger: 'blur' }],
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
 }
+
+// 监听记住账号选项，保存到本地存储
+watch(() => formData.rememberMe, (value) => {
+  if (value && formData.username) {
+    localStorage.setItem('parkAdminUsername', formData.username)
+  } else if (!value) {
+    localStorage.removeItem('parkAdminUsername')
+  }
+})
+
+// 组件加载时检查本地存储的账号
+onMounted(() => {
+  const savedUsername = localStorage.getItem('parkAdminUsername')
+  if (savedUsername) {
+    formData.username = savedUsername
+    formData.rememberMe = true
+  }
+})
 
 const handleLogin = async () => {
   try {
@@ -127,59 +152,60 @@ const handleLogin = async () => {
 
 .login-card {
   width: 400px;
-  background-color: var(--color-bg-card);
-  border-radius: var(--border-radius-xl);
-  padding: var(--spacing-xxl);
-  box-shadow: var(--shadow-lg);
+  background: #fff;
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
 }
 
 .login-header {
   text-align: center;
-  margin-bottom: var(--spacing-xxl);
+  margin-bottom: 24px;
 
   .login-logo {
     width: 64px;
     height: 64px;
     background: linear-gradient(135deg, #165DFF, #4080FF);
-    border-radius: var(--border-radius-lg);
+    border-radius: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto var(--spacing-lg);
+    margin: 0 auto 16px;
   }
 
   .login-title {
-    font-size: var(--font-size-xl);
-    font-weight: var(--font-weight-bold);
-    color: var(--color-title);
-    margin-bottom: var(--spacing-sm);
+    font-size: 28px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 8px;
   }
 
   .login-subtitle {
-    font-size: var(--font-size-sm);
-    color: var(--color-text-secondary);
+    font-size: 14px;
+    color: #666;
   }
 }
 
 .login-form {
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: 16px;
+}
 
-  :deep(.ivu-btn) {
-    font-size: var(--font-size-md);
-    font-weight: var(--font-weight-medium);
-  }
+.remember-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .login-tips {
   text-align: center;
-  font-size: var(--font-size-xs);
-  color: var(--color-text-secondary);
+  font-size: 12px;
+  color: #999;
 }
 
 .login-footer {
-  padding: var(--spacing-lg);
+  padding: 24px;
   text-align: center;
   color: rgba(255, 255, 255, 0.8);
-  font-size: var(--font-size-xs);
+  font-size: 12px;
 }
 </style>
