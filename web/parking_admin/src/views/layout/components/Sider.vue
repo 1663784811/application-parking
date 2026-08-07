@@ -52,7 +52,7 @@
 import { computed, reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Menu, Submenu, MenuItem, Icon } from 'view-ui-plus'
-import { useCommonStore } from '@/stores/common'
+import { useCommonStore } from '@/stores/common.js'
 
 const route = useRoute()
 const router = useRouter()

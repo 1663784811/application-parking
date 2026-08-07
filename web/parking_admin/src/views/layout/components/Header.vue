@@ -5,7 +5,7 @@
       <Breadcrumb />
     </div>
 
-    
+
     <div class="header-right">
       <!-- 消息通知 -->
       <div class="header-action" @click="handleNotification">
@@ -40,8 +40,8 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { Avatar, Badge, Dropdown, DropdownMenu, DropdownItem, Icon } from 'view-ui-plus'
 import Breadcrumb from './Breadcrumb.vue'
-import { useUserStore } from '@/stores/user'
-import { useCommonStore } from '@/stores/common'
+import { useUserStore } from '@/stores/user.js'
+import { useCommonStore } from '@/stores/common.js'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -124,7 +124,7 @@ const handleLogout = () => {
     }
   }
 
-  
+
   .header-right {
     display: flex;
     align-items: center;
