@@ -272,7 +272,7 @@ initData()
       box-shadow: var(--shadow-base);
 
       .summary-icon {
-        minWidth: 56px;
+        min-width: 56px;
         height: 56px;
         border-radius: var(--border-radius-base);
         display: flex;

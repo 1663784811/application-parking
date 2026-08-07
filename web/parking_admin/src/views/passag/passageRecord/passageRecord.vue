@@ -176,7 +176,7 @@ const state = reactive({
 })
 
 const columns = [
-  { type: 'selection', minWidth: 60, align: 'center' },
+  { type: 'selection', width: 80, align: 'center' },
   { title: '抓拍图', key: 'captureImage', minWidth: 100, align: 'center' },
   { title: '车牌号', key: 'plate', minWidth: 120 },
   { title: '通道', key: 'channel', minWidth: 100 },

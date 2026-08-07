@@ -130,7 +130,7 @@
             v-model="state.formData.totalSpaces"
             :min="1"
             placeholder="请输入总车位数"
-            style="minWidth: 100%"
+            style="min-width: 100%"
           />
         </FormItem>
 
@@ -252,7 +252,7 @@ const state = reactive({
 const columns = [
   {
     type: 'selection',
-    minWidth: 60,
+    width: 80,
     align: 'center'
   },
   {

@@ -179,7 +179,7 @@
             v-model="state.assignForm.expireDate"
             type="date"
             placeholder="请选择有效期"
-            style="minWidth: 100%"
+            style="min-width: 100%"
           />
         </FormItem>
       </Form>
@@ -467,7 +467,7 @@ initData()
       box-shadow: var(--shadow-base);
 
       .stat-dot {
-        minWidth: 12px;
+        min-width: 12px;
         height: 12px;
         border-radius: 50%;
         margin-right: var(--spacing-sm);

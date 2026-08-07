@@ -170,7 +170,7 @@ const state = reactive({
 })
 
 const columns = [
-  { type: 'selection', minWidth: 60, align: 'center' },
+  { type: 'selection', width: 80, align: 'center' },
   { title: '车牌号', key: 'plate', minWidth: 120 },
   { title: '异常类型', slot: 'exceptionType', minWidth: 120 },
   { title: '发生时间', key: 'exceptionTime', minWidth: 160 },
@@ -387,7 +387,7 @@ initData()
       }
 
       .stat-icon {
-        minWidth: 48px;
+        min-width: 48px;
         height: 48px;
         border-radius: var(--border-radius-base);
         display: flex;

@@ -72,7 +72,7 @@ const handleSave = () => Message.success('收费规则保存成功')
 
 <style lang="less" scoped>
 .charge-rule-config-page {
-  max-minWidth: 800px;
+  max-width: 800px;
 
   .config-section {
     background: var(--bg-color);

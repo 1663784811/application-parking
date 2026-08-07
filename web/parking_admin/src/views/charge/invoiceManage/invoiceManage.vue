@@ -77,7 +77,7 @@ const state = reactive({
 })
 
 const columns = [
-  { type: 'selection', minWidth: 60, align: 'center' },
+  { type: 'selection', width: 80, align: 'center' },
   { title: '发票抬头', key: 'title', minWidth: 180 },
   { title: '税号', key: 'taxNo', minWidth: 180 },
   { title: '发票金额', key: 'amount', minWidth: 120, align: 'right' },

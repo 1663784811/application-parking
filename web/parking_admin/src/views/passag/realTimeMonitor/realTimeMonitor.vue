@@ -245,7 +245,7 @@ loadPassageList()
   }
 
   .channel-sidebar {
-    minWidth: 200px;
+    min-width: 200px;
     flex-shrink: 0;
     background-color: var(--bg-color);
     border-radius: var(--border-radius-base);

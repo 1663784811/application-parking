@@ -40,18 +40,18 @@
           </Select>
         </FormItem>
         <FormItem label="使用门槛" prop="threshold">
-          <InputNumber v-model="state.formData.threshold" :min="0" style="minWidth: 100%" />
+          <InputNumber v-model="state.formData.threshold" :min="0" style="min-width: 100%" />
           <span class="form-tip">消费满此金额即可使用，设为0则无门槛</span>
         </FormItem>
         <FormItem label="优惠金额" prop="discount">
-          <InputNumber v-model="state.formData.discount" :min="0" style="minWidth: 100%" />
+          <InputNumber v-model="state.formData.discount" :min="0" style="min-width: 100%" />
           <span class="form-tip">满减金额、折扣率或免费时长（分钟）</span>
         </FormItem>
         <FormItem label="发放数量" prop="totalCount">
-          <InputNumber v-model="state.formData.totalCount" :min="1" style="minWidth: 100%" />
+          <InputNumber v-model="state.formData.totalCount" :min="1" style="min-width: 100%" />
         </FormItem>
         <FormItem label="有效期" prop="validDays">
-          <InputNumber v-model="state.formData.validDays" :min="1" style="minWidth: 100%" />
+          <InputNumber v-model="state.formData.validDays" :min="1" style="min-width: 100%" />
           <span class="form-tip">领取后多少天内有效</span>
         </FormItem>
         <FormItem label="状态" prop="status">

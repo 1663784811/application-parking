@@ -511,7 +511,7 @@ onMounted(() => {
 
 // 左侧导航
 .profile-nav {
-  minWidth: 280px;
+  min-width: 280px;
   flex-shrink: 0;
 
   .user-card {
@@ -528,7 +528,7 @@ onMounted(() => {
       margin-bottom: var(--spacing-lg);
 
       .avatar {
-        minWidth: 80px;
+        min-width: 80px;
         height: 80px;
         border-radius: 50%;
         background: linear-gradient(135deg, #165DFF, #4080FF);
@@ -546,7 +546,7 @@ onMounted(() => {
         position: absolute;
         top: 0;
         left: 0;
-        minWidth: 100%;
+        min-width: 100%;
         height: 100%;
         border-radius: 50%;
         background-color: rgba(0, 0, 0, 0.5);
@@ -617,7 +617,7 @@ onMounted(() => {
 // 右侧内容
 .profile-content {
   flex: 1;
-  min-minWidth: 0;
+  min-width: 0;
 }
 
 .content-panel {
@@ -644,7 +644,7 @@ onMounted(() => {
 // 信息表单
 .info-form,
 .password-form {
-  max-minWidth: 500px;
+  max-width: 500px;
 }
 
 // 安全设置
@@ -664,7 +664,7 @@ onMounted(() => {
     align-items: center;
 
     .security-icon {
-      minWidth: 44px;
+      min-width: 44px;
       height: 44px;
       border-radius: var(--border-radius-base);
       display: flex;

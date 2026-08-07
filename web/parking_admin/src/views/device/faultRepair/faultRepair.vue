@@ -35,7 +35,7 @@
         <FormItem label="设备名称">{{ state.currentFault?.deviceName }}</FormItem>
         <FormItem label="故障类型">{{ state.currentFault?.faultType }}</FormItem>
         <FormItem label="指派给"><Select v-model="state.assignForm.repairerId"><Option value="1">张师傅</Option><Option value="2">李师傅</Option><Option value="3">王师傅</Option></Select></FormItem>
-        <FormItem label="预计完成"><DatePicker v-model="state.assignForm.expectDate" type="date" style="minWidth: 100%" /></FormItem>
+        <FormItem label="预计完成"><DatePicker v-model="state.assignForm.expectDate" type="date" style="min-width: 100%" /></FormItem>
       </Form>
       <template #footer><Button @click="state.assignModalVisible = false">取消</Button><Button type="primary" @click="handleAssignSubmit">指派</Button></template>
     </Modal>
