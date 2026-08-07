@@ -1,43 +1,71 @@
 <template>
-  <!-- 右下：1.2.5 道闸操作 -->
-  <div class="card">
+  <!-- 右下：道闸操作 · 应急值守 -->
+  <div class="card gate-op-card">
+    <!-- 卡片头部 -->
     <div class="card-header">
-      <h3><i class="fas fa-remote"></i> 道闸操作 · 应急值守</h3>
-      <span class="status-badge"><i class="fas fa-hand-pointer"></i> 远程控制</span>
+      <div class="header-left">
+        <i class="fas fa-remote"></i>
+        <h3>道闸操作 · 应急值守</h3>
+      </div>
+      <div class="header-right">
+        <span class="remote-badge">
+          <i class="fas fa-hand-pointer"></i>
+          远程控制
+        </span>
+      </div>
     </div>
+
+    <!-- 操作网格 -->
     <div class="operation-grid">
       <!-- 查看应缴费用 -->
       <div class="op-card">
-        <div class="op-title"><i class="fas fa-receipt" style="color:#1f6e9c;"></i> 应缴费用</div>
+        <div class="op-title">
+          <i class="fas fa-receipt"></i>
+          应缴费用
+        </div>
         <div class="op-detail">
-          <span>{{ state.fee.plate }}</span>
-          <span><strong>¥{{ state.fee.amount.toFixed(2) }}</strong></span>
+          <span class="op-plate">{{ state.fee.plate }}</span>
+          <span class="op-amount">¥{{ state.fee.amount.toFixed(2) }}</span>
         </div>
         <div class="op-info">
-          <span>停放 {{ state.fee.duration }}</span>
+          <span><i class="far fa-clock"></i> 停放 {{ state.fee.duration }}</span>
+          <span class="info-divider"></span>
           <span>单价 ¥{{ state.fee.unitPrice }}/h</span>
         </div>
         <button class="op-btn secondary" @click="viewFeeDetail">
-          <i class="fas fa-eye"></i> 查看完整计费
+          <i class="fas fa-eye"></i>
+          查看完整计费
         </button>
       </div>
+
       <!-- 现金支付结算 -->
       <div class="op-card">
-        <div class="op-title"><i class="fas fa-money-bill-wave" style="color:#1f6e9c;"></i> 现金支付结算</div>
-        <div class="op-cash-input">
+        <div class="op-title">
+          <i class="fas fa-money-bill-wave"></i>
+          现金支付结算
+        </div>
+        <div class="op-cash-row">
           <span class="op-cash-label">实收</span>
-          <span class="op-cash-amount">¥{{ state.cash.received.toFixed(2) }}</span>
+          <span class="op-cash-value">¥{{ state.cash.received.toFixed(2) }}</span>
           <span class="op-cash-change">找零 ¥{{ state.cash.change.toFixed(2) }}</span>
         </div>
-        <button class="op-btn" @click="handleCashPayment">
-          <i class="fas fa-check-circle"></i> 核销账单 · 已支付
+        <button class="op-btn primary" @click="handleCashPayment">
+          <i class="fas fa-check-circle"></i>
+          核销账单 · 已支付
         </button>
-        <div class="op-cash-record"><i class="far fa-clock"></i> 留存现金缴费记录</div>
+        <div class="op-cash-note">
+          <i class="far fa-clock"></i>
+          留存现金缴费记录
+        </div>
       </div>
     </div>
+
+    <!-- 道闸状态栏 -->
     <div class="gate-status-bar">
       <span v-for="g in state.gateStatus" :key="g.name">
-        <i class="fas fa-circle" :style="{ color: g.color }"></i> {{ g.name }} {{ g.state }}
+        <i class="fas fa-circle" :style="{ color: g.color }"></i>
+        {{ g.name }}
+        <span class="gate-state" :class="g.stateClass">{{ g.state }}</span>
       </span>
     </div>
   </div>
@@ -61,9 +89,9 @@ const state = reactive({
   },
   // 道闸状态栏
   gateStatus: [
-    {name: '主入口', state: '开启', color: '#1f9d6a'},
-    {name: '主出口', state: '关闭', color: '#1f9d6a'},
-    {name: '应急通道', state: '故障', color: '#d45a5a'}
+    {name: '主入口', state: '开启', stateClass: 'open', color: 'var(--color-success)'},
+    {name: '主出口', state: '关闭', stateClass: 'closed', color: 'var(--color-text-secondary)'},
+    {name: '应急通道', state: '故障', stateClass: 'fault', color: 'var(--color-danger)'}
   ]
 })
 
@@ -83,10 +111,10 @@ const handleCashPayment = () => {
 // 卡片通用样式
 // ============================================
 .card {
-  background: #ffffff;
-  border-radius: 24px;
-  padding: 20px 22px;
-  box-shadow: 0 8px 20px -8px rgba(0, 20, 30, 0.08);
+  background: var(--color-bg-card);
+  border-radius: var(--border-radius-xl);
+  padding: var(--spacing-xl) var(--spacing-xxl);
+  box-shadow: var(--shadow-base);
   display: flex;
   flex-direction: column;
 
@@ -94,31 +122,49 @@ const handleCashPayment = () => {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 16px;
-    border-bottom: 1px solid #ecf1f7;
-    padding-bottom: 12px;
+    margin-bottom: var(--spacing-lg);
+    border-bottom: 1px solid var(--color-border-light);
+    padding-bottom: var(--spacing-md);
 
-    h3 {
-      font-weight: 600;
-      font-size: 18px;
-      color: #1c3b57;
+    .header-left {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: var(--spacing-sm);
 
-      i {
-        color: #1f6e9c;
-        font-size: 16px;
-        width: 24px;
+      > i {
+        color: var(--color-primary);
+        font-size: var(--font-size-md);
+      }
+
+      h3 {
+        font-weight: var(--font-weight-bold);
+        font-size: var(--font-size-lg);
+        color: var(--color-title);
+        white-space: nowrap;
       }
     }
 
-    .status-badge {
-      font-size: 12px;
-      background: #e7edf5;
-      padding: 4px 12px;
-      border-radius: 40px;
-      color: #2a4d6e;
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      flex-shrink: 0;
+
+      .remote-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        padding: 4px 12px;
+        border-radius: 40px;
+        font-weight: var(--font-weight-medium);
+        color: var(--color-primary);
+        background: rgba(22, 93, 255, 0.08);
+
+        i {
+          font-size: 11px;
+        }
+      }
     }
   }
 }
@@ -126,120 +172,192 @@ const handleCashPayment = () => {
 // ============================================
 // 道闸操作模块
 // ============================================
-.operation-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
+.gate-op-card {
+  .operation-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
 
-  .op-card {
-    background: #f8faff;
-    border-radius: 20px;
-    padding: 16px 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    min-width: 0;
-
-    .op-title {
-      font-weight: 600;
-      color: #1c3b57;
-      font-size: 14px;
+    .op-card {
+      background: var(--color-bg);
+      border-radius: var(--border-radius-lg);
+      padding: var(--spacing-md) var(--spacing-lg);
       display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-
-    .op-detail {
-      font-size: 13px;
-      color: #2f5577;
-      background: #eef4fa;
-      padding: 8px 12px;
-      border-radius: 40px;
-      display: flex;
-      justify-content: space-between;
-    }
-
-    .op-info {
-      font-size: 11px;
-      color: #3e6180;
-      display: flex;
-      gap: 8px;
-    }
-
-    .op-cash-input {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      flex-wrap: wrap;
-
-      .op-cash-label {
-        font-weight: 500;
-        color: #1a3e5c;
-      }
-
-      .op-cash-amount {
-        background: white;
-        padding: 4px 12px;
-        border-radius: 40px;
-        border: 1px solid #d9e2ec;
-      }
-
-      .op-cash-change {
-        font-size: 11px;
-        color: #2f5577;
-      }
-    }
-
-    .op-cash-record {
-      font-size: 11px;
-      color: #4f7292;
-      margin-top: 4px;
-    }
-
-    .op-btn {
-      background: #0f3b5c;
-      border: none;
-      border-radius: 60px;
-      padding: 12px 0;
-      color: white;
-      font-weight: 600;
-      font-size: 14px;
-      cursor: pointer;
-      transition: 0.15s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      box-shadow: 0 4px 10px rgba(15, 59, 92, 0.15);
-      margin-top: 4px;
+      flex-direction: column;
+      gap: var(--spacing-sm);
+      min-width: 0;
+      border: 1px solid var(--color-border-light);
+      transition: border-color var(--transition-fast);
 
       &:hover {
-        background: #134b73;
-        transform: scale(1.01);
+        border-color: var(--color-border);
       }
 
-      &.secondary {
-        background: #eaf1fa;
-        color: #1a3e5c;
-        box-shadow: none;
+      .op-title {
+        font-weight: var(--font-weight-bold);
+        color: var(--color-title);
+        font-size: 14px;
+        display: flex;
+        gap: var(--spacing-sm);
+        align-items: center;
 
-        &:hover {
-          background: #d6e2f0;
+        i {
+          color: var(--color-primary);
+          font-size: 14px;
+          width: 18px;
+        }
+      }
+
+      .op-detail {
+        font-size: 13px;
+        color: var(--color-body);
+        background: var(--color-bg-card);
+        padding: 8px 12px;
+        border-radius: 40px;
+        display: flex;
+        justify-content: space-between;
+        border: 1px solid var(--color-border);
+
+        .op-plate {
+          font-weight: var(--font-weight-medium);
+        }
+
+        .op-amount {
+          font-weight: var(--font-weight-bold);
+          color: var(--color-primary);
+          font-size: 15px;
+        }
+      }
+
+      .op-info {
+        font-size: 11px;
+        color: var(--color-text-secondary);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+
+        i {
+          font-size: 10px;
+        }
+
+        .info-divider {
+          width: 1px;
+          height: 10px;
+          background: var(--color-border);
+        }
+      }
+
+      .op-cash-row {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        flex-wrap: wrap;
+
+        .op-cash-label {
+          font-weight: var(--font-weight-medium);
+          color: var(--color-text-secondary);
+          font-size: 12px;
+        }
+
+        .op-cash-value {
+          background: var(--color-bg-card);
+          padding: 4px 12px;
+          border-radius: 40px;
+          border: 1px solid var(--color-border);
+          font-weight: var(--font-weight-bold);
+          color: var(--color-title);
+          font-size: 14px;
+        }
+
+        .op-cash-change {
+          font-size: 11px;
+          color: var(--color-warning);
+          font-weight: var(--font-weight-medium);
+        }
+      }
+
+      .op-cash-note {
+        font-size: 11px;
+        color: var(--color-text-secondary);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+
+        i {
+          font-size: 10px;
+        }
+      }
+
+      .op-btn {
+        border: none;
+        border-radius: 60px;
+        padding: 10px 0;
+        font-weight: var(--font-weight-bold);
+        font-size: 13px;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+
+        i {
+          font-size: 13px;
+        }
+
+        &.primary {
+          background: var(--color-primary);
+          color: #ffffff;
+          box-shadow: 0 4px 10px rgba(22, 93, 255, 0.2);
+
+          &:hover {
+            background: var(--color-primary-dark);
+            transform: translateY(-1px);
+          }
+
+          &:active {
+            transform: translateY(0);
+          }
+        }
+
+        &.secondary {
+          background: var(--color-bg-card);
+          color: var(--color-body);
+          border: 1px solid var(--color-border);
+
+          &:hover {
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+            background: rgba(22, 93, 255, 0.04);
+          }
         }
       }
     }
   }
-}
 
-.gate-status-bar {
-  margin-top: 10px;
-  background: #ecf3fa;
-  border-radius: 40px;
-  padding: 6px 16px;
-  font-size: 12px;
-  color: #1d4b6e;
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
+  // 道闸状态栏
+  .gate-status-bar {
+    margin-top: var(--spacing-md);
+    background: var(--color-bg);
+    border-radius: 40px;
+    padding: 6px 16px;
+    font-size: 12px;
+    color: var(--color-body);
+    display: flex;
+    gap: var(--spacing-lg);
+    flex-wrap: wrap;
+
+    i {
+      font-size: 7px;
+    }
+
+    .gate-state {
+      font-weight: var(--font-weight-medium);
+
+      &.open { color: var(--color-success); }
+      &.closed { color: var(--color-text-secondary); }
+      &.fault { color: var(--color-danger); }
+    }
+  }
 }
 </style>
