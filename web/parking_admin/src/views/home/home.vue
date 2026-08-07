@@ -461,7 +461,7 @@ onUnmounted(() => {
     display: flex;
     align-items: center;
     justify-content: center;
-    minWidth: 56px;
+    width: 56px;
     height: 56px;
     border-radius: var(--border-radius-lg);
     margin-right: var(--spacing-lg);
@@ -609,7 +609,7 @@ onUnmounted(() => {
         color: var(--text-color-secondary);
 
         .legend-dot {
-          minWidth: 8px;
+          width: 8px;
           height: 8px;
           border-radius: 50%;
           margin-right: var(--spacing-xs);
@@ -630,7 +630,7 @@ onUnmounted(() => {
     height: 260px;
 
     .chart-container {
-      minWidth: 100%;
+      width: 100%;
       height: 100%;
     }
   }

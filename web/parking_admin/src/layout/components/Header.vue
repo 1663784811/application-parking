@@ -5,47 +5,13 @@
       <Breadcrumb />
     </div>
 
-    <div class="header-center">
-      <div class="global-search">
-        <Icon type="ios-search" class="search-icon" />
-        <input
-          type="text"
-          class="search-input"
-          placeholder="搜索车牌、订单号、停车场名..."
-          v-model="state.searchKeyword"
-          @keyup.enter="handleSearch"
-        />
-      </div>
-    </div>
-
+    
     <div class="header-right">
       <!-- 消息通知 -->
       <div class="header-action" @click="handleNotification">
         <Badge :count="notificationCount" :offset="[-2, 2]">
           <Icon type="ios-notifications-outline" class="action-icon" />
         </Badge>
-      </div>
-
-      <!-- 切换停车场 -->
-      <div class="header-action parking-selector">
-        <Dropdown @on-click="handleParkingChange">
-          <div class="parking-selector-inner">
-            <Icon type="ios-car" />
-            <span class="parking-name">{{ currentParkingName }}</span>
-            <Icon type="ios-arrow-down" />
-          </div>
-          <template #list>
-            <DropdownMenu>
-              <DropdownItem
-                v-for="item in parkingOptions"
-                :key="item.id"
-                :name="item.id"
-              >
-                {{ item.name }}
-              </DropdownItem>
-            </DropdownMenu>
-          </template>
-        </Dropdown>
       </div>
 
       <!-- 用户信息 -->
@@ -70,7 +36,7 @@
 </template>
 
 <script setup>
-import { computed, reactive } from 'vue'
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { Avatar, Badge, Dropdown, DropdownMenu, DropdownItem, Icon } from 'view-ui-plus'
 import Breadcrumb from './Breadcrumb.vue'
@@ -81,22 +47,6 @@ const router = useRouter()
 const userStore = useUserStore()
 const commonStore = useCommonStore()
 
-const state = reactive({
-  searchKeyword: ''
-})
-
-// 停车场选项（模拟数据，实际应该从接口获取）
-const parkingOptions = [
-  { id: 1, name: '全部停车场' },
-  { id: 2, name: '城西停车场' },
-  { id: 3, name: '城东停车场' },
-  { id: 4, name: '购物中心停车场' }
-]
-
-// 当前停车场名称
-const currentParkingName = computed(() => {
-  return commonStore.state.currentParking?.name || '全部停车场'
-})
 
 // 消息通知数
 const notificationCount = computed(() => {
@@ -119,25 +69,10 @@ const handleToggleMenu = () => {
   commonStore.toggleSider()
 }
 
-// 全局搜索
-const handleSearch = () => {
-  if (state.searchKeyword.trim()) {
-    // TODO: 调用搜索接口或跳转搜索结果页
-    console.log('搜索:', state.searchKeyword)
-  }
-}
 
 // 消息通知
 const handleNotification = () => {
   // TODO: 打开消息通知面板
-}
-
-// 切换停车场
-const handleParkingChange = (id) => {
-  const parking = parkingOptions.find(item => item.id === id)
-  if (parking) {
-    commonStore.setCurrentParking(parking)
-  }
 }
 
 // 用户菜单点击
@@ -189,49 +124,7 @@ const handleLogout = () => {
     }
   }
 
-  .header-center {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    padding: 0 var(--spacing-xl);
-
-    .global-search {
-      display: flex;
-      align-items: center;
-      width: 400px;
-      height: 36px;
-      padding: 0 var(--spacing-md);
-      background-color: var(--bg-color-page);
-      border: 1px solid var(--border-color);
-      border-radius: var(--border-radius-base);
-      transition: border-color 0.3s, box-shadow 0.3s;
-
-      &:focus-within {
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 2px rgba(22, 93, 255, 0.1);
-      }
-
-      .search-icon {
-        color: var(--text-color-secondary);
-        font-size: 16px;
-      }
-
-      .search-input {
-        flex: 1;
-        margin-left: var(--spacing-sm);
-        border: none;
-        outline: none;
-        background: transparent;
-        font-size: var(--font-size-sm);
-        color: var(--text-color);
-
-        &::placeholder {
-          color: var(--text-color-secondary);
-        }
-      }
-    }
-  }
-
+  
   .header-right {
     display: flex;
     align-items: center;
@@ -254,30 +147,6 @@ const handleLogout = () => {
       .action-icon {
         font-size: 20px;
         color: var(--text-color);
-      }
-    }
-
-    .parking-selector {
-      width: auto;
-      margin-right: var(--spacing-xl);
-
-      .parking-selector-inner {
-        display: flex;
-        align-items: center;
-        padding: 6px 12px;
-        background-color: var(--bg-color-page);
-        border-radius: var(--border-radius-base);
-        transition: background-color 0.3s;
-
-        &:hover {
-          background-color: var(--border-color);
-        }
-
-        .parking-name {
-          margin: 0 var(--spacing-sm);
-          font-size: var(--font-size-sm);
-          color: var(--text-color);
-        }
       }
     }
 
