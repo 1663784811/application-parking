@@ -8,8 +8,10 @@ export const useCommonStore = defineStore('common', () => {
   const state = reactive({
     // 侧边栏折叠状态
     siderCollapsed: false,
-    // 当前选中的停车场
+    // 当前选中的停车场（单选用，兼容旧代码）
     currentParking: null,
+    // 多选选中的停车场 ID 列表
+    selectedParkingIds: [],
     // 停车场列表
     parkingList: [],
     // 全局加载状态
@@ -33,6 +35,26 @@ export const useCommonStore = defineStore('common', () => {
   // 设置当前停车场
   const setCurrentParking = (parking) => {
     state.currentParking = parking
+  }
+
+  // 设置多选停车场
+  const setSelectedParkingIds = (ids) => {
+    state.selectedParkingIds = ids
+  }
+
+  // 切换单个停车场选中状态
+  const toggleParkingSelection = (id) => {
+    const idx = state.selectedParkingIds.indexOf(id)
+    if (idx === -1) {
+      state.selectedParkingIds.push(id)
+    } else {
+      state.selectedParkingIds.splice(idx, 1)
+    }
+  }
+
+  // 清空停车场选择
+  const clearParkingSelection = () => {
+    state.selectedParkingIds = []
   }
 
   // 设置停车场列表
@@ -60,6 +82,9 @@ export const useCommonStore = defineStore('common', () => {
     toggleSider,
     setSiderCollapsed,
     setCurrentParking,
+    setSelectedParkingIds,
+    toggleParkingSelection,
+    clearParkingSelection,
     setParkingList,
     setGlobalLoading,
     setNotificationCount,

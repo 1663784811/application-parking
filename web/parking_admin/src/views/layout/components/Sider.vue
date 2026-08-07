@@ -87,9 +87,14 @@ const menuList = [
         path: '/parking/parkingList'
       },
       {
-        name: 'spaceManagement',
-        title: '车位管理',
-        path: '/parking/spaceManagement'
+        name: 'chargeRuleConfig',
+        title: '收费规则配置',
+        path: '/system/chargeRuleConfig'
+      },
+      {
+        name: 'channelList',
+        title: '通道列表',
+        path: '/parking/channelList'
       }
     ]
   },
@@ -98,6 +103,11 @@ const menuList = [
     icon: 'ios-camera',
     title: '车辆通行',
     children: [
+      {
+        name: 'spaceManagement',
+        title: '实时车位',
+        path: '/parking/spaceManagement'
+      },
       {
         name: 'realTimeMonitor',
         title: '实时监控',
@@ -118,11 +128,11 @@ const menuList = [
   {
     name: 'charge',
     icon: 'ios-card',
-    title: '收费管理',
+    title: '订单管理',
     children: [
       {
         name: 'chargeFlow',
-        title: '收费流水',
+        title: '订单列表',
         path: '/charge/chargeFlow'
       },
       {
@@ -222,11 +232,6 @@ const menuList = [
         name: 'rolePermission',
         title: '角色权限',
         path: '/system/rolePermission'
-      },
-      {
-        name: 'chargeRuleConfig',
-        title: '收费规则配置',
-        path: '/system/chargeRuleConfig'
       },
       {
         name: 'smsConfig',

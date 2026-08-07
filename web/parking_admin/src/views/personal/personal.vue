@@ -1,9 +1,5 @@
 <template>
   <div class="personal-page">
-    <div class="page-header">
-      <h2 class="page-title">个人中心</h2>
-    </div>
-
     <div class="personal-content">
       <!-- 左侧导航 -->
       <div class="profile-nav">
@@ -52,12 +48,7 @@
             <h3 class="panel-title">基本信息</h3>
           </div>
           <div class="panel-body">
-            <Form
-              ref="infoFormRef"
-              :model="state.infoForm"
-              :label-width="100"
-              class="info-form"
-            >
+            <Form :model="state.infoForm" :label-width="100" class="info-form">
               <FormItem label="用户名">
                 <Input v-model="state.infoForm.username" disabled />
               </FormItem>
@@ -91,42 +82,33 @@
             <h3 class="panel-title">修改密码</h3>
           </div>
           <div class="panel-body">
-            <Form
-              ref="passwordFormRef"
-              :model="state.passwordForm"
-              :rules="state.passwordRules"
-              :label-width="120"
-              class="password-form"
-            >
-              <FormItem label="当前密码" prop="oldPassword">
+            <Form :model="state.passwordForm" :label-width="120" class="password-form">
+              <FormItem label="当前密码">
                 <Input
                   v-model="state.passwordForm.oldPassword"
                   type="password"
                   placeholder="请输入当前密码"
-                  password
                 />
               </FormItem>
-              <FormItem label="新密码" prop="newPassword">
+              <FormItem label="新密码">
                 <Input
                   v-model="state.passwordForm.newPassword"
                   type="password"
                   placeholder="请输入新密码"
-                  password
                 />
               </FormItem>
-              <FormItem label="确认新密码" prop="confirmPassword">
+              <FormItem label="确认新密码">
                 <Input
                   v-model="state.passwordForm.confirmPassword"
                   type="password"
                   placeholder="请再次输入新密码"
-                  password
                 />
               </FormItem>
               <FormItem>
                 <Button type="primary" :loading="state.passwordSaving" @click="handleChangePassword">
                   确认修改
                 </Button>
-                <Button style="margin-left: 12px" @click="state.passwordForm = { oldPassword: '', newPassword: '', confirmPassword: '' }">
+                <Button style="margin-left: 12px" @click="handleResetPassword">
                   重置
                 </Button>
               </FormItem>
@@ -281,13 +263,11 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted } from 'vue'
+import { reactive, onMounted } from 'vue'
 import { Icon, Form, FormItem, Input, Button, Tag, Switch, Upload, Table, Page, Message, Modal } from 'view-ui-plus'
 import { useUserStore } from '@/stores/user'
 
 const userStore = useUserStore()
-const infoFormRef = ref(null)
-const passwordFormRef = ref(null)
 
 const state = reactive({
   activeTab: 'info',
@@ -316,29 +296,6 @@ const state = reactive({
     confirmPassword: ''
   },
 
-  passwordRules: {
-    oldPassword: [
-      { required: true, message: '请输入当前密码', trigger: 'blur' }
-    ],
-    newPassword: [
-      { required: true, message: '请输入新密码', trigger: 'blur' },
-      { type: 'string', min: 6, message: '密码长度不能少于6位', trigger: 'blur' }
-    ],
-    confirmPassword: [
-      { required: true, message: '请再次输入新密码', trigger: 'blur' },
-      {
-        validator: (rule, value, callback) => {
-          if (value !== state.passwordForm.newPassword) {
-            callback(new Error('两次输入的密码不一致'))
-          } else {
-            callback()
-          }
-        },
-        trigger: 'blur'
-      }
-    ]
-  },
-
   notifications: {
     bill: true,
     alert: true,
@@ -349,34 +306,7 @@ const state = reactive({
   logList: [],
   logPage: 1,
   logPageSize: 10,
-  logTotal: 0,
-
-  logColumns: [
-    {
-      title: '时间',
-      key: 'time',
-      minWidth: 180
-    },
-    {
-      title: '操作类型',
-      slot: 'actionType',
-      minWidth: 120
-    },
-    {
-      title: '操作内容',
-      key: 'content'
-    },
-    {
-      title: 'IP地址',
-      key: 'ip',
-      minWidth: 140
-    },
-    {
-      title: '设备',
-      key: 'device',
-      minWidth: 160
-    }
-  ]
+  logTotal: 0
 })
 
 const navList = [
@@ -387,8 +317,15 @@ const navList = [
   { key: 'log', title: '操作日志', icon: 'ios-list' }
 ]
 
-// 保存基本信息
-const handleSaveInfo = async () => {
+const logColumns = [
+  { title: '时间', key: 'time', minWidth: 180 },
+  { title: '操作类型', slot: 'actionType', minWidth: 120 },
+  { title: '操作内容', key: 'content' },
+  { title: 'IP地址', key: 'ip', minWidth: 140 },
+  { title: '设备', key: 'device', minWidth: 160 }
+]
+
+const handleSaveInfo = () => {
   state.saving = true
   setTimeout(() => {
     Message.success('保存成功')
@@ -396,23 +333,36 @@ const handleSaveInfo = async () => {
   }, 800)
 }
 
-// 修改密码
-const handleChangePassword = async () => {
-  try {
-    await passwordFormRef.value.validate()
-    state.passwordSaving = true
-    setTimeout(() => {
-      Message.success('密码修改成功')
-      state.passwordForm = { oldPassword: '', newPassword: '', confirmPassword: '' }
-      state.passwordSaving = false
-      state.activeTab = 'info'
-    }, 800)
-  } catch (e) {
-    console.error('表单验证失败')
+const handleChangePassword = () => {
+  if (!state.passwordForm.oldPassword) {
+    Message.warning('请输入当前密码')
+    return
   }
+  if (!state.passwordForm.newPassword) {
+    Message.warning('请输入新密码')
+    return
+  }
+  if (state.passwordForm.newPassword.length < 6) {
+    Message.warning('密码长度不能少于6位')
+    return
+  }
+  if (state.passwordForm.newPassword !== state.passwordForm.confirmPassword) {
+    Message.warning('两次输入的密码不一致')
+    return
+  }
+  state.passwordSaving = true
+  setTimeout(() => {
+    Message.success('密码修改成功')
+    state.passwordForm = { oldPassword: '', newPassword: '', confirmPassword: '' }
+    state.passwordSaving = false
+    state.activeTab = 'info'
+  }, 800)
 }
 
-// 保存通知设置
+const handleResetPassword = () => {
+  state.passwordForm = { oldPassword: '', newPassword: '', confirmPassword: '' }
+}
+
 const handleSaveNotification = () => {
   state.notificationSaving = true
   setTimeout(() => {
@@ -421,34 +371,20 @@ const handleSaveNotification = () => {
   }, 500)
 }
 
-// 头像上传成功
 const handleAvatarSuccess = () => {
   Message.success('头像更新成功')
 }
 
-// 获取操作类型颜色
 const getActionColor = (type) => {
-  const colors = {
-    login: 'blue',
-    edit: 'green',
-    delete: 'red',
-    export: 'orange'
-  }
+  const colors = { login: 'blue', edit: 'green', delete: 'red', export: 'orange' }
   return colors[type] || 'default'
 }
 
-// 获取操作类型文本
 const getActionText = (type) => {
-  const texts = {
-    login: '登录',
-    edit: '编辑',
-    delete: '删除',
-    export: '导出'
-  }
+  const texts = { login: '登录', edit: '编辑', delete: '删除', export: '导出' }
   return texts[type] || type
 }
 
-// 加载日志列表
 const loadLogList = () => {
   state.logLoading = true
   setTimeout(() => {
@@ -464,13 +400,11 @@ const loadLogList = () => {
   }, 500)
 }
 
-// 分页大小改变
 const handlePageSizeChange = (size) => {
   state.logPageSize = size
   loadLogList()
 }
 
-// 查看登录日志
 const showLoginLog = () => {
   Modal.info({
     title: '登录日志',
@@ -479,7 +413,6 @@ const showLoginLog = () => {
 }
 
 onMounted(() => {
-  // 如果有用户信息，更新表单
   if (userStore.state.userInfo) {
     state.userInfo.name = userStore.state.userInfo.name || '管理员'
   }
@@ -489,264 +422,248 @@ onMounted(() => {
 
 <style lang="less" scoped>
 .personal-page {
-  padding: var(--spacing-xl);
-  min-height: calc(100vh - var(--header-height));
-  background-color: var(--bg-color-light);
-}
-
-.page-header {
-  margin-bottom: var(--spacing-xl);
-
-  .page-title {
-    font-size: var(--font-size-lg);
-    font-weight: 600;
-    color: var(--text-color-title);
-  }
-}
-
-.personal-content {
+  flex: 1;
   display: flex;
-  gap: var(--spacing-xl);
-}
+  flex-direction: column;
 
-// 左侧导航
-.profile-nav {
-  min-width: 280px;
-  flex-shrink: 0;
+  .personal-content {
+    display: flex;
+    gap: var(--spacing-xl);
+  }
 
-  .user-card {
-    background-color: var(--bg-color);
-    border-radius: var(--border-radius-base);
-    box-shadow: var(--shadow-base);
-    padding: var(--spacing-xl);
-    text-align: center;
-    margin-bottom: var(--spacing-lg);
+  .profile-nav {
+    width: 280px;
+    flex-shrink: 0;
 
-    .avatar-wrapper {
-      position: relative;
-      display: inline-block;
+    .user-card {
+      background-color: var(--bg-color);
+      border-radius: var(--border-radius-base);
+      box-shadow: var(--shadow-base);
+      padding: var(--spacing-xl);
+      text-align: center;
       margin-bottom: var(--spacing-lg);
 
-      .avatar {
-        min-width: 80px;
-        height: 80px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #165DFF, #4080FF);
-        display: flex;
-        align-items: center;
-        justify-content: center;
+      .avatar-wrapper {
+        position: relative;
+        display: inline-block;
+        margin-bottom: var(--spacing-lg);
 
-        .ivu-icon {
-          font-size: 40px;
-          color: #fff;
+        .avatar {
+          width: 80px;
+          height: 80px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #165DFF, #4080FF);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          .ivu-icon {
+            font-size: 40px;
+            color: #fff;
+          }
+        }
+
+        .avatar-mask {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 80px;
+          height: 80px;
+          border-radius: 50%;
+          background-color: rgba(0, 0, 0, 0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          opacity: 0;
+          cursor: pointer;
+          transition: opacity 0.3s;
+
+          .ivu-icon {
+            font-size: 24px;
+            color: #fff;
+          }
+        }
+
+        &:hover .avatar-mask {
+          opacity: 1;
         }
       }
 
-      .avatar-mask {
-        position: absolute;
-        top: 0;
-        left: 0;
-        min-width: 100%;
-        height: 100%;
-        border-radius: 50%;
-        background-color: rgba(0, 0, 0, 0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 0;
-        cursor: pointer;
-        transition: opacity 0.3s;
-
-        .ivu-icon {
-          font-size: 24px;
-          color: #fff;
-        }
+      .user-name {
+        font-size: var(--font-size-md);
+        font-weight: 600;
+        color: var(--text-color-title);
+        margin-bottom: var(--spacing-xs);
       }
 
-      &:hover .avatar-mask {
-        opacity: 1;
+      .user-role {
+        font-size: var(--font-size-sm);
+        color: var(--text-color-secondary);
       }
     }
 
-    .user-name {
-      font-size: var(--font-size-md);
-      font-weight: 600;
-      color: var(--text-color-title);
-      margin-bottom: var(--spacing-xs);
-    }
-
-    .user-role {
-      font-size: var(--font-size-sm);
-      color: var(--text-color-secondary);
-    }
-  }
-
-  .nav-list {
-    background-color: var(--bg-color);
-    border-radius: var(--border-radius-base);
-    box-shadow: var(--shadow-base);
-    padding: var(--spacing-sm);
-
-    .nav-item {
-      display: flex;
-      align-items: center;
-      padding: var(--spacing-md) var(--spacing-lg);
-      border-radius: var(--border-radius-sm);
-      cursor: pointer;
-      transition: all 0.2s;
-      color: var(--text-color);
-
-      .ivu-icon {
-        font-size: 18px;
-        margin-right: var(--spacing-md);
-      }
-
-      &:hover {
-        background-color: var(--bg-color-hover);
-        color: var(--primary-color);
-      }
-
-      &.active {
-        background-color: var(--primary-color);
-        color: #fff;
-      }
-    }
-  }
-}
-
-// 右侧内容
-.profile-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.content-panel {
-  background-color: var(--bg-color);
-  border-radius: var(--border-radius-base);
-  box-shadow: var(--shadow-base);
-
-  .panel-header {
-    padding: var(--spacing-lg) var(--spacing-xl);
-    border-bottom: 1px solid var(--border-color);
-
-    .panel-title {
-      font-size: var(--font-size-md);
-      font-weight: 600;
-      color: var(--text-color-title);
-    }
-  }
-
-  .panel-body {
-    padding: var(--spacing-xl);
-  }
-}
-
-// 信息表单
-.info-form,
-.password-form {
-  max-width: 500px;
-}
-
-// 安全设置
-.security-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--spacing-lg) 0;
-  border-bottom: 1px solid var(--border-color);
-
-  &:last-child {
-    border-bottom: none;
-  }
-
-  .security-info {
-    display: flex;
-    align-items: center;
-
-    .security-icon {
-      min-width: 44px;
-      height: 44px;
+    .nav-list {
+      background-color: var(--bg-color);
       border-radius: var(--border-radius-base);
+      box-shadow: var(--shadow-base);
+      padding: var(--spacing-sm);
+
+      .nav-item {
+        display: flex;
+        align-items: center;
+        padding: var(--spacing-md) var(--spacing-lg);
+        border-radius: var(--border-radius-sm);
+        cursor: pointer;
+        transition: all 0.2s;
+        color: var(--text-color);
+
+        .ivu-icon {
+          font-size: 18px;
+          margin-right: var(--spacing-md);
+        }
+
+        &:hover {
+          background-color: var(--bg-color-hover);
+          color: var(--primary-color);
+        }
+
+        &.active {
+          background-color: var(--primary-color);
+          color: #fff;
+        }
+      }
+    }
+  }
+
+  .profile-content {
+    flex: 1;
+    min-width: 0;
+
+    .content-panel {
+      background-color: var(--bg-color);
+      border-radius: var(--border-radius-base);
+      box-shadow: var(--shadow-base);
+
+      .panel-header {
+        padding: var(--spacing-lg) var(--spacing-xl);
+        border-bottom: 1px solid var(--border-color);
+
+        .panel-title {
+          font-size: var(--font-size-md);
+          font-weight: 600;
+          color: var(--text-color-title);
+        }
+      }
+
+      .panel-body {
+        padding: var(--spacing-xl);
+      }
+    }
+
+    .info-form,
+    .password-form {
+      max-width: 500px;
+    }
+
+    .security-item {
       display: flex;
       align-items: center;
-      justify-content: center;
-      margin-right: var(--spacing-lg);
-      background-color: var(--bg-color-light);
+      justify-content: space-between;
+      padding: var(--spacing-lg) 0;
+      border-bottom: 1px solid var(--border-color);
 
-      .ivu-icon {
-        font-size: 20px;
-        color: var(--text-color-secondary);
+      &:last-child {
+        border-bottom: none;
       }
 
-      &.success {
-        background-color: rgba(52, 199, 98, 0.1);
-        .ivu-icon {
-          color: var(--success-color);
+      .security-info {
+        display: flex;
+        align-items: center;
+
+        .security-icon {
+          width: 44px;
+          height: 44px;
+          border-radius: var(--border-radius-base);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-right: var(--spacing-lg);
+          background-color: var(--bg-color-page);
+
+          .ivu-icon {
+            font-size: 20px;
+            color: var(--text-color-secondary);
+          }
+
+          &.success {
+            background-color: rgba(52, 199, 98, 0.1);
+            .ivu-icon {
+              color: var(--success-color);
+            }
+          }
+
+          &.warning {
+            background-color: rgba(255, 149, 0, 0.1);
+            .ivu-icon {
+              color: var(--warning-color);
+            }
+          }
+        }
+
+        .security-detail {
+          h4 {
+            font-size: var(--font-size-sm);
+            font-weight: 600;
+            color: var(--text-color-title);
+            margin-bottom: var(--spacing-xs);
+          }
+
+          p {
+            font-size: var(--font-size-sm);
+            color: var(--text-color-secondary);
+          }
         }
       }
+    }
 
-      &.warning {
-        background-color: rgba(255, 149, 0, 0.1);
-        .ivu-icon {
-          color: var(--warning-color);
+    .notification-list {
+      .notification-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: var(--spacing-lg) 0;
+        border-bottom: 1px solid var(--border-color);
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        .notification-info {
+          h4 {
+            font-size: var(--font-size-sm);
+            font-weight: 600;
+            color: var(--text-color-title);
+            margin-bottom: var(--spacing-xs);
+          }
+
+          p {
+            font-size: var(--font-size-sm);
+            color: var(--text-color-secondary);
+          }
         }
       }
     }
 
-    .security-detail {
-      h4 {
-        font-size: var(--font-size-sm);
-        font-weight: 600;
-        color: var(--text-color-title);
-        margin-bottom: var(--spacing-xs);
-      }
+    .save-bar {
+      margin-top: var(--spacing-xl);
+      padding-top: var(--spacing-xl);
+      border-top: 1px solid var(--border-color);
+    }
 
-      p {
-        font-size: var(--font-size-sm);
-        color: var(--text-color-secondary);
-      }
+    .pagination-wrapper {
+      margin-top: var(--spacing-lg);
+      text-align: right;
     }
   }
-}
-
-// 通知设置
-.notification-list {
-  .notification-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: var(--spacing-lg) 0;
-    border-bottom: 1px solid var(--border-color);
-
-    &:last-child {
-      border-bottom: none;
-    }
-
-    .notification-info {
-      h4 {
-        font-size: var(--font-size-sm);
-        font-weight: 600;
-        color: var(--text-color-title);
-        margin-bottom: var(--spacing-xs);
-      }
-
-      p {
-        font-size: var(--font-size-sm);
-        color: var(--text-color-secondary);
-      }
-    }
-  }
-}
-
-.save-bar {
-  margin-top: var(--spacing-xl);
-  padding-top: var(--spacing-xl);
-  border-top: 1px solid var(--border-color);
-}
-
-// 分页
-.pagination-wrapper {
-  margin-top: var(--spacing-lg);
-  text-align: right;
 }
 </style>

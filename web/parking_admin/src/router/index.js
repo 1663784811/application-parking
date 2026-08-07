@@ -3,50 +3,6 @@
  */
 import { createRouter, createWebHistory } from 'vue-router'
 
-// 路由懒加载
-const Layout = () => import('@/views/layout/MainLayout.vue')
-const Login = () => import('@/views/login/login.vue')
-
-// 工作台
-const Home = () => import('@/views/home/home.vue')
-
-// 停车场管理
-const ParkingList = () => import('@/views/parking/parkingList/parkingList.vue')
-const SpaceManagement = () => import('@/views/parking/spaceManagement/spaceManagement.vue')
-
-// 车辆通行
-const RealTimeMonitor = () => import('@/views/passag/realTimeMonitor/realTimeMonitor.vue')
-const PassageRecord = () => import('@/views/passag/passageRecord/passageRecord.vue')
-const ExceptionRecord = () => import('@/views/passag/exceptionRecord/exceptionRecord.vue')
-
-// 收费管理
-const ChargeFlow = () => import('@/views/charge/chargeFlow/chargeFlow.vue')
-const OrderReconcile = () => import('@/views/charge/orderReconcile/orderReconcile.vue')
-const CouponConfig = () => import('@/views/charge/couponConfig/couponConfig.vue')
-const InvoiceManage = () => import('@/views/charge/invoiceManage/invoiceManage.vue')
-
-// 会员管理
-const MemberList = () => import('@/views/member/memberList/memberList.vue')
-const PackageConfig = () => import('@/views/member/packageConfig/packageConfig.vue')
-const RenewalRecord = () => import('@/views/member/renewalRecord/renewalRecord.vue')
-
-// 设备管理
-const DeviceList = () => import('@/views/device/deviceList/deviceList.vue')
-const FaultRepair = () => import('@/views/device/faultRepair/faultRepair.vue')
-
-// 数据报表
-const RevenueReport = () => import('@/views/report/revenueReport/revenueReport.vue')
-const TrafficReport = () => import('@/views/report/trafficReport/trafficReport.vue')
-const SpaceUsageReport = () => import('@/views/report/spaceUsageReport/spaceUsageReport.vue')
-const ExportReport = () => import('@/views/report/exportReport/exportReport.vue')
-
-// 系统设置
-const AdminAccount = () => import('@/views/system/adminAccount/adminAccount.vue')
-const RolePermission = () => import('@/views/system/rolePermission/rolePermission.vue')
-const ChargeRuleConfig = () => import('@/views/system/chargeRuleConfig/chargeRuleConfig.vue')
-const SmsConfig = () => import('@/views/system/smsConfig/smsConfig.vue')
-const LogManage = () => import('@/views/system/logManage/logManage.vue')
-
 const routes = [
   {
     path: '/',
@@ -55,20 +11,20 @@ const routes = [
   {
     path: '/login',
     name: 'login',
-    component: Login,
+    component: () => import('@/views/login/login.vue'),
     meta: {
       title: '登录'
     }
   },
   {
     path: '/',
-    component: Layout,
+    component: () => import('@/views/layout/MainLayout.vue'),
     children: [
       // 工作台
       {
         path: '/home',
         name: 'home',
-        component: Home,
+        component: () => import('@/views/home/home.vue'),
         meta: {
           title: '首页'
         }
@@ -78,33 +34,51 @@ const routes = [
       {
         path: '/parking/parkingList',
         name: 'parkingList',
-        component: ParkingList,
+        component: () => import('@/views/parking/parkingList/parkingList.vue'),
         meta: {
-          title: '停车场列表'
+          title: '停车场列表',
         }
       },
       {
-        path: '/parking/spaceManagement',
-        name: 'spaceManagement',
-        component: SpaceManagement,
+        path: '/system/chargeRuleConfig',
+        name: 'chargeRuleConfig',
+        component: () => import('@/views/system/chargeRuleConfig/chargeRuleConfig.vue'),
         meta: {
-          title: '车位管理'
+          title: '收费规则配置'
+        }
+      },
+      {
+        path: '/parking/channelList',
+        name: 'channelList',
+        component: () => import('@/views/parking/channelList/channelList.vue'),
+        meta: {
+          title: '通道列表'
         }
       },
 
       // 车辆通行
       {
+        path: '/parking/spaceManagement',
+        name: 'spaceManagement',
+        component: () => import('@/views/parking/spaceManagement/spaceManagement.vue'),
+        meta: {
+          title: '实时车位',
+          showParkingSidebar: true
+        }
+      },
+      {
         path: '/passag/realTimeMonitor',
         name: 'realTimeMonitor',
-        component: RealTimeMonitor,
+        component: () => import('@/views/passag/realTimeMonitor/realTimeMonitor.vue'),
         meta: {
-          title: '实时监控'
+          title: '实时监控',
+          showParkingSidebar: true
         }
       },
       {
         path: '/passag/passageRecord',
         name: 'passageRecord',
-        component: PassageRecord,
+        component: () => import('@/views/passag/passageRecord/passageRecord.vue'),
         meta: {
           title: '通行记录查询'
         }
@@ -112,7 +86,7 @@ const routes = [
       {
         path: '/passag/exceptionRecord',
         name: 'exceptionRecord',
-        component: ExceptionRecord,
+        component: () => import('@/views/passag/exceptionRecord/exceptionRecord.vue'),
         meta: {
           title: '异常通行记录'
         }
@@ -122,15 +96,15 @@ const routes = [
       {
         path: '/charge/chargeFlow',
         name: 'chargeFlow',
-        component: ChargeFlow,
+        component: () => import('@/views/charge/chargeFlow/chargeFlow.vue'),
         meta: {
-          title: '收费流水'
+          title: '订单列表'
         }
       },
       {
         path: '/charge/orderReconcile',
         name: 'orderReconcile',
-        component: OrderReconcile,
+        component: () => import('@/views/charge/orderReconcile/orderReconcile.vue'),
         meta: {
           title: '订单对账'
         }
@@ -138,7 +112,7 @@ const routes = [
       {
         path: '/charge/couponConfig',
         name: 'couponConfig',
-        component: CouponConfig,
+        component: () => import('@/views/charge/couponConfig/couponConfig.vue'),
         meta: {
           title: '优惠配置'
         }
@@ -146,7 +120,7 @@ const routes = [
       {
         path: '/charge/invoiceManage',
         name: 'invoiceManage',
-        component: InvoiceManage,
+        component: () => import('@/views/charge/invoiceManage/invoiceManage.vue'),
         meta: {
           title: '发票管理'
         }
@@ -156,7 +130,7 @@ const routes = [
       {
         path: '/member/memberList',
         name: 'memberList',
-        component: MemberList,
+        component: () => import('@/views/member/memberList/memberList.vue'),
         meta: {
           title: '固定车主列表'
         }
@@ -164,7 +138,7 @@ const routes = [
       {
         path: '/member/packageConfig',
         name: 'packageConfig',
-        component: PackageConfig,
+        component: () => import('@/views/member/packageConfig/packageConfig.vue'),
         meta: {
           title: '套餐配置'
         }
@@ -172,7 +146,7 @@ const routes = [
       {
         path: '/member/renewalRecord',
         name: 'renewalRecord',
-        component: RenewalRecord,
+        component: () => import('@/views/member/renewalRecord/renewalRecord.vue'),
         meta: {
           title: '续费记录'
         }
@@ -182,15 +156,16 @@ const routes = [
       {
         path: '/device/deviceList',
         name: 'deviceList',
-        component: DeviceList,
+        component: () => import('@/views/device/deviceList/deviceList.vue'),
         meta: {
-          title: '设备列表'
+          title: '设备列表',
+          showParkingSidebar: true
         }
       },
       {
         path: '/device/faultRepair',
         name: 'faultRepair',
-        component: FaultRepair,
+        component: () => import('@/views/device/faultRepair/faultRepair.vue'),
         meta: {
           title: '故障报修'
         }
@@ -200,7 +175,7 @@ const routes = [
       {
         path: '/report/revenueReport',
         name: 'revenueReport',
-        component: RevenueReport,
+        component: () => import('@/views/report/revenueReport/revenueReport.vue'),
         meta: {
           title: '营收统计'
         }
@@ -208,7 +183,7 @@ const routes = [
       {
         path: '/report/trafficReport',
         name: 'trafficReport',
-        component: TrafficReport,
+        component: () => import('@/views/report/trafficReport/trafficReport.vue'),
         meta: {
           title: '车流量报表'
         }
@@ -216,7 +191,7 @@ const routes = [
       {
         path: '/report/spaceUsageReport',
         name: 'spaceUsageReport',
-        component: SpaceUsageReport,
+        component: () => import('@/views/report/spaceUsageReport/spaceUsageReport.vue'),
         meta: {
           title: '车位利用率'
         }
@@ -224,7 +199,7 @@ const routes = [
       {
         path: '/report/exportReport',
         name: 'exportReport',
-        component: ExportReport,
+        component: () => import('@/views/report/exportReport/exportReport.vue'),
         meta: {
           title: '导出报表'
         }
@@ -234,7 +209,7 @@ const routes = [
       {
         path: '/system/adminAccount',
         name: 'adminAccount',
-        component: AdminAccount,
+        component: () => import('@/views/system/adminAccount/adminAccount.vue'),
         meta: {
           title: '管理员账号'
         }
@@ -242,23 +217,15 @@ const routes = [
       {
         path: '/system/rolePermission',
         name: 'rolePermission',
-        component: RolePermission,
+        component: () => import('@/views/system/rolePermission/rolePermission.vue'),
         meta: {
           title: '角色权限'
         }
       },
       {
-        path: '/system/chargeRuleConfig',
-        name: 'chargeRuleConfig',
-        component: ChargeRuleConfig,
-        meta: {
-          title: '收费规则配置'
-        }
-      },
-      {
         path: '/system/smsConfig',
         name: 'smsConfig',
-        component: SmsConfig,
+        component: () => import('@/views/system/smsConfig/smsConfig.vue'),
         meta: {
           title: '短信配置'
         }
@@ -266,7 +233,7 @@ const routes = [
       {
         path: '/system/logManage',
         name: 'logManage',
-        component: LogManage,
+        component: () => import('@/views/system/logManage/logManage.vue'),
         meta: {
           title: '日志管理'
         }

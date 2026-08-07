@@ -1,25 +1,25 @@
 <template>
-  <div class="charge-rule-config-page">
+  <div class="channel-list-page">
     <!-- 筛选栏 -->
     <div class="filter-bar">
       <div class="filter-row">
         <div class="filter-item">
-          <Select v-model="state.searchForm.type" placeholder="规则类型" class="filter-select" clearable>
-            <Option value="temp">临时车</Option>
-            <Option value="fixed">固定车</Option>
-            <Option value="discount">优惠</Option>
+          <Select v-model="state.searchForm.type" placeholder="通道类型" class="filter-select" clearable>
+            <Option value="in">入口</Option>
+            <Option value="out">出口</Option>
+            <Option value="inout">出入口</Option>
           </Select>
         </div>
         <div class="filter-item">
           <Select v-model="state.searchForm.status" placeholder="状态" class="filter-select" clearable>
-            <Option :value="1">启用</Option>
-            <Option :value="0">停用</Option>
+            <Option :value="1">正常</Option>
+            <Option :value="0">故障</Option>
           </Select>
         </div>
         <div class="filter-item">
           <Input
             v-model="state.searchForm.keyword"
-            placeholder="搜索规则名称"
+            placeholder="搜索通道名称"
             class="filter-input"
             clearable
             @on-enter="handleSearch"
@@ -37,7 +37,7 @@
         </div>
       </div>
       <div class="filter-actions">
-        <Button type="primary" icon="ios-add" @click="handleAdd">新增规则</Button>
+        <Button type="primary" icon="ios-add" @click="handleAdd">新增通道</Button>
       </div>
     </div>
 
@@ -51,17 +51,10 @@
         <template #type="{ row }">
           <Tag :color="typeColor(row.type)">{{ typeText(row.type) }}</Tag>
         </template>
-        <template #detail="{ row }">
-          <span class="detail-text">{{ row.detail }}</span>
-        </template>
         <template #status="{ row }">
-          <i-switch
-            v-model="row.status"
-            :true-value="1"
-            :false-value="0"
-            size="small"
-            @on-change="(val) => handleStatusChange(row, val)"
-          />
+          <span class="status-tag" :class="'status-' + (row.status === 1 ? 'normal' : 'fault')">
+            {{ row.status === 1 ? '正常' : '故障' }}
+          </span>
         </template>
         <template #action="{ row }">
           <Button type="text" size="small" @click="handleEdit(row)">编辑</Button>
@@ -84,31 +77,34 @@
     <!-- 新增/编辑弹窗 -->
     <Modal
       v-model="state.modalVisible"
-      :title="state.isEdit ? '编辑规则' : '新增规则'"
-      width="600"
+      :title="state.isEdit ? '编辑通道' : '新增通道'"
+      width="500"
     >
-      <Form :model="state.form" :label-width="120">
-        <FormItem label="规则名称" prop="name">
-          <Input v-model="state.form.name" placeholder="请输入规则名称"/>
+      <Form :model="state.form" :label-width="100">
+        <FormItem label="通道名称" prop="name">
+          <Input v-model="state.form.name" placeholder="请输入通道名称"/>
         </FormItem>
-        <FormItem label="规则类型" prop="type">
-          <Select v-model="state.form.type" placeholder="请选择规则类型">
-            <Option value="temp">临时车收费</Option>
-            <Option value="fixed">固定车套餐</Option>
-            <Option value="discount">优惠规则</Option>
+        <FormItem label="通道编号" prop="code">
+          <Input v-model="state.form.code" placeholder="请输入通道编号"/>
+        </FormItem>
+        <FormItem label="通道类型" prop="type">
+          <Select v-model="state.form.type" placeholder="请选择通道类型">
+            <Option value="in">入口</Option>
+            <Option value="out">出口</Option>
+            <Option value="inout">出入口</Option>
           </Select>
         </FormItem>
-        <FormItem label="收费详情" prop="detail">
-          <Input v-model="state.form.detail" type="textarea" :rows="3" placeholder="请描述收费详情"/>
-        </FormItem>
-        <FormItem label="金额" prop="amount">
-          <InputNumber v-model="state.form.amount" :min="0" :precision="2" class="form-number"/>
-          <span class="unit">元</span>
+        <FormItem label="所属停车场" prop="parkingId">
+          <Select v-model="state.form.parkingId" placeholder="请选择停车场">
+            <Option v-for="item in state.parkingList" :key="item.id" :value="item.id">
+              {{ item.name }}
+            </Option>
+          </Select>
         </FormItem>
         <FormItem label="状态" prop="status">
           <i-switch v-model="state.form.status" :true-value="1" :false-value="0">
-            <span slot="open">启用</span>
-            <span slot="close">停用</span>
+            <span slot="open">正常</span>
+            <span slot="close">故障</span>
           </i-switch>
         </FormItem>
       </Form>
@@ -128,7 +124,6 @@ import {
   FormItem,
   Icon,
   Input,
-  InputNumber,
   Message,
   Modal,
   Option,
@@ -138,6 +133,9 @@ import {
   Table,
   Tag
 } from 'view-ui-plus'
+import {useCommonStore} from '@/stores/common.js'
+
+const commonStore = useCommonStore()
 
 const state = reactive({
   searchForm: {
@@ -149,6 +147,10 @@ const state = reactive({
   loading: false,
   tableData: [],
 
+  parkingList: commonStore.state.parkingList.length > 0
+    ? commonStore.state.parkingList
+    : [],
+
   pagination: {
     total: 0,
     current: 1,
@@ -159,36 +161,38 @@ const state = reactive({
   isEdit: false,
   form: {
     name: '',
-    type: 'temp',
-    detail: '',
-    amount: 0,
+    code: '',
+    type: 'in',
+    parkingId: null,
     status: 1
   }
 })
 
 const columns = [
   {
-    title: '规则名称',
+    title: '通道编号',
+    key: 'code',
+    minWidth: 120
+  },
+  {
+    title: '通道名称',
     key: 'name',
     minWidth: 160
   },
   {
-    title: '规则类型',
+    title: '通道类型',
     slot: 'type',
-    minWidth: 120
+    minWidth: 100
   },
   {
-    title: '收费详情',
-    slot: 'detail',
-    minWidth: 240
+    title: '所属停车场',
+    key: 'parkingName',
+    minWidth: 160
   },
   {
-    title: '金额',
-    key: 'amount',
-    minWidth: 100,
-    render: (h, {row}) => {
-      return h('span', row.amount !== null ? `${row.amount} 元` : '-')
-    }
+    title: 'IP地址',
+    key: 'ip',
+    minWidth: 140
   },
   {
     title: '状态',
@@ -203,25 +207,25 @@ const columns = [
 ]
 
 const typeColor = (type) => {
-  const map = {temp: 'blue', fixed: 'green', discount: 'orange'}
+  const map = {in: 'blue', out: 'green', inout: 'orange'}
   return map[type] || 'default'
 }
 
 const typeText = (type) => {
-  const map = {temp: '临时车', fixed: '固定车', discount: '优惠'}
+  const map = {in: '入口', out: '出口', inout: '出入口'}
   return map[type] || '-'
 }
 
 const mockData = () => {
   return [
-    {id: 1, name: '临时车标准收费', type: 'temp', detail: '首小时5元，之后3元/小时，24小时封顶50元', amount: 5, status: 1},
-    {id: 2, name: '临时车夜间优惠', type: 'temp', detail: '22:00-次日6:00，每小时2元', amount: 2, status: 1},
-    {id: 3, name: '月卡套餐', type: 'fixed', detail: '月卡300元/月，不限次数进出', amount: 300, status: 1},
-    {id: 4, name: '季卡套餐', type: 'fixed', detail: '季卡800元/季，不限次数进出', amount: 800, status: 1},
-    {id: 5, name: '年卡套餐', type: 'fixed', detail: '年卡2800元/年，不限次数进出', amount: 2800, status: 1},
-    {id: 6, name: '节假日折扣', type: 'discount', detail: '法定节假日全天8折优惠', amount: 0, status: 1},
-    {id: 7, name: '优惠券抵扣', type: 'discount', detail: '单次最高抵扣10元', amount: 10, status: 1},
-    {id: 8, name: '免费时长规则', type: 'temp', detail: '进场15分钟内免费出场', amount: 0, status: 0}
+    {id: 1, code: 'CH001', name: '1号入口', type: 'in', parkingName: '万象城停车场', ip: '192.168.1.10', status: 1},
+    {id: 2, code: 'CH002', name: '2号出口', type: 'out', parkingName: '万象城停车场', ip: '192.168.1.11', status: 1},
+    {id: 3, code: 'CH003', name: '3号入口', type: 'in', parkingName: '万象城停车场', ip: '192.168.1.12', status: 1},
+    {id: 4, code: 'CH004', name: '地下入口', type: 'in', parkingName: 'CBD商务中心停车场', ip: '192.168.2.10', status: 1},
+    {id: 5, code: 'CH005', name: '地下出口', type: 'out', parkingName: 'CBD商务中心停车场', ip: '192.168.2.11', status: 0},
+    {id: 6, code: 'CH006', name: '东门入口', type: 'in', parkingName: '科技园停车场', ip: '192.168.3.10', status: 1},
+    {id: 7, code: 'CH007', name: '西门出口', type: 'out', parkingName: '科技园停车场', ip: '192.168.3.11', status: 1},
+    {id: 8, code: 'CH008', name: '主入口', type: 'inout', parkingName: '海岸城购物中心停车场', ip: '192.168.4.10', status: 1}
   ]
 }
 
@@ -230,7 +234,6 @@ const loadData = () => {
   setTimeout(() => {
     let list = mockData()
 
-    // 筛选
     if (state.searchForm.type) {
       list = list.filter(item => item.type === state.searchForm.type)
     }
@@ -239,7 +242,7 @@ const loadData = () => {
     }
     if (state.searchForm.keyword) {
       const kw = state.searchForm.keyword.trim().toLowerCase()
-      list = list.filter(item => item.name.toLowerCase().includes(kw))
+      list = list.filter(item => item.name.toLowerCase().includes(kw) || item.code.toLowerCase().includes(kw))
     }
 
     state.tableData = list
@@ -266,9 +269,9 @@ const handleAdd = () => {
   state.isEdit = false
   state.form = {
     name: '',
-    type: 'temp',
-    detail: '',
-    amount: 0,
+    code: '',
+    type: 'in',
+    parkingId: null,
     status: 1
   }
   state.modalVisible = true
@@ -278,9 +281,9 @@ const handleEdit = (row) => {
   state.isEdit = true
   state.form = {
     name: row.name,
+    code: row.code,
     type: row.type,
-    detail: row.detail,
-    amount: row.amount,
+    parkingId: null,
     status: row.status
   }
   state.modalVisible = true
@@ -288,7 +291,7 @@ const handleEdit = (row) => {
 
 const handleSubmit = () => {
   if (!state.form.name) {
-    Message.warning('请输入规则名称')
+    Message.warning('请输入通道名称')
     return
   }
   Message.success(state.isEdit ? '编辑成功' : '新增成功')
@@ -299,16 +302,12 @@ const handleSubmit = () => {
 const handleDelete = (row) => {
   Modal.confirm({
     title: '确认删除',
-    content: `确定要删除规则"${row.name}"吗？`,
+    content: `确定要删除通道"${row.name}"吗？`,
     onOk: () => {
       Message.success('删除成功')
       loadData()
     }
   })
-}
-
-const handleStatusChange = (row, val) => {
-  Message.success(`规则"${row.name}"已${val === 1 ? '启用' : '停用'}`)
 }
 
 const handlePageChange = (page) => {
@@ -322,7 +321,7 @@ onMounted(() => {
 </script>
 
 <style lang="less" scoped>
-.charge-rule-config-page {
+.channel-list-page {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -360,14 +359,26 @@ onMounted(() => {
   }
 
   .table-container {
+    flex: 1;
     background-color: var(--bg-color);
     border-radius: var(--border-radius-base);
     padding: var(--spacing-xl);
     box-shadow: var(--shadow-base);
 
-    .detail-text {
-      font-size: var(--font-size-sm);
-      color: var(--text-color-secondary);
+    .status-tag {
+      padding: 2px 8px;
+      border-radius: var(--border-radius-sm);
+      font-size: var(--font-size-xs);
+    }
+
+    .status-normal {
+      background-color: rgba(0, 180, 42, 0.1);
+      color: var(--success-color);
+    }
+
+    .status-fault {
+      background-color: rgba(245, 63, 63, 0.1);
+      color: var(--error-color);
     }
 
     .pagination-wrapper {
@@ -375,15 +386,6 @@ onMounted(() => {
       justify-content: flex-end;
       margin-top: var(--spacing-xl);
     }
-  }
-
-  .form-number {
-    width: 200px;
-  }
-
-  .unit {
-    margin-left: var(--spacing-sm);
-    color: var(--text-color-secondary);
   }
 }
 </style>
