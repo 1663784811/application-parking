@@ -4,7 +4,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 // 路由懒加载
-const Layout = () => import('@/views/layout/index.vue')
+const Layout = () => import('@/views/layout/MainLayout.vue')
 const Login = () => import('@/views/login/login.vue')
 
 // 工作台
