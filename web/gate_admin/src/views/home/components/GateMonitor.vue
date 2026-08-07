@@ -247,7 +247,7 @@ const handleRefresh = () => {
         }
 
         i {
-          font-size: 11px;
+          font-size: 12px;
 
           &.spinning {
             animation: icon-spin 0.8s linear infinite;
@@ -344,7 +344,7 @@ const handleRefresh = () => {
         bottom: 26%;
         left: 50%;
         transform: translateX(-50%);
-        font-size: 10px;
+        font-size: 12px;
         font-weight: var(--font-weight-normal);
         color: rgba(255, 255, 255, 0.5);
         z-index: 1;
@@ -374,7 +374,7 @@ const handleRefresh = () => {
         }
 
         .gate-location {
-          font-size: 10px;
+          font-size: 12px;
           color: rgba(255, 255, 255, 0.8);
           overflow: hidden;
           text-overflow: ellipsis;
@@ -388,7 +388,7 @@ const handleRefresh = () => {
         top: 6px;
         right: 6px;
         z-index: 2;
-        font-size: 10px;
+        font-size: 12px;
         font-weight: var(--font-weight-medium);
         padding: 2px 8px;
         border-radius: 20px;
@@ -435,7 +435,7 @@ const handleRefresh = () => {
         bottom: 6px;
         left: 8px;
         z-index: 2;
-        font-size: 9px;
+        font-size: 12px;
         font-weight: var(--font-weight-bold);
         color: rgba(255, 255, 255, 0.85);
       }
@@ -449,11 +449,11 @@ const handleRefresh = () => {
         display: inline-flex;
         align-items: center;
         gap: 3px;
-        font-size: 9px;
+        font-size: 12px;
         font-weight: var(--font-weight-medium);
 
         i {
-          font-size: 5px;
+          font-size: 6px;
         }
 
         &.online {
@@ -528,7 +528,7 @@ const handleRefresh = () => {
         z-index: 3;
         background: rgba(245, 63, 63, 0.92);
         color: #ffffff;
-        font-size: 10px;
+        font-size: 12px;
         font-weight: var(--font-weight-medium);
         padding: 3px 10px;
         display: flex;
@@ -536,7 +536,7 @@ const handleRefresh = () => {
         gap: 4px;
 
         i {
-          font-size: 10px;
+          font-size: 12px;
         }
       }
 
@@ -561,7 +561,7 @@ const handleRefresh = () => {
     gap: 4px;
 
     i {
-      font-size: 11px;
+      font-size: 12px;
     }
   }
 }

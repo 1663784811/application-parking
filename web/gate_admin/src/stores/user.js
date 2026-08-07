@@ -10,6 +10,7 @@ export const useUserStore = defineStore('user', {
     userInfo: {
       id: null,
       name: '',
+      role: '',
       phone: '',
       parkingName: '',
       parkingId: null

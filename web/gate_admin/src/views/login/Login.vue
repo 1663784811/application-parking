@@ -21,8 +21,7 @@
               v-model="formData.username"
               placeholder="请输入保安账号"
               size="large"
-              prefix="ios-person-outline"
-            >
+              >
               <template #prefix>
                 <i class="fas fa-user"></i>
               </template>

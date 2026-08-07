@@ -163,7 +163,7 @@ const handleCashPayment = () => {
         }
 
         :deep(.ivu-select-arrow) {
-          font-size: 10px;
+          font-size: 12px;
           color: var(--color-text-secondary);
           transition: color var(--transition-fast);
           right: 12px;

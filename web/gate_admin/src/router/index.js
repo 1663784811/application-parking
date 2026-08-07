@@ -31,7 +31,7 @@ const routes = [
         path: '/home',
         name: 'Home',
         component: Home,
-        meta: { title: '首页', icon: 'ios-home-outline' }
+        meta: { title: '首页', icon: 'fa-home' }
       }
     ]
   }

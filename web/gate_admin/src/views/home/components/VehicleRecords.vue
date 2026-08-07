@@ -308,7 +308,7 @@ const filteredRecords = computed(() => {
           color: var(--color-text-secondary);
 
           i {
-            font-size: 11px;
+            font-size: 12px;
             color: var(--color-text-secondary);
           }
 
@@ -381,7 +381,7 @@ const filteredRecords = computed(() => {
           background: transparent;
           padding: 4px 10px;
           border-radius: 4px;
-          font-size: 11px;
+          font-size: 12px;
           font-weight: var(--font-weight-medium);
           color: var(--color-text-secondary);
           cursor: pointer;
@@ -393,7 +393,7 @@ const filteredRecords = computed(() => {
           .tab-count {
             background: var(--color-border);
             color: var(--color-text-secondary);
-            font-size: 10px;
+            font-size: 12px;
             padding: 0 5px;
             border-radius: 20px;
             line-height: 1.4;
@@ -420,7 +420,7 @@ const filteredRecords = computed(() => {
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        font-size: 11px;
+        font-size: 12px;
         padding: 4px 10px;
         border-radius: 40px;
         font-weight: var(--font-weight-medium);
@@ -481,7 +481,7 @@ const filteredRecords = computed(() => {
   top: 0;
   z-index: 2;
   background: var(--color-bg-card);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: var(--font-weight-bold);
   color: var(--color-text-secondary);
   text-transform: uppercase;
@@ -578,11 +578,11 @@ const filteredRecords = computed(() => {
       gap: 4px;
       padding: 2px 10px;
       border-radius: 40px;
-      font-size: 11px;
+      font-size: 12px;
       font-weight: var(--font-weight-bold);
 
       i {
-        font-size: 10px;
+        font-size: 12px;
       }
 
       &.in {
@@ -616,7 +616,7 @@ const filteredRecords = computed(() => {
       border-radius: 40px;
 
       i {
-        font-size: 5px;
+        font-size: 6px;
       }
 
       &.normal {
@@ -679,14 +679,14 @@ const filteredRecords = computed(() => {
   flex-shrink: 0;
 
   .footer-left {
-    font-size: 11px;
+    font-size: 12px;
     color: var(--color-text-secondary);
     display: flex;
     align-items: center;
     gap: 4px;
 
     i {
-      font-size: 10px;
+      font-size: 12px;
     }
   }
 
@@ -696,7 +696,7 @@ const filteredRecords = computed(() => {
     gap: 4px;
 
     .pagination-info {
-      font-size: 11px;
+      font-size: 12px;
       color: var(--color-text-secondary);
       margin-right: var(--spacing-sm);
     }
@@ -708,7 +708,7 @@ const filteredRecords = computed(() => {
       border-radius: var(--border-radius-base);
       background: var(--color-bg-card);
       color: var(--color-body);
-      font-size: 11px;
+      font-size: 12px;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
@@ -716,7 +716,7 @@ const filteredRecords = computed(() => {
       transition: all var(--transition-fast);
 
       i {
-        font-size: 9px;
+        font-size: 12px;
       }
 
       &:hover:not(:disabled) {

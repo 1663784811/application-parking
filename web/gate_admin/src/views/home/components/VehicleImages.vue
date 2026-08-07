@@ -131,7 +131,7 @@ const handleRefresh = () => {
         gap: 4px;
 
         i {
-          font-size: 11px;
+          font-size: 12px;
         }
       }
     }
@@ -146,7 +146,7 @@ const handleRefresh = () => {
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        font-size: 11px;
+        font-size: 12px;
         padding: 4px 10px;
         border-radius: 40px;
         font-weight: var(--font-weight-medium);
@@ -249,7 +249,7 @@ const handleRefresh = () => {
         max-width: 70%;
 
         i {
-          font-size: 11px;
+          font-size: 12px;
         }
       }
 
@@ -264,7 +264,7 @@ const handleRefresh = () => {
         gap: 3px;
         padding: 2px 8px;
         border-radius: 20px;
-        font-size: 10px;
+        font-size: 12px;
         font-weight: var(--font-weight-bold);
         backdrop-filter: blur(4px);
 
@@ -289,7 +289,7 @@ const handleRefresh = () => {
         bottom: 6px;
         left: 8px;
         z-index: 2;
-        font-size: 9px;
+        font-size: 12px;
         font-weight: var(--font-weight-bold);
         color: rgba(255, 255, 255, 0.7);
       }
@@ -303,7 +303,7 @@ const handleRefresh = () => {
         display: inline-flex;
         align-items: center;
         gap: 3px;
-        font-size: 9px;
+        font-size: 12px;
         font-weight: var(--font-weight-medium);
         color: rgba(255, 255, 255, 0.7);
 

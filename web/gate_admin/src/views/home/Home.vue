@@ -36,7 +36,7 @@ import GateOperation from './components/GateOperation.vue'
   overflow: auto;
   display: flex;
   gap: 20px;
-  padding: 20px;
+  padding: 12px;
   background: var(--color-bg);
   flex-direction: row;
 

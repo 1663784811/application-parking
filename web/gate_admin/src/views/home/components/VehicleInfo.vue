@@ -118,7 +118,7 @@ const state = reactive({
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        font-size: 11px;
+        font-size: 12px;
         padding: 4px 12px;
         border-radius: 40px;
         font-weight: var(--font-weight-medium);
@@ -126,7 +126,7 @@ const state = reactive({
         background: rgba(22, 93, 255, 0.08);
 
         i {
-          font-size: 11px;
+          font-size: 12px;
         }
       }
     }
@@ -149,7 +149,7 @@ const state = reactive({
       gap: 2px;
 
       .label {
-        font-size: 10px;
+        font-size: 12px;
         text-transform: uppercase;
         color: var(--color-text-secondary);
         letter-spacing: 0.5px;
@@ -170,14 +170,14 @@ const state = reactive({
         background: rgba(255, 125, 0, 0.1);
         padding: 0 8px;
         border-radius: 40px;
-        font-size: 10px;
+        font-size: 12px;
         font-weight: var(--font-weight-bold);
       }
 
       .status-tag {
         padding: 0 10px;
         border-radius: 40px;
-        font-size: 11px;
+        font-size: 12px;
         font-weight: var(--font-weight-bold);
         display: inline-block;
         line-height: 1.8;
@@ -208,7 +208,7 @@ const state = reactive({
       display: flex;
       align-items: center;
       gap: 6px;
-      font-size: 11px;
+      font-size: 12px;
       font-weight: var(--font-weight-bold);
       color: var(--color-text-secondary);
       text-transform: uppercase;
