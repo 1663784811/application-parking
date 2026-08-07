@@ -4,7 +4,7 @@
       <div class="login-card">
         <div class="login-header">
           <div class="login-logo">
-            <Icon type="ios-car" size="40" color="#fff" />
+            <i class="fas fa-car"></i>
           </div>
           <h1 class="login-title">停车场管理系统</h1>
           <p class="login-subtitle">请输入账号密码登录</p>
@@ -24,7 +24,7 @@
               prefix="ios-person-outline"
             >
               <template #prefix>
-                <Icon type="ios-person-outline" />
+                <i class="fas fa-user"></i>
               </template>
             </Input>
           </FormItem>
@@ -39,19 +39,19 @@
               @on-enter="handleLogin"
             >
               <template #prefix>
-                <Icon type="ios-lock-outline" />
+                <i class="fas fa-lock"></i>
               </template>
             </Input>
           </FormItem>
 
           <FormItem>
-            <Label value=" remember" class="remember-label">
+            <label class="remember-label">
               <Checkbox v-model="formData.rememberMe">记住账号</Checkbox>
-            </Label>
+            </label>
           </FormItem>
 
           <FormItem>
-            <Button type="primary" size="large" block @click="handleLogin">
+            <Button type="primary" size="large" long @click="handleLogin">
               登录
             </Button>
           </FormItem>
@@ -72,7 +72,7 @@
 <script setup>
 import { reactive, ref, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { Form, FormItem, Input, Button, Icon, Message, Label, Checkbox } from 'view-ui-plus'
+import { Form, FormItem, Input, Button, Checkbox, Message } from 'view-ui-plus'
 import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
@@ -154,13 +154,13 @@ const handleLogin = async () => {
   width: 400px;
   background: #fff;
   border-radius: 12px;
-  padding: 32px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  padding: 40px 32px 32px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.12);
 }
 
 .login-header {
   text-align: center;
-  margin-bottom: 24px;
+  margin-bottom: 32px;
 
   .login-logo {
     width: 64px;
@@ -171,10 +171,12 @@ const handleLogin = async () => {
     align-items: center;
     justify-content: center;
     margin: 0 auto 16px;
+    color: #fff;
+    font-size: 28px;
   }
 
   .login-title {
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 700;
     color: #1a1a1a;
     margin-bottom: 8px;
@@ -182,24 +184,47 @@ const handleLogin = async () => {
 
   .login-subtitle {
     font-size: 14px;
-    color: #666;
+    color: #86909c;
   }
 }
 
 .login-form {
   margin-bottom: 16px;
+
+  :deep(.ivu-input-wrapper-large) {
+    .ivu-input {
+      font-size: 14px;
+      height: 44px;
+    }
+  }
+
+  :deep(.ivu-input-prefix) {
+    i {
+      font-size: 16px;
+      color: #86909c;
+    }
+  }
+
+  :deep(.ivu-input:focus) {
+    border-color: #165DFF;
+    box-shadow: 0 0 0 2px rgba(22, 93, 255, 0.1);
+  }
 }
 
-.remember-checkbox {
+.remember-label {
   display: flex;
   align-items: center;
   gap: 8px;
+  font-size: 14px;
+  cursor: pointer;
 }
 
 .login-tips {
   text-align: center;
   font-size: 12px;
-  color: #999;
+  color: #c9cdd4;
+  padding-top: 16px;
+  border-top: 1px solid #f2f3f5;
 }
 
 .login-footer {
@@ -207,5 +232,6 @@ const handleLogin = async () => {
   text-align: center;
   color: rgba(255, 255, 255, 0.8);
   font-size: 12px;
+  letter-spacing: 0.5px;
 }
 </style>

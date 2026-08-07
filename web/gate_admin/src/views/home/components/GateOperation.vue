@@ -1,72 +1,34 @@
 <template>
-  <!-- 右下：道闸操作 · 应急值守 -->
+  <!-- 右下：操作 -->
   <div class="card gate-op-card">
     <!-- 卡片头部 -->
     <div class="card-header">
       <div class="header-left">
-        <i class="fas fa-remote"></i>
-        <h3>道闸操作 · 应急值守</h3>
+        <i class="fas fa-bolt"></i>
+        <span class="header-plate">{{ state.plate }}</span>
+        <span class="header-fee">¥{{ state.fee.toFixed(2) }}</span>
       </div>
       <div class="header-right">
-        <span class="remote-badge">
-          <i class="fas fa-hand-pointer"></i>
-          远程控制
-        </span>
-      </div>
-    </div>
-
-    <!-- 操作网格 -->
-    <div class="operation-grid">
-      <!-- 查看应缴费用 -->
-      <div class="op-card">
-        <div class="op-title">
-          <i class="fas fa-receipt"></i>
-          应缴费用
-        </div>
-        <div class="op-detail">
-          <span class="op-plate">{{ state.fee.plate }}</span>
-          <span class="op-amount">¥{{ state.fee.amount.toFixed(2) }}</span>
-        </div>
-        <div class="op-info">
-          <span><i class="far fa-clock"></i> 停放 {{ state.fee.duration }}</span>
-          <span class="info-divider"></span>
-          <span>单价 ¥{{ state.fee.unitPrice }}/h</span>
-        </div>
-        <button class="op-btn secondary" @click="viewFeeDetail">
-          <i class="fas fa-eye"></i>
-          查看完整计费
-        </button>
-      </div>
-
-      <!-- 现金支付结算 -->
-      <div class="op-card">
-        <div class="op-title">
-          <i class="fas fa-money-bill-wave"></i>
-          现金支付结算
-        </div>
-        <div class="op-cash-row">
-          <span class="op-cash-label">实收</span>
-          <span class="op-cash-value">¥{{ state.cash.received.toFixed(2) }}</span>
-          <span class="op-cash-change">找零 ¥{{ state.cash.change.toFixed(2) }}</span>
-        </div>
-        <button class="op-btn primary" @click="handleCashPayment">
-          <i class="fas fa-check-circle"></i>
-          核销账单 · 已支付
-        </button>
-        <div class="op-cash-note">
-          <i class="far fa-clock"></i>
-          留存现金缴费记录
+        <div class="gate-select">
+          <span class="gate-label">道闸</span>
+          <i class="fas fa-road"></i>
+          <Select v-model="state.selectedGate" transfer>
+            <Option v-for="g in state.gates" :key="g.value" :value="g.value">{{ g.label }}</Option>
+          </Select>
         </div>
       </div>
     </div>
 
-    <!-- 道闸状态栏 -->
-    <div class="gate-status-bar">
-      <span v-for="g in state.gateStatus" :key="g.name">
-        <i class="fas fa-circle" :style="{ color: g.color }"></i>
-        {{ g.name }}
-        <span class="gate-state" :class="g.stateClass">{{ g.state }}</span>
-      </span>
+    <!-- 操作按钮 -->
+    <div class="action-grid">
+      <button class="action-btn pass-btn" @click="handleDirectPass">
+        <i class="fas fa-check-circle"></i>
+        <span class="btn-text">直接放行</span>
+      </button>
+      <button class="action-btn cash-btn" @click="handleCashPayment">
+        <i class="fas fa-money-bill-wave"></i>
+        <span class="btn-text">现金支付</span>
+      </button>
     </div>
   </div>
 </template>
@@ -75,34 +37,23 @@
 import {reactive} from 'vue'
 
 const state = reactive({
-  // 应缴费用
-  fee: {
-    plate: '粤A·8K92F',
-    amount: 15.00,
-    duration: '2h18m',
-    unitPrice: 5
-  },
-  // 现金支付信息
-  cash: {
-    received: 20.00,
-    change: 5.00
-  },
-  // 道闸状态栏
-  gateStatus: [
-    {name: '主入口', state: '开启', stateClass: 'open', color: 'var(--color-success)'},
-    {name: '主出口', state: '关闭', stateClass: 'closed', color: 'var(--color-text-secondary)'},
-    {name: '应急通道', state: '故障', stateClass: 'fault', color: 'var(--color-danger)'}
-  ]
+  selectedGate: 'G02',
+  gates: [
+    {value: 'G01', label: '#G01 主入口'},
+    {value: 'G02', label: '#G02 主出口'},
+    {value: 'G03', label: '#G03 地下车库'},
+    {value: 'G04', label: '#G04 应急通道'}
+  ],
+  plate: '粤A·8K92F',
+  fee: 15.00
 })
 
-// 查看完整计费
-const viewFeeDetail = () => {
-  alert('查看完整计费详情：\n停放时长：2小时18分\n计费规则：首小时¥5，后续¥5/小时\n免费时长：30分钟\n抵扣时长：0分钟\n应付金额：¥15.00')
+const handleDirectPass = () => {
+  alert(`道闸已开启，车辆已放行 [${state.selectedGate}]`)
 }
 
-// 现金支付结算
 const handleCashPayment = () => {
-  alert('现金支付结算完成\n实收：¥20.00\n找零：¥5.00\n账单已核销，状态更新为「已支付」')
+  alert('现金支付结算完成，账单已核销')
 }
 </script>
 
@@ -113,7 +64,7 @@ const handleCashPayment = () => {
 .card {
   background: var(--color-bg-card);
   border-radius: var(--border-radius-xl);
-  padding: var(--spacing-xl) var(--spacing-xxl);
+  padding: var(--spacing-lg) var(--spacing-xxl);
   box-shadow: var(--shadow-base);
   display: flex;
   flex-direction: column;
@@ -122,9 +73,9 @@ const handleCashPayment = () => {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: var(--spacing-lg);
+    margin-bottom: 12px;
     border-bottom: 1px solid var(--color-border-light);
-    padding-bottom: var(--spacing-md);
+    padding-bottom: 10px;
 
     .header-left {
       display: flex;
@@ -136,11 +87,21 @@ const handleCashPayment = () => {
         font-size: var(--font-size-md);
       }
 
-      h3 {
+      .header-plate {
+        font-size: 15px;
         font-weight: var(--font-weight-bold);
-        font-size: var(--font-size-lg);
         color: var(--color-title);
-        white-space: nowrap;
+        letter-spacing: 0.5px;
+      }
+
+      .header-fee {
+        font-size: 18px;
+        font-weight: var(--font-weight-bold);
+        color: var(--color-warning);
+        background: rgba(255, 125, 0, 0.1);
+        padding: 2px 12px;
+        border-radius: 40px;
+        line-height: 1.4;
       }
     }
 
@@ -150,19 +111,66 @@ const handleCashPayment = () => {
       gap: var(--spacing-sm);
       flex-shrink: 0;
 
-      .remote-badge {
-        display: inline-flex;
+      .gate-select {
+        display: flex;
         align-items: center;
-        gap: 6px;
-        font-size: 11px;
-        padding: 4px 12px;
-        border-radius: 40px;
-        font-weight: var(--font-weight-medium);
-        color: var(--color-primary);
-        background: rgba(22, 93, 255, 0.08);
+        gap: 8px;
+        padding: 0;
+        border-radius: 8px;
+        background: #fff;
+        border: 1px solid var(--color-border);
+        transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+        overflow: hidden;
 
-        i {
-          font-size: 11px;
+        &:hover {
+          border-color: var(--color-primary);
+          box-shadow: 0 2px 10px rgba(22, 93, 255, 0.15);
+        }
+
+        .gate-label {
+          font-size: 12px;
+          color: var(--color-text-secondary);
+          font-weight: var(--font-weight-medium);
+          margin-left: 12px;
+          flex-shrink: 0;
+        }
+
+        > i {
+          font-size: 14px;
+          color: var(--color-primary);
+          flex-shrink: 0;
+        }
+
+        :deep(.ivu-select) {
+          flex: 1;
+        }
+
+        :deep(.ivu-select-selection) {
+          border: none !important;
+          box-shadow: none !important;
+          background: transparent;
+          border-radius: 0;
+          height: 38px;
+        }
+
+        :deep(.ivu-select-placeholder),
+        :deep(.ivu-select-selected-value) {
+          font-size: 13px;
+          font-weight: var(--font-weight-bold);
+          color: var(--color-title);
+          padding-left: 4px;
+        }
+
+        :deep(.ivu-select-arrow) {
+          font-size: 10px;
+          color: var(--color-text-secondary);
+          transition: color var(--transition-fast);
+          right: 12px;
+        }
+
+        &:hover :deep(.ivu-select-arrow) {
+          color: var(--color-primary);
         }
       }
     }
@@ -170,193 +178,101 @@ const handleCashPayment = () => {
 }
 
 // ============================================
-// 道闸操作模块
+// 操作按钮
 // ============================================
 .gate-op-card {
-  .operation-grid {
+  .action-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: var(--spacing-md);
+    gap: 10px;
 
-    .op-card {
-      background: var(--color-bg);
-      border-radius: var(--border-radius-lg);
-      padding: var(--spacing-md) var(--spacing-lg);
+    .action-btn {
+      border: none;
+      border-radius: 10px;
+      padding: 0;
+      height: 72px;
+      cursor: pointer;
+      transition: all var(--transition-fast);
       display: flex;
       flex-direction: column;
-      gap: var(--spacing-sm);
-      min-width: 0;
-      border: 1px solid var(--color-border-light);
-      transition: border-color var(--transition-fast);
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      position: relative;
+      overflow: hidden;
 
-      &:hover {
-        border-color: var(--color-border);
+      i {
+        font-size: 18px;
+        position: relative;
+        z-index: 1;
+        transition: transform var(--transition-fast);
       }
 
-      .op-title {
-        font-weight: var(--font-weight-bold);
-        color: var(--color-title);
+      .btn-text {
         font-size: 14px;
-        display: flex;
-        gap: var(--spacing-sm);
-        align-items: center;
-
-        i {
-          color: var(--color-primary);
-          font-size: 14px;
-          width: 18px;
-        }
-      }
-
-      .op-detail {
-        font-size: 13px;
-        color: var(--color-body);
-        background: var(--color-bg-card);
-        padding: 8px 12px;
-        border-radius: 40px;
-        display: flex;
-        justify-content: space-between;
-        border: 1px solid var(--color-border);
-
-        .op-plate {
-          font-weight: var(--font-weight-medium);
-        }
-
-        .op-amount {
-          font-weight: var(--font-weight-bold);
-          color: var(--color-primary);
-          font-size: 15px;
-        }
-      }
-
-      .op-info {
-        font-size: 11px;
-        color: var(--color-text-secondary);
-        display: flex;
-        align-items: center;
-        gap: var(--spacing-sm);
-
-        i {
-          font-size: 10px;
-        }
-
-        .info-divider {
-          width: 1px;
-          height: 10px;
-          background: var(--color-border);
-        }
-      }
-
-      .op-cash-row {
-        display: flex;
-        align-items: center;
-        gap: var(--spacing-sm);
-        flex-wrap: wrap;
-
-        .op-cash-label {
-          font-weight: var(--font-weight-medium);
-          color: var(--color-text-secondary);
-          font-size: 12px;
-        }
-
-        .op-cash-value {
-          background: var(--color-bg-card);
-          padding: 4px 12px;
-          border-radius: 40px;
-          border: 1px solid var(--color-border);
-          font-weight: var(--font-weight-bold);
-          color: var(--color-title);
-          font-size: 14px;
-        }
-
-        .op-cash-change {
-          font-size: 11px;
-          color: var(--color-warning);
-          font-weight: var(--font-weight-medium);
-        }
-      }
-
-      .op-cash-note {
-        font-size: 11px;
-        color: var(--color-text-secondary);
-        display: flex;
-        align-items: center;
-        gap: 4px;
-
-        i {
-          font-size: 10px;
-        }
-      }
-
-      .op-btn {
-        border: none;
-        border-radius: 60px;
-        padding: 10px 0;
         font-weight: var(--font-weight-bold);
-        font-size: 13px;
-        cursor: pointer;
-        transition: all var(--transition-fast);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
+        position: relative;
+        z-index: 1;
+        letter-spacing: 0.5px;
+      }
 
-        i {
-          font-size: 13px;
+      // 直接放行 - 绿色
+      &.pass-btn {
+        background: linear-gradient(135deg, #00B42A 0%, #27C24C 100%);
+        color: #fff;
+        box-shadow: 0 4px 14px rgba(0, 180, 42, 0.3);
+
+        &::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.18) 0%, transparent 60%);
+          pointer-events: none;
         }
 
-        &.primary {
-          background: var(--color-primary);
-          color: #ffffff;
-          box-shadow: 0 4px 10px rgba(22, 93, 255, 0.2);
+        &:hover {
+          box-shadow: 0 8px 24px rgba(0, 180, 42, 0.45);
+          transform: translateY(-2px);
 
-          &:hover {
-            background: var(--color-primary-dark);
-            transform: translateY(-1px);
-          }
-
-          &:active {
-            transform: translateY(0);
+          i {
+            transform: scale(1.15);
           }
         }
 
-        &.secondary {
-          background: var(--color-bg-card);
-          color: var(--color-body);
-          border: 1px solid var(--color-border);
-
-          &:hover {
-            border-color: var(--color-primary);
-            color: var(--color-primary);
-            background: rgba(22, 93, 255, 0.04);
-          }
+        &:active {
+          box-shadow: 0 2px 6px rgba(0, 180, 42, 0.25);
+          transform: translateY(0);
         }
       }
-    }
-  }
 
-  // 道闸状态栏
-  .gate-status-bar {
-    margin-top: var(--spacing-md);
-    background: var(--color-bg);
-    border-radius: 40px;
-    padding: 6px 16px;
-    font-size: 12px;
-    color: var(--color-body);
-    display: flex;
-    gap: var(--spacing-lg);
-    flex-wrap: wrap;
+      // 现金支付 - 橙色
+      &.cash-btn {
+        background: linear-gradient(135deg, #FF7D00 0%, #FF9A2E 100%);
+        color: #fff;
+        box-shadow: 0 4px 14px rgba(255, 125, 0, 0.25);
 
-    i {
-      font-size: 7px;
-    }
+        &::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.15) 0%, transparent 60%);
+          pointer-events: none;
+        }
 
-    .gate-state {
-      font-weight: var(--font-weight-medium);
+        &:hover {
+          box-shadow: 0 8px 24px rgba(255, 125, 0, 0.4);
+          transform: translateY(-2px);
 
-      &.open { color: var(--color-success); }
-      &.closed { color: var(--color-text-secondary); }
-      &.fault { color: var(--color-danger); }
+          i {
+            transform: scale(1.15);
+          }
+        }
+
+        &:active {
+          box-shadow: 0 2px 6px rgba(255, 125, 0, 0.25);
+          transform: translateY(0);
+        }
+      }
     }
   }
 }

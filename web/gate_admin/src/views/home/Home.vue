@@ -37,7 +37,7 @@ import GateOperation from './components/GateOperation.vue'
   display: flex;
   gap: 20px;
   padding: 20px;
-  background: #eef2f7;
+  background: var(--color-bg);
   flex-direction: row;
 
   .left-column {

@@ -32,10 +32,17 @@
 
     <!-- 计费详情 -->
     <div class="billing-detail">
-      <span v-for="bill in state.billing" :key="bill.label">
-        <strong>{{ bill.label }}</strong>
-        {{ bill.value }}
-      </span>
+      <div class="billing-header">
+        <i class="fas fa-receipt"></i>
+        <span>计费明细</span>
+      </div>
+      <div class="billing-rows">
+        <div class="billing-row" v-for="(bill, idx) in state.billing" :key="bill.label"
+             :class="{ 'bill-total': idx === state.billing.length - 1 }">
+          <span class="bill-label">{{ bill.label }}</span>
+          <span class="bill-value">{{ bill.value }}</span>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -65,16 +72,15 @@ const state = reactive({
 </script>
 
 <style lang="less" scoped>
-// ============================================
-// 卡片通用样式
-// ============================================
-.card {
+.info-card {
   background: var(--color-bg-card);
   border-radius: var(--border-radius-xl);
   padding: var(--spacing-xl) var(--spacing-xxl);
   box-shadow: var(--shadow-base);
   display: flex;
   flex-direction: column;
+  flex: 1;
+  overflow: auto;
 
   .card-header {
     display: flex;
@@ -131,8 +137,6 @@ const state = reactive({
 // 车辆通行信息模块
 // ============================================
 .info-card {
-  flex: 1;
-
   .info-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -191,21 +195,77 @@ const state = reactive({
     }
   }
 
+  // ============================================
+  // 计费详情（重新设计）
+  // ============================================
   .billing-detail {
     background: var(--color-bg);
     border-radius: var(--border-radius-lg);
-    padding: var(--spacing-sm) var(--spacing-md);
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px 16px;
-    font-size: 13px;
-    color: var(--color-body);
+    padding: var(--spacing-md);
+    margin-top: auto;
 
-    span {
-      strong {
+    .billing-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: var(--font-weight-bold);
+      color: var(--color-text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--color-border-light);
+      margin-bottom: 8px;
+
+      i {
+        font-size: 12px;
+      }
+    }
+
+    .billing-rows {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .billing-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 2px 0;
+      font-size: 13px;
+
+      .bill-label {
         color: var(--color-text-secondary);
         font-weight: var(--font-weight-medium);
-        margin-right: 2px;
+      }
+
+      .bill-value {
+        color: var(--color-body);
+        font-weight: var(--font-weight-medium);
+      }
+
+      // 应付金额行 — 高亮
+      &.bill-total {
+        margin-top: 4px;
+        padding-top: 6px;
+        border-top: 1px dashed var(--color-border);
+
+        .bill-label {
+          color: var(--color-title);
+          font-weight: var(--font-weight-bold);
+          font-size: 14px;
+        }
+
+        .bill-value {
+          color: var(--color-warning);
+          font-weight: var(--font-weight-bold);
+          font-size: 16px;
+          background: rgba(255, 125, 0, 0.1);
+          padding: 0 10px;
+          border-radius: 40px;
+          line-height: 1.6;
+        }
       }
     }
   }

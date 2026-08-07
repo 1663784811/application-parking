@@ -4,7 +4,7 @@
     <!-- 卡片头部 -->
     <div class="card-header">
       <div class="header-title">
-        <i class="fas fa-gate"></i>
+        <i class="fas fa-warehouse"></i>
         <h3>道闸实时监控</h3>
       </div>
       <div class="header-stats">
@@ -113,7 +113,7 @@ function generateGateData() {
       gateAction: gateActions[index % 2],
       alert: isOffline || isFault,
       alertText: isOffline ? '信号丢失' : '闸杆异常悬停',
-      alertIcon: isOffline ? 'fa-wifi-slash' : 'fa-tools',
+      alertIcon: isOffline ? 'fa-wifi-slash' : 'fa-wrench',
       cameraStatus: isNormal ? 'online' : isOffline ? 'offline' : 'fault',
       cameraIcon: isNormal ? 'fa-video' : isOffline ? 'fa-video-slash' : 'fa-exclamation-triangle',
       cameraLabel: isNormal ? '实时画面' : isOffline ? '摄像头离线' : '画面异常',

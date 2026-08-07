@@ -219,6 +219,7 @@ const state = reactive({
 const stats = computed(() => {
   const all = state.records
   return {
+    total: all.length,
     in: all.filter(r => r.type === 'in').length,
     out: all.filter(r => r.type === 'out').length,
     abnormal: all.filter(r => r.statusClass !== 'normal').length
@@ -340,11 +341,12 @@ const filteredRecords = computed(() => {
         border-radius: var(--border-radius-lg);
         padding: 5px 10px;
         width: 180px;
-        transition: border-color var(--transition-fast);
+        transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 
         &:focus-within {
           border-color: var(--color-primary);
           background: var(--color-bg-card);
+          box-shadow: 0 0 0 3px rgba(22, 93, 255, 0.08);
         }
 
         i {
