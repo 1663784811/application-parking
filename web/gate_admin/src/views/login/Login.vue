@@ -1,36 +1,44 @@
 <template>
   <div class="login-page">
-    <div class="login-container">
+    <!-- 背景装饰圆 -->
+    <div class="login-decoration">
+      <div class="deco-circle deco-circle--1"></div>
+      <div class="deco-circle deco-circle--2"></div>
+      <div class="deco-circle deco-circle--3"></div>
+    </div>
+
+    <div class="login-body">
       <div class="login-card">
-        <div class="login-header">
+        <!-- 卡片头部 -->
+        <div class="login-card-header">
           <div class="login-logo">
-            <i class="fas fa-car"></i>
+            <img src="@/assets/icons/parking-logo.svg" alt="停车场管理系统" />
           </div>
           <h1 class="login-title">停车场管理系统</h1>
-          <p class="login-subtitle">请输入账号密码登录</p>
         </div>
 
+        <!-- 登录表单 -->
         <Form
           ref="formRef"
-          :model="formData"
-          :rules="rules"
+          :model="state.formData"
+          :rules="state.rules"
           class="login-form"
         >
           <FormItem prop="username">
             <Input
-              v-model="formData.username"
+              v-model="state.formData.username"
               placeholder="请输入保安账号"
               size="large"
-              >
+            >
               <template #prefix>
-                <i class="fas fa-user"></i>
+                <Icon type="ios-person-outline" />
               </template>
             </Input>
           </FormItem>
 
           <FormItem prop="password">
             <Input
-              v-model="formData.password"
+              v-model="state.formData.password"
               type="password"
               placeholder="请输入密码"
               size="large"
@@ -38,24 +46,33 @@
               @on-enter="handleLogin"
             >
               <template #prefix>
-                <i class="fas fa-lock"></i>
+                <Icon type="ios-lock-outline" />
               </template>
             </Input>
           </FormItem>
 
           <FormItem>
-            <label class="remember-label">
-              <Checkbox v-model="formData.rememberMe">记住账号</Checkbox>
-            </label>
+            <div class="form-extra">
+              <Checkbox v-model="state.formData.remember">
+                记住账号
+              </Checkbox>
+            </div>
           </FormItem>
 
           <FormItem>
-            <Button type="primary" size="large" long @click="handleLogin">
-              登录
+            <Button
+              type="success"
+              size="large"
+              long
+              :loading="state.loading"
+              @click="handleLogin"
+            >
+              登 录
             </Button>
           </FormItem>
         </Form>
 
+        <!-- 提示信息 -->
         <div class="login-tips">
           <span>演示账号：admin / 123456</span>
         </div>
@@ -69,9 +86,9 @@
 </template>
 
 <script setup>
-import { reactive, ref, watch, onMounted } from 'vue'
+import { reactive, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { Form, FormItem, Input, Button, Checkbox, Message } from 'view-ui-plus'
+import { Form, FormItem, Input, Button, Checkbox, Icon, Message } from 'view-ui-plus'
 import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
@@ -79,158 +96,195 @@ const userStore = useUserStore()
 
 const formRef = ref(null)
 
-const formData = reactive({
-  username: '',
-  password: '',
-  rememberMe: false
+const state = reactive({
+  // 表单数据
+  formData: {
+    username: '',
+    password: '',
+    remember: false
+  },
+  // 表单校验规则
+  rules: {
+    username: [
+      { required: true, message: '请输入保安账号', trigger: 'blur' }
+    ],
+    password: [
+      { required: true, message: '请输入密码', trigger: 'blur' }
+    ]
+  },
+  // 登录按钮加载状态
+  loading: false
 })
 
-const rules = {
-  username: [{ required: true, message: '请输入保安账号', trigger: 'blur' }],
-  password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
-}
-
-// 监听记住账号选项，保存到本地存储
-watch(() => formData.rememberMe, (value) => {
-  if (value && formData.username) {
-    localStorage.setItem('parkAdminUsername', formData.username)
-  } else if (!value) {
-    localStorage.removeItem('parkAdminUsername')
-  }
-})
-
-// 组件加载时检查本地存储的账号
+// 组件挂载时，读取本地存储的账号
 onMounted(() => {
   const savedUsername = localStorage.getItem('parkAdminUsername')
   if (savedUsername) {
-    formData.username = savedUsername
-    formData.rememberMe = true
+    state.formData.username = savedUsername
+    state.formData.remember = true
   }
 })
 
+// 处理记住账号
+const saveRememberAccount = () => {
+  if (state.formData.remember && state.formData.username) {
+    localStorage.setItem('parkAdminUsername', state.formData.username)
+  } else {
+    localStorage.removeItem('parkAdminUsername')
+  }
+}
+
+// 登录操作
 const handleLogin = async () => {
   try {
-    await formRef.value.validate()
+    const valid = await formRef.value.validate()
+    if (!valid) return
 
-    // 简化验证逻辑
-    if (formData.username === 'admin' && formData.password === '123456') {
+    state.loading = true
+
+    // 保存记住账号状态
+    saveRememberAccount()
+
+    // 模拟登录验证
+    if (state.formData.username === 'admin' && state.formData.password === '123456') {
       userStore.login({ name: '管理员李明', role: 'admin' })
-      Message.success('登录成功')
-      router.push('/home')
     } else {
-      // 通用登录
       userStore.login({
-        name: formData.username,
-        role: formData.username === 'admin' ? 'admin' : 'guard'
+        name: state.formData.username,
+        role: 'guard'
       })
-      Message.success('登录成功')
-      router.push('/home')
     }
+
+    Message.success('登录成功')
+    router.push({ name: 'Home' })
   } catch (e) {
-    console.error('验证失败', e)
+    console.error('表单验证失败', e)
+  } finally {
+    state.loading = false
   }
 }
 </script>
 
 <style lang="less" scoped>
 .login-page {
+  position: relative;
   min-height: 100vh;
-  background: linear-gradient(135deg, #165DFF 0%, #4080FF 50%, #165DFF 100%);
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  overflow: hidden;
 }
 
-.login-container {
+// 背景装饰圆
+.login-decoration {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.deco-circle {
+  position: absolute;
+  border-radius: 50%;
+  background: #fff;
+  opacity: 0.06;
+}
+
+.deco-circle--1 {
+  width: 520px;
+  height: 520px;
+  top: -140px;
+  right: -100px;
+}
+
+.deco-circle--2 {
+  width: 360px;
+  height: 360px;
+  bottom: -80px;
+  left: -80px;
+}
+
+.deco-circle--3 {
+  width: 180px;
+  height: 180px;
+  bottom: 25%;
+  right: 20%;
+}
+
+// 主体区域
+.login-body {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+  z-index: 1;
 }
 
+// 登录卡片
 .login-card {
-  width: 400px;
-  background: #fff;
-  border-radius: 12px;
-  padding: 40px 32px 32px;
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.12);
+  width: 420px;
+  background: var(--color-bg-card);
+  border-radius: var(--border-radius-xl);
+  padding: 44px 36px 36px;
+  box-shadow: var(--shadow-lg);
 }
 
-.login-header {
+// 卡片头部
+.login-card-header {
   text-align: center;
-  margin-bottom: 32px;
-
-  .login-logo {
-    width: 64px;
-    height: 64px;
-    background: linear-gradient(135deg, #165DFF, #4080FF);
-    border-radius: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 16px;
-    color: #fff;
-    font-size: 28px;
-  }
-
-  .login-title {
-    font-size: 24px;
-    font-weight: 700;
-    color: #1a1a1a;
-    margin-bottom: 8px;
-  }
-
-  .login-subtitle {
-    font-size: 14px;
-    color: #86909c;
-  }
+  margin-bottom: 36px;
 }
 
-.login-form {
-  margin-bottom: 16px;
-
-  :deep(.ivu-input-wrapper-large) {
-    .ivu-input {
-      font-size: 14px;
-      height: 44px;
-    }
-  }
-
-  :deep(.ivu-input-prefix) {
-    i {
-      font-size: 16px;
-      color: #86909c;
-    }
-  }
-
-  :deep(.ivu-input:focus) {
-    border-color: #165DFF;
-    box-shadow: 0 0 0 2px rgba(22, 93, 255, 0.1);
-  }
-}
-
-.remember-label {
+.login-logo {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 20px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  cursor: pointer;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--color-success) 0%, var(--color-success-light) 100%);
+  border-radius: 18px;
+  padding: 16px;
+  color: #fff;
 }
 
+.login-title {
+  font-size: var(--font-size-title);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-title);
+  margin-bottom: 6px;
+}
+
+// 表单区域
+.login-form {
+  margin-bottom: 8px;
+}
+
+// 表单额外选项
+.form-extra {
+  display: flex;
+  align-items: center;
+  font-size: var(--font-size-sm);
+}
+
+// 提示信息
 .login-tips {
   text-align: center;
-  font-size: 12px;
-  color: #c9cdd4;
-  padding-top: 16px;
-  border-top: 1px solid #f2f3f5;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  padding-top: 20px;
+  border-top: 1px solid var(--color-border-light);
 }
 
+// 页脚
 .login-footer {
+  position: relative;
+  z-index: 1;
   padding: 24px;
   text-align: center;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 12px;
+  font-size: var(--font-size-xs);
+  color: rgba(255, 255, 255, 0.75);
   letter-spacing: 0.5px;
 }
 </style>

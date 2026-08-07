@@ -20,12 +20,6 @@
         <span class="time-text">{{ currentTime }}</span>
       </div>
 
-      <!-- 通知 -->
-      <div class="notification-btn" @click="handleNotificationClick">
-        <i class="fas fa-bell"></i>
-        <span class="notif-dot" v-if="unreadCount > 0">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
-      </div>
-
       <!-- 用户信息 + 下拉菜单 -->
       <div class="user-dropdown" ref="dropdownRef">
         <div class="user-trigger" @click="toggleDropdown">
@@ -68,18 +62,15 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Message } from 'view-ui-plus'
 import { useUserStore } from '@/stores/user'
-import { useSystemStore } from '@/stores/system'
 
 const router = useRouter()
 const userStore = useUserStore()
-const systemStore = useSystemStore()
 
 const currentTime = ref('')
 const dropdownOpen = ref(false)
 const dropdownRef = ref(null)
 let timeInterval = null
 
-const unreadCount = computed(() => systemStore.unreadNotificationCount)
 const userInfo = computed(() => userStore.userInfo)
 const isAdmin = computed(() => userStore.isAdmin)
 
@@ -104,10 +95,6 @@ const closeDropdown = (e) => {
   if (dropdownRef.value && !dropdownRef.value.contains(e.target)) {
     dropdownOpen.value = false
   }
-}
-
-const handleNotificationClick = () => {
-  // Trigger notification panel
 }
 
 const handleLogout = () => {
@@ -218,58 +205,18 @@ onUnmounted(() => {
       display: flex;
       align-items: center;
       gap: 6px;
-      font-size: 14px;
       color: var(--color-text-secondary);
-      padding: 0 14px;
-      border-right: 1px solid var(--color-border-light);
+      padding: 0 14px 0 0;
 
       i {
-        font-size: 14px;
+        font-size: 15px;
       }
 
       .time-text {
-        font-family: 'SF Mono', 'Consolas', 'Menlo', monospace;
+        font-size: 16px;
+        font-weight: var(--font-weight-medium);
         font-variant-numeric: tabular-nums;
-      }
-    }
-
-    .notification-btn {
-      position: relative;
-      cursor: pointer;
-      width: 34px;
-      height: 34px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 8px;
-      transition: all var(--transition-fast);
-      color: var(--color-text-secondary);
-      font-size: 18px;
-
-      &:hover {
-        background: var(--color-bg);
-        color: var(--color-primary);
-        transform: translateY(-1px);
-      }
-
-      .notif-dot {
-        position: absolute;
-        top: 2px;
-        right: 2px;
-        min-width: 16px;
-        height: 16px;
-        background: var(--color-danger);
-        color: #fff;
-        font-size: 12px;
-        font-weight: var(--font-weight-bold);
-        border-radius: 20px;
-        padding: 0 4px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        line-height: 1;
-        box-shadow: 0 0 0 2px #fff;
-        animation: notif-pulse 2s ease-in-out infinite;
+        letter-spacing: 0.5px;
       }
     }
 
@@ -448,13 +395,4 @@ onUnmounted(() => {
   transform: translateY(-4px) scale(0.98);
 }
 
-// 通知徽标脉冲动画
-@keyframes notif-pulse {
-  0%, 100% {
-    box-shadow: 0 0 0 2px #fff, 0 0 0 4px rgba(245, 63, 63, 0);
-  }
-  50% {
-    box-shadow: 0 0 0 2px #fff, 0 0 0 6px rgba(245, 63, 63, 0.15);
-  }
-}
 </style>

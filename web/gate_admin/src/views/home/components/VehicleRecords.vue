@@ -599,7 +599,6 @@ const filteredRecords = computed(() => {
 
   .col-time {
     .time-text {
-      font-family: 'SF Mono', 'Consolas', 'Menlo', monospace;
       font-size: 13px;
       color: var(--color-body);
     }
