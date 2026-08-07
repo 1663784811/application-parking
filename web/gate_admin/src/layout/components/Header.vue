@@ -7,7 +7,6 @@
       </div>
       <div class="brand">
         <span class="brand-name">停车场管理系统</span>
-        <span class="brand-sub">Parking Management</span>
       </div>
       <div class="header-divider"></div>
       <span class="parking-name">{{ userInfo.parkingName || '城西停车场' }}</span>
@@ -141,7 +140,7 @@ onUnmounted(() => {
     .logo {
       width: 36px;
       height: 36px;
-      background: linear-gradient(135deg, var(--color-primary) 0%, #4080FF 100%);
+      background: linear-gradient(135deg, var(--color-primary-light) 0%, #FFFFFF 100%);
       border-radius: 8px;
       display: flex;
       align-items: center;
@@ -165,14 +164,7 @@ onUnmounted(() => {
         line-height: 1.2;
       }
 
-      .brand-sub {
-        font-size: 12px;
-        color: var(--color-text-secondary);
-        line-height: 1.2;
-        letter-spacing: 0.5px;
-        text-transform: uppercase;
       }
-    }
 
     .header-divider {
       width: 1px;
@@ -205,13 +197,7 @@ onUnmounted(() => {
       display: flex;
       align-items: center;
       gap: 6px;
-      color: var(--color-text-secondary);
       padding: 0 14px 0 0;
-
-      i {
-        font-size: 15px;
-      }
-
       .time-text {
         font-size: 16px;
         font-weight: var(--font-weight-medium);
