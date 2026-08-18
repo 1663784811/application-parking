@@ -24,8 +24,14 @@ public enum WebErrCodeEnum {
     WEB_LOGINERR(6000, "登录失败"),
     WEB_NOT_LOGIN(6001, "该用户没有登录"),
     WEB_REGISTER_ERR(6002, "注册失败"),
+    WEB_USER_EXISTS(6003, "用户已存在"),
+    WEB_PASSWORD_ERROR(6004, "密码错误"),
+    WEB_USER_NOT_FOUND(6005, "用户不存在"),
+    WEB_USER_DISABLED(6006, "用户已禁用"),
+    WEB_VERIFY_CODE_ERROR(6007, "验证码错误"),
 
     WEB_LOGIN_TIME_OUT(6010, "登录过期"),
+    WEB_TOKEN_INVALID(6011, "令牌无效"),
 
 
     WEB_AUTHENTICATION_ERR(6020, "没有权限"),

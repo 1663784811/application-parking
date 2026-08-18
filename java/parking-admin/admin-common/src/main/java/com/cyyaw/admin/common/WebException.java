@@ -12,7 +12,7 @@ public class WebException extends RuntimeException {
     private WebException() {
     }
 
-    private WebException(WebErrCodeEnum webErrCodeEnum) {
+    public WebException(WebErrCodeEnum webErrCodeEnum) {
         this.msg = webErrCodeEnum.getMsg();
         this.code = webErrCodeEnum.getCode();
     }

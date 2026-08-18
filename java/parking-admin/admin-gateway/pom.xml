@@ -11,7 +11,7 @@
     </parent>
 
 
-    <artifactId>admin-entity</artifactId>
+    <artifactId>admin-gateway</artifactId>
     <version>1.0.1</version>
     <packaging>jar</packaging>
 
@@ -22,49 +22,15 @@
     </properties>
 
     <dependencies>
-        <!-- MyBatis-Plus 注解：@TableName / @TableId 等（实体类只用注解，不引完整 starter） -->
-        <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-spring-boot4-starter</artifactId>
-        </dependency>
-
-        <!-- Lombok：父 pom 中为 optional，不传递，需在此显式声明 -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-redis</artifactId>
-        </dependency>
-
-
-        <dependency>
-            <groupId>jakarta.persistence</groupId>
-            <artifactId>jakarta.persistence-api</artifactId>
-        </dependency>
-
-
-        <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-        </dependency>
-
-
-        <dependency>
-            <groupId>com.cyyaw.admin</groupId>
-            <artifactId>admin-common</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-
     </dependencies>
 
     <build>
         <plugins>
-            <!-- 纯实体库 jar，无需 Spring Boot repackage -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
