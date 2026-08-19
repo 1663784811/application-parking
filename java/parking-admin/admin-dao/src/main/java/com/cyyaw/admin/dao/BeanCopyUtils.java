@@ -1,4 +1,4 @@
-package com.cyyaw.admin.entity.utils;
+package com.cyyaw.admin.dao;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.SimpleCache;
@@ -6,6 +6,7 @@ import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.cyyaw.admin.entity.utils.StreamUtils;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.springframework.cglib.beans.BeanCopier;

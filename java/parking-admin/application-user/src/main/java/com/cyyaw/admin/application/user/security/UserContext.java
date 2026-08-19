@@ -1,4 +1,4 @@
-package com.cyyaw.admin.user.security;
+package com.cyyaw.admin.application.user.security;
 
 /**
  * 以 ThreadLocal 持有当前请求的登录用户。

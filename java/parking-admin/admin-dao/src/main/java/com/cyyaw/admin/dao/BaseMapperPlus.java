@@ -1,4 +1,4 @@
-package com.cyyaw.admin.entity.utils;
+package com.cyyaw.admin.dao;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ReflectionKit;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.toolkit.Db;
+import com.cyyaw.admin.entity.utils.BaseEntity;
 
 import java.io.Serializable;
 import java.util.Collection;

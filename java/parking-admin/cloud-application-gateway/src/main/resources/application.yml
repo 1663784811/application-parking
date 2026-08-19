@@ -5,7 +5,7 @@ spring:
   profiles:
     active: log
   application:
-    name: spring-gateway
+    name: cloud-application-gateway
   config:
     import: #######   导入nacos配置列表
       - nacos:nacos-config-example.properties?refreshEnabled=true

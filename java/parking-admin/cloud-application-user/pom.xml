@@ -53,6 +53,11 @@
             <optional>true</optional>
         </dependency>
 
+        <dependency>
+            <groupId>com.cyyaw.admin</groupId>
+            <artifactId>application-user</artifactId>
+            <version>1.0.1</version>
+        </dependency>
 
     </dependencies>
 

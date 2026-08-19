@@ -1,7 +1,7 @@
-package com.cyyaw.admin.user;
+package com.cyyaw.admin.application.user;
 
-import com.cyyaw.admin.user.security.AuthFilter;
-import com.cyyaw.admin.user.security.JwtUtil;
+import com.cyyaw.admin.application.user.security.AuthFilter;
+import com.cyyaw.admin.application.user.security.JwtUtil;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

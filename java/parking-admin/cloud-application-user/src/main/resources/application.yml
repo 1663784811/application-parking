@@ -3,9 +3,9 @@ server:
 
 spring:
   profiles:
-    active: log
+    active: log,mysql,mybatis
   application:
-    name: admin-user
+    name: cloud-application-user
   cloud:
     nacos:
       serverAddr: 192.168.221.38:8848

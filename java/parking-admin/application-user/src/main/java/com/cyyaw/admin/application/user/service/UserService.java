@@ -1,4 +1,4 @@
-package com.cyyaw.admin.user.service;
+package com.cyyaw.admin.application.user.service;
 
 import com.cyyaw.admin.entity.dto.user.LoginResult;
 import com.cyyaw.admin.entity.dto.user.RegisterRequest;

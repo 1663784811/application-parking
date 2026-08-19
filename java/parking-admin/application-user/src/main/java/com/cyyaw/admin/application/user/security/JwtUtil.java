@@ -1,4 +1,4 @@
-package com.cyyaw.admin.user.security;
+package com.cyyaw.admin.application.user.security;
 
 import com.cyyaw.admin.common.WebErrCodeEnum;
 import com.cyyaw.admin.common.WebException;

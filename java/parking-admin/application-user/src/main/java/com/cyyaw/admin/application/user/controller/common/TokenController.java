@@ -1,10 +1,10 @@
-package com.cyyaw.admin.user.controller.common;
+package com.cyyaw.admin.application.user.controller.common;
 
 import com.cyyaw.admin.common.BaseResult;
 import com.cyyaw.admin.entity.dto.user.LoginResult;
 import com.cyyaw.admin.entity.dto.user.RefreshRequest;
 import com.cyyaw.admin.entity.dto.user.UserInfoVo;
-import com.cyyaw.admin.user.service.UserService;
+import com.cyyaw.admin.application.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;

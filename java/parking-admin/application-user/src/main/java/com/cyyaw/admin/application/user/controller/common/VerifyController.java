@@ -1,9 +1,9 @@
-package com.cyyaw.admin.user.controller.common;
+package com.cyyaw.admin.application.user.controller.common;
 
 import com.cyyaw.admin.common.BaseResult;
 import com.cyyaw.admin.entity.dto.user.VerifyCodeRequest;
-import com.cyyaw.admin.user.verify.CaptchaImageUtil;
-import com.cyyaw.admin.user.verify.VerifyCodeStore;
+import com.cyyaw.admin.application.user.verify.CaptchaImageUtil;
+import com.cyyaw.admin.application.user.verify.VerifyCodeStore;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

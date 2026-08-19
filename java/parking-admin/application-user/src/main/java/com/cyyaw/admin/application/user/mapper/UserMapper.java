@@ -1,4 +1,4 @@
-package com.cyyaw.admin.user.mapper;
+package com.cyyaw.admin.application.user.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.cyyaw.admin.entity.module.user.User;

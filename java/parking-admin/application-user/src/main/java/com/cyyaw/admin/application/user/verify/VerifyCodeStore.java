@@ -1,4 +1,4 @@
-package com.cyyaw.admin.user.verify;
+package com.cyyaw.admin.application.user.verify;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

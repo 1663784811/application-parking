@@ -1,4 +1,4 @@
-package com.cyyaw.admin.user.security;
+package com.cyyaw.admin.application.user.security;
 
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;

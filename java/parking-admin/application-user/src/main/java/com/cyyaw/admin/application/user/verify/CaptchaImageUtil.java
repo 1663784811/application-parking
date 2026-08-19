@@ -1,4 +1,4 @@
-package com.cyyaw.admin.user.verify;
+package com.cyyaw.admin.application.user.verify;
 
 import javax.imageio.ImageIO;
 import java.awt.Color;

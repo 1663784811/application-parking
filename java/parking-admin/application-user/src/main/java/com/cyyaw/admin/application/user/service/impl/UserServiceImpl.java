@@ -1,4 +1,4 @@
-package com.cyyaw.admin.user.service.impl;
+package com.cyyaw.admin.application.user.service.impl;
 
 import com.cyyaw.admin.common.WebErrCodeEnum;
 import com.cyyaw.admin.common.WebException;
@@ -6,12 +6,12 @@ import com.cyyaw.admin.entity.dto.user.LoginResult;
 import com.cyyaw.admin.entity.dto.user.RegisterRequest;
 import com.cyyaw.admin.entity.dto.user.UserInfoVo;
 import com.cyyaw.admin.entity.module.user.User;
-import com.cyyaw.admin.user.mapper.UserMapper;
-import com.cyyaw.admin.user.security.JwtUtil;
-import com.cyyaw.admin.user.security.LoginUser;
-import com.cyyaw.admin.user.security.UserContext;
-import com.cyyaw.admin.user.service.UserService;
-import com.cyyaw.admin.user.verify.VerifyCodeStore;
+import com.cyyaw.admin.application.user.mapper.UserMapper;
+import com.cyyaw.admin.application.user.security.JwtUtil;
+import com.cyyaw.admin.application.user.security.LoginUser;
+import com.cyyaw.admin.application.user.security.UserContext;
+import com.cyyaw.admin.application.user.service.UserService;
+import com.cyyaw.admin.application.user.verify.VerifyCodeStore;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
