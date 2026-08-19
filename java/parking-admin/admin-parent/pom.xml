@@ -32,11 +32,11 @@
 
 
         <!--================       集群      ======================-->
-        <module>../admin-gateway</module>
+        <module>../cloud-gateway</module>
 
 
         <!-- ===============      单机        ===================== -->
-        <module>../admin-all</module>
+        <module>../single-all</module>
 
 
         <!--    集群接口抽象层    -->
