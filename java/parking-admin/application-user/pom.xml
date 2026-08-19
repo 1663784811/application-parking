@@ -74,7 +74,6 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- BCrypt 密码哈希：仅用 PasswordEncoder，不引入 Spring Security 过滤链 -->
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-crypto</artifactId>
@@ -83,8 +82,27 @@
             <groupId>com.cyyaw.admin</groupId>
             <artifactId>admin-common</artifactId>
             <version>1.0.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.cyyaw.admin</groupId>
+            <artifactId>admin-dao</artifactId>
+            <version>1.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.cyyaw.admin</groupId>
+            <artifactId>admin-config</artifactId>
+            <version>1.0.1</version>
             <scope>compile</scope>
         </dependency>
+
+
+
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-core</artifactId>
+        </dependency>
+
 
     </dependencies>
 

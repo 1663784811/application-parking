@@ -25,6 +25,7 @@
         <!-- 实体类统一模块：被各服务依赖，需先构建 -->
         <module>../admin-entity</module>
         <module>../admin-common</module>
+        <module>../admin-config</module>
 
 
         <!--================     应用服务    =================-->
