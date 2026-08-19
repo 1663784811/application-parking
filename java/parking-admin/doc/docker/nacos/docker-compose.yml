@@ -1,0 +1,26 @@
+services:
+  nacos:
+    image: nacos/nacos-server:v3.1.1
+    restart: always
+    environment:
+      - MODE=standalone
+      - NACOS_APPLICATION_PORT=8848
+      - SPRING_DATASOURCE_PLATFORM=mysql
+      - MYSQL_SERVICE_HOST=host.docker.internal
+      - MYSQL_SERVICE_PORT=3306
+      - MYSQL_SERVICE_DB_NAME=t_nacos
+      - MYSQL_SERVICE_USER=root
+      - MYSQL_SERVICE_PASSWORD=v7L9pX2qR5sK3mN8bY4cZ6wA1dE0fG2h
+      - MYSQL_SERVICE_DB_PARAM=useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      - NACOS_AUTH_ENABLE=true
+      - NACOS_AUTH_USER=nacos
+      - NACOS_AUTH_PASSWD=nacos
+      - NACOS_AUTH_TOKEN=ZXlKaGJHY2lPaUpTVXpVeE1pSjkuZXlKcGMzTWlPaUpRVkVkTFNFSkJMQU5CVlVKRC4=
+      - NACOS_AUTH_IDENTITY_KEY=nacos
+      - NACOS_AUTH_IDENTITY_VALUE=nacos
+    ports:
+      - "8848:8848"
+      - "8080:8080"
+
+
+

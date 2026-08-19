@@ -1,0 +1,37 @@
+# Sentinel Configuration
+spring:
+  cloud:
+    sentinel:
+      enabled: true
+      transport:
+        dashboard: localhost:8080
+        port: 8719
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

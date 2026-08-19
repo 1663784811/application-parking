@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- 日志输出路径 -->
+    <property name="LOG_HOME" value="./logs/spring-gateway"/>
+
+    <!-- 控制台日志输出格式 -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - [%X{traceId:-},%X{spanId:-}] %msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- 文件日志输出格式 -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_HOME}/spring-gateway.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- 每天生成一个日志文件 -->
+            <fileNamePattern>${LOG_HOME}/spring-gateway.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <!-- 保留30天的日志 -->
+            <maxHistory>30</maxHistory>
+            <!-- 单个日志文件最大100MB -->
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>100MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - [%X{traceId:-},%X{spanId:-}] %msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- Spring Cloud Gateway 路由日志 -->
+    <logger name="org.springframework.cloud.gateway" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </logger>
+
+    <!-- WebFlux 请求日志 -->
+    <logger name="org.springframework.web.reactive" level="DEBUG"/>
+
+    <!-- Spring Cloud相关日志 -->
+    <logger name="org.springframework.cloud" level="INFO"/>
+    <logger name="com.alibaba.nacos" level="INFO"/>
+
+    <!-- 根日志级别 -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </root>
+</configuration>

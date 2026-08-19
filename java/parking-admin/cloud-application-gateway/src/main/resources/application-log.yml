@@ -1,0 +1,34 @@
+# 日志配置
+logging:
+  level:
+    com.cyyaw.spring.gateway: INFO
+    com.cyyaw.spring.gateway.filter: DEBUG
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.web.reactive: DEBUG
+    org.springframework.cloud.loadbalancer: DEBUG
+    org.springframework.cloud.openfeign: DEBUG
+    com.alibaba.cloud.nacos: DEBUG
+    com.alibaba.csp.sentinel: DEBUG
+    org.springframework.web.server.adapter.HttpWebHandlerAdapter: DEBUG
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

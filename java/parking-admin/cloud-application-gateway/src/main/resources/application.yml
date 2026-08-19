@@ -1,0 +1,45 @@
+server:
+  port: 9000
+
+spring:
+  profiles:
+    active: log
+  application:
+    name: spring-gateway
+  config:
+    import: #######   导入nacos配置列表
+      - nacos:nacos-config-example.properties?refreshEnabled=true
+  cloud:
+    nacos:
+      serverAddr: 192.168.221.38:8848
+      username: nacos
+      password: nacos
+      # 配置中心
+      #config:
+
+      #  服务注册与发现
+      discovery:
+        server-addr: ${spring.cloud.nacos.server-addr}
+        username: ${spring.cloud.nacos.username}
+        password: ${spring.cloud.nacos.password}
+    loadbalancer:
+      ribbon:
+        enabled: false
+      nacos:
+        enabled: true
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: admin-user
+              uri: lb://admin-user
+              predicates:
+                - Path=/user/**
+
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'

@@ -1,0 +1,33 @@
+server:
+  port: 9001
+
+spring:
+  profiles:
+    active: log
+  application:
+    name: admin-user
+  cloud:
+    nacos:
+      serverAddr: 192.168.221.38:8848
+      username: nacos
+      password: nacos
+      # 配置中心
+      #config:
+
+      #  服务注册与发现
+      discovery:
+        server-addr: ${spring.cloud.nacos.server-addr}
+        username: ${spring.cloud.nacos.username}
+        password: ${spring.cloud.nacos.password}
+    loadbalancer:
+      ribbon:
+        enabled: false
+      nacos:
+        enabled: true
+
+  config:
+    import: #######   导入nacos配置列表
+      - nacos:nacos-config-example.properties?refreshEnabled=true
+
+
+
