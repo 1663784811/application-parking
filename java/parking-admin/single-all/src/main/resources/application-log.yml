@@ -1,0 +1,10 @@
+# 日志配置
+logging:
+  level:
+    com.cyyaw.admin.user: INFO
+    com.cyyaw.admin.user.client: DEBUG
+    org.springframework.web: INFO
+    org.springframework.cloud.openfeign: DEBUG
+    feign.Logger: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

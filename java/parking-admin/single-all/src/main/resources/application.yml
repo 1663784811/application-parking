@@ -1,7 +1,12 @@
 server:
-  port: 9001
+  port: 10000
 
 
+spring:
+  profiles:
+    active: log,mysql,mybatis
+  application:
+    name: cloud-application-user
 
 
 

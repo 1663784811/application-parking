@@ -1,0 +1,41 @@
+# MyBatis-Plus配置
+mybatis-plus:
+  # 显示SQL日志
+  configuration:
+    # SQL日志实现类 - 使用标准输出流打印SQL语句，方便开发和调试
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    # 自动将数据库下划线命名转换为驼峰命名（如：user_name -> userName）
+    map-underscore-to-camel-case: true
+    # 是否开启二级缓存 - 生产环境可考虑开启，开发环境建议关闭
+    cache-enabled: false
+    # 是否开启延迟加载 - false表示立即加载所有关联对象
+    lazy-loading-enabled: false
+    # 激进懒加载策略 - true表示加载任意属性时加载所有延迟加载属性
+    aggressive-lazy-loading: true
+    # 是否使用JDBC的getGeneratedKeys获取数据库自增主键
+    use-generated-keys: false
+    # 执行器类型 - SIMPLE为普通执行器，REUSE为重用预编译语句，BATCH为批量执行器
+    default-executor-type: simple
+  # 全局配置
+  global-config:
+    db-config:
+      # 主键类型配置
+      # AUTO: 数据库ID自增 (MySQL推荐)
+      # INPUT: 用户输入ID
+      # ASSIGN_ID: 雪花算法生成全局唯一ID (数字类型)
+      # ASSIGN_UUID: 全局唯一ID UUID
+      id-type: ASSIGN_ID
+      # 字段验证策略
+      # IGNORED: 忽略判断，直接插入
+      # NOT_NULL: 非NULL判断 (推荐)
+      # 数据库表名是否使用下划线命名
+      table-underline: true
+      # 逻辑删除配置 - 删除标记为1
+      logic-delete-value: 1
+      # 逻辑删除配置 - 正常状态标记为0
+      logic-not-delete-value: 0
+  # XML映射文件位置 - 支持通配符，用于配置Mapper XML文件路径
+  mapper-locations: classpath:mapper/**/*.xml # 若有 XML 映射文件需配置
+  # 实体类扫描包路径 - 配置后可在XML中直接使用类名而非全限定名
+  type-aliases-package: com.cyyaw.admin.entity.module # 实体类别名包
+
