@@ -93,7 +93,13 @@ public class AuthFilter implements GlobalFilter, Ordered {
             "/login",
             "/register",
             "/health",
-            "/actuator/**"
+            "/actuator/**",
+            // knife4j 文档相关路径放行，否则 UI 被网关 401 拦截
+            "/doc.html",
+            "/webjars/**",
+            "/swagger-resources/**",
+            "/v3/api-docs/**",
+            "/favicon.ico"
         };
 
         for (String publicPath : publicEndpoints) {

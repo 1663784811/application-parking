@@ -43,3 +43,24 @@ management:
     web:
       exposure:
         include: '*'
+
+# knife4j 网关聚合：在网关统一暴露 /doc.html，从 Nacos 自动发现下游服务并聚合其 OpenAPI 文档
+knife4j:
+  gateway:
+    enabled: true
+    # DISCOVER：基于服务发现自动聚合；MANUAL：在 routes 下手动列举服务
+    strategy: DISCOVER
+    discover:
+      enabled: true
+      # 下游使用 OpenAPI3（springdoc /v3/api-docs）
+      version: OpenAPI3
+      # 排除网关自身，避免把网关当作下游文档源
+      excluded-services:
+        - cloud-application-gateway
+
+# 网关自身不生成 API 文档（文档由聚合下游得到）
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
