@@ -1,0 +1,166 @@
+/*
+ * 停车H5应用颜色系统
+ * 遵循现代设计原则并考虑无障碍访问
+ */
+
+:root {
+  /* ========================================
+   * 品牌主色（核心标识）
+   * ======================================== */
+
+  /* 主品牌色 */
+  --brand-primary: #10b981;        /* 主色（核心按钮/导航） */
+  --brand-primary-1: #047857;      /* 主色-深（active状态） */
+  --brand-primary-2: #34d399;      /* 主色-中（hover状态） */
+  --brand-primary-3: #a7f3d0;      /* 主色-浅（次要元素） */
+  --brand-primary-4: #d1fae5;      /* 主色-极浅（边框/描边） */
+  --brand-primary-5: #ecfdf5;      /* 主色-最浅（背景/高亮） */
+
+  /* ========================================
+   * 辅助色（成功 / 警告 / 危险 / 信息）
+   * ======================================== */
+
+  /* 成功色（绿色系） */
+  --color-success: #10b981;        /* 成功-主色（文字/图标） */
+  --color-success-light: #dcfce7;  /* 成功-浅（背景/提示框） */
+  --color-success-deep: #047857;   /* 成功-深（hover/active） */
+
+  /* 警告色（琥珀色/橙色系） */
+  --color-warning: #f59e0b;        /* 警告-主色 */
+  --color-warning-light: #fef3c7;  /* 警告-浅 */
+  --color-warning-deep: #b45309;   /* 警告-深 */
+
+  /* 危险色（红色系） */
+  --color-danger: #ef4444;         /* 危险-主色（错误/删除） */
+  --color-danger-light: #fee2e2;   /* 危险-浅 */
+  --color-danger-deep: #b91c1c;    /* 危险-深 */
+
+  /* 信息色（蓝色系） */
+  --color-info: #3b82f6;           /* 信息-主色（说明/占位） */
+  --color-info-light: #dbeafe;     /* 信息-浅 */
+  --color-info-deep: #1d4ed8;      /* 信息-深 */
+
+  /* ========================================
+   * 中性色（文本 / 背景 / 边框，占比 80%+）
+   * ======================================== */
+
+  /* 文本色 */
+  --text-primary: #1f2937;         /* 主要文本（标题/正文） */
+  --text-secondary: #4b5563;       /* 次要文本（副标题/说明） */
+  --text-tertiary: #6b7280;        /* 提示文本（占位/辅助） */
+  --text-disabled: #9ca3af;        /* 禁用文本 */
+  --text-placeholder: #b0b9c6;     /* 输入框占位文本 */
+
+  /* 背景色 */
+  --bg-primary: #ffffff;           /* 主背景（页面/卡片） */
+  --bg-secondary: #f9fafb;         /* 次要背景（区块分隔） */
+  --bg-tertiary: #f3f4f6;          /* 卡片背景（悬浮/选中） */
+  --bg-disabled: #f9fafb;          /* 禁用背景 */
+  --bg-mask: rgba(0, 0, 0, 0.4);  /* 遮罩背景（弹窗） */
+
+  /* 边框色 */
+  --border-primary: #e5e7eb;       /* 常规边框（卡片/表单） */
+  --border-secondary: #f3f4f6;     /* 轻边框（分割线） */
+  --border-tertiary: #f9fafb;      /* 极轻边框（内部分隔） */
+  --border-hover: #d1d5db;         /* 边框hover状态 */
+
+  /* ========================================
+   * 交互状态色
+   * ======================================== */
+
+  /* 通用交互状态 */
+  --state-hover: #f3f4f6;          /* 通用hover背景 */
+  --state-active: #e5e7eb;         /* 通用active背景 */
+  --state-disabled: #f9fafb;       /* 通用禁用色 */
+
+  /* 主色交互状态（快捷复用） */
+  --brand-hover: var(--brand-primary-2);    /* 主色hover */
+  --brand-active: var(--brand-primary-1);   /* 主色active */
+  --brand-disabled: #a7f3d0;                /* 主色禁用 */
+
+  /* ========================================
+   * 渐变色
+   * ======================================== */
+
+  /* 品牌主渐变（核心场景：按钮/卡片/背景） */
+  --gradient-primary: linear-gradient(135deg, var(--brand-primary) 0%, #34d399 100%);
+  --gradient-primary-light: linear-gradient(135deg, var(--brand-primary-4) 0%, var(--brand-primary-5) 100%);
+
+  /* 功能渐变（成功/警告/危险） */
+  --gradient-success: linear-gradient(135deg, var(--color-success) 0%, #34d399 100%);
+  --gradient-warning: linear-gradient(135deg, var(--color-warning) 0%, #fbbf24 100%);
+  --gradient-danger: linear-gradient(135deg, var(--color-danger) 0%, #f87171 100%);
+
+  /* 通用渐变（装饰/分割/背景） */
+  --gradient-neutral: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  --gradient-mask: linear-gradient(to bottom, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.4) 100%);
+
+  /* ========================================
+   * 业务语义色（可选，根据业务调整）
+   * ======================================== */
+
+  /* 订单/状态相关颜色 */
+  --status-pending: #f59e0b;       /* 待处理/待付款 */
+  --status-processing: #3b82f6;    /* 处理中/进行中 */
+  --status-completed: #10b981;     /* 已完成/成功 */
+  --status-cancelled: #ef4444;     /* 已取消/失败 */
+  --status-refunded: #8b5cf6;      /* 已退款/特殊状态 */
+
+  /* 用户状态颜色 */
+  --user-active: #10b981;          /* 活跃用户 */
+  --user-inactive: #9ca3af;        /* 非活跃用户 */
+  --user-suspended: #ef4444;       /* 已停用用户 */
+
+  /* ========================================
+   * 额外工具色
+   * ======================================== */
+
+  /* 阴影颜色 */
+  --shadow-light: rgba(0, 0, 0, 0.05);
+  --shadow-medium: rgba(0, 0, 0, 0.1);
+  --shadow-strong: rgba(0, 0, 0, 0.15);
+
+  /* 聚焦环 */
+  --focus-ring: rgba(37, 99, 235, 0.5);
+
+  /* ========================================
+   * 品牌色之上的内容（渐变/深色背景上的文字与玻璃面）
+   * ======================================== */
+
+  /* 文本色（白） */
+  --on-brand-primary: #ffffff;            /* 主要文本 */
+  --on-brand-secondary: rgba(255, 255, 255, 0.88); /* 次要文本 */
+  --on-brand-tertiary: rgba(255, 255, 255, 0.78);  /* 提示文本 */
+  --on-brand-disabled: rgba(255, 255, 255, 0.55);  /* 弱化/禁用 */
+
+  /* 玻璃面/装饰 */
+  --on-brand-glass: rgba(255, 255, 255, 0.16);        /* 玻璃卡片底 */
+  --on-brand-glass-strong: rgba(255, 255, 255, 0.22); /* 玻璃边/强 */
+  --on-brand-glass-soft: rgba(255, 255, 255, 0.12);  /* 玻璃柔光 */
+  --on-brand-divider: rgba(255, 255, 255, 0.3);     /* 玻璃分割线 */
+
+  /* ========================================
+   * 品牌阴影（主色绿调）
+   * ======================================== */
+  --shadow-brand: rgba(4, 120, 87, 0.3);        /* 按钮/卡片投影色 */
+  --shadow-brand-strong: rgba(4, 120, 87, 0.45); /* 标志/光晕强调 */
+
+  /* ========================================
+   * VIP / 金色强调
+   * ======================================== */
+  --accent-gold: #ffd700;      /* 金色徽章底 */
+  --accent-gold-deep: #b8860b; /* 金色徽章文字 */
+
+  /* ========================================
+   * 圆角
+   * ======================================== */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+}
+
+/* Safe Area - 状态栏高度（默认值40px，iOS/Android兼容） */
+:root {
+  --safe-top: env(safe-area-inset-top, 40px);
+}
