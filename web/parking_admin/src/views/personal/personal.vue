@@ -6,7 +6,8 @@
         <div class="user-card">
           <div class="avatar-wrapper">
             <div class="avatar">
-              <Icon type="ios-person" />
+              <img v-if="state.userInfo.avatar" :src="state.userInfo.avatar" class="avatar-img" />
+              <Icon v-else type="ios-person" />
             </div>
             <Upload
               :show-upload-list="false"
@@ -61,8 +62,8 @@
               <FormItem label="邮箱">
                 <Input v-model="state.infoForm.email" placeholder="请输入邮箱" />
               </FormItem>
-              <FormItem label="所属部门">
-                <Input v-model="state.infoForm.department" disabled />
+              <FormItem label="昵称">
+                <Input v-model="state.infoForm.nickName" placeholder="请输入昵称" maxlength="20" />
               </FormItem>
               <FormItem label="角色">
                 <Tag color="blue">{{ state.userInfo.roleName }}</Tag>
@@ -263,11 +264,20 @@
 </template>
 
 <script setup>
-import { reactive, onMounted } from 'vue'
+import { reactive, onMounted, watch } from 'vue'
 import { Icon, Form, FormItem, Input, Button, Tag, Switch, Upload, Table, Page, Message, Modal } from 'view-ui-plus'
 import { useUserStore } from '@/stores/user'
+import { userApi } from '@/api'
 
 const userStore = useUserStore()
+
+// 角色 → 中文展示
+const ROLE_MAP = {
+  Admin: '管理员',
+  User: '普通用户',
+  Store: '门店管理员',
+  Root: '超级管理员'
+}
 
 const state = reactive({
   activeTab: 'info',
@@ -276,18 +286,21 @@ const state = reactive({
   notificationSaving: false,
   logLoading: false,
 
+  // 顶部用户卡片展示信息（由 findUserInfo 映射）
   userInfo: {
-    name: '管理员',
-    roleName: '超级管理员',
-    twoFactorEnabled: false
+    name: '',
+    roleName: '',
+    avatar: '',
+    twoFactorEnabled: false // 后端未提供两步验证字段，默认未开启
   },
 
+  // 基本信息表单（字段对齐 AuAdmin：account/realName/nickName/phone/email）
   infoForm: {
-    username: 'admin',
-    name: '管理员',
-    phone: '138****8888',
-    email: 'admin@example.com',
-    department: '技术部'
+    username: '',   // 账号 account（不可改）
+    name: '',       // 真实姓名 realName
+    nickName: '',   // 昵称 nickName
+    phone: '',      // 手机号 phone
+    email: ''       // 邮箱 email
   },
 
   passwordForm: {
@@ -325,12 +338,9 @@ const logColumns = [
   { title: '设备', key: 'device', minWidth: 160 }
 ]
 
+// 基本信息保存：后端个人中心接口暂未提供资料修改接口，不模拟成功
 const handleSaveInfo = () => {
-  state.saving = true
-  setTimeout(() => {
-    Message.success('保存成功')
-    state.saving = false
-  }, 800)
+  Message.info('个人资料修改接口尚未提供')
 }
 
 const handleChangePassword = () => {
@@ -350,29 +360,21 @@ const handleChangePassword = () => {
     Message.warning('两次输入的密码不一致')
     return
   }
-  state.passwordSaving = true
-  setTimeout(() => {
-    Message.success('密码修改成功')
-    state.passwordForm = { oldPassword: '', newPassword: '', confirmPassword: '' }
-    state.passwordSaving = false
-    state.activeTab = 'info'
-  }, 800)
+  Message.info('修改密码接口尚未提供')
 }
 
 const handleResetPassword = () => {
   state.passwordForm = { oldPassword: '', newPassword: '', confirmPassword: '' }
 }
 
+// 通知设置保存：后端暂未提供，不模拟成功
 const handleSaveNotification = () => {
-  state.notificationSaving = true
-  setTimeout(() => {
-    Message.success('保存成功')
-    state.notificationSaving = false
-  }, 500)
+  Message.info('通知设置接口尚未提供')
 }
 
+// 头像上传：后端暂未提供上传接口
 const handleAvatarSuccess = () => {
-  Message.success('头像更新成功')
+  Message.info('头像上传接口尚未提供')
 }
 
 const getActionColor = (type) => {
@@ -385,19 +387,10 @@ const getActionText = (type) => {
   return texts[type] || type
 }
 
+// 操作日志：后端个人中心接口未提供，暂无数据
 const loadLogList = () => {
-  state.logLoading = true
-  setTimeout(() => {
-    state.logList = [
-      { time: '2024-01-15 14:32:15', actionType: 'edit', content: '修改了停车场「中心停车场」的基本信息', ip: '192.168.1.100', device: 'Windows Chrome' },
-      { time: '2024-01-15 10:15:00', actionType: 'export', content: '导出了2024年1月的营收报表', ip: '192.168.1.100', device: 'Windows Chrome' },
-      { time: '2024-01-14 16:45:30', actionType: 'login', content: '管理员登录系统', ip: '192.168.1.100', device: 'Windows Chrome' },
-      { time: '2024-01-14 09:20:00', actionType: 'edit', content: '添加了新设备「2号入口相机」', ip: '192.168.1.100', device: 'Windows Chrome' },
-      { time: '2024-01-13 15:30:00', actionType: 'delete', content: '删除了用户「张三」的账号', ip: '192.168.1.100', device: 'Windows Chrome' }
-    ]
-    state.logTotal = 25
-    state.logLoading = false
-  }, 500)
+  state.logList = []
+  state.logTotal = 0
 }
 
 const handlePageSizeChange = (size) => {
@@ -412,10 +405,44 @@ const showLoginLog = () => {
   })
 }
 
-onMounted(() => {
+// 将 findUserInfo 返回映射到页面展示状态
+// findUserInfo.data = { baseInfo, role, permission, auEnterprise }
+// baseInfo（Admin 角色）= AuAdmin：account/phone/nickName/avatar/realName/gender/birthday/email
+const mapUserInfo = (info) => {
+  if (!info) return
+  const base = info.baseInfo || {}
+  state.userInfo.name = base.nickName || base.realName || base.account || '管理员'
+  state.userInfo.roleName = ROLE_MAP[info.role] || info.role || '—'
+  state.userInfo.avatar = base.avatar || ''
+  state.infoForm.username = base.account || ''
+  state.infoForm.name = base.realName || ''
+  state.infoForm.nickName = base.nickName || ''
+  state.infoForm.phone = base.phone || ''
+  state.infoForm.email = base.email || ''
+}
+
+// 拉取当前登录用户信息：优先复用 store（MainLayout 已拉取），否则主动调 findUserInfo
+const loadUserInfo = async () => {
   if (userStore.state.userInfo) {
-    state.userInfo.name = userStore.state.userInfo.name || '管理员'
+    mapUserInfo(userStore.state.userInfo)
+    return
   }
+  try {
+    const res = await userApi.findUserInfo()
+    userStore.setUserInfo(res.data)
+    mapUserInfo(res.data)
+  } catch (e) {
+    // 获取失败由 authRequest 拦截器提示
+  }
+}
+
+// store 中用户信息异步到达时同步映射
+watch(() => userStore.state.userInfo, (info) => {
+  mapUserInfo(info)
+})
+
+onMounted(() => {
+  loadUserInfo()
   loadLogList()
 })
 </script>
@@ -456,10 +483,18 @@ onMounted(() => {
           display: flex;
           align-items: center;
           justify-content: center;
+          overflow: hidden;
 
           .ivu-icon {
             font-size: 40px;
             color: #fff;
+          }
+
+          .avatar-img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
           }
         }
 

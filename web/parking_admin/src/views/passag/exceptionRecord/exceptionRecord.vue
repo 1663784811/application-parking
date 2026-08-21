@@ -30,17 +30,18 @@
 
         <div class="filter-item"><Button type="primary" @click="handleSearch">查询</Button></div>
         <div class="filter-item"><Button @click="handleReset">重置</Button></div>
-      </div>
-
-      <div class="filter-actions">
-        <Button type="primary" @click="handleBatchBlacklist" :disabled="state.selectedRows.length === 0">
-          <Icon type="ios-close-circle-outline" />
-          批量加入黑名单
-        </Button>
-        <Button @click="handleBatchSms" :disabled="state.selectedRows.length === 0">
-          <Icon type="ios-mail-outline" />
-          批量短信通知
-        </Button>
+        <div class="filter-item">
+          <Button type="primary" @click="handleBatchBlacklist" :disabled="state.selectedRows.length === 0">
+            <Icon type="ios-close-circle-outline" />
+            批量加入黑名单
+          </Button>
+        </div>
+        <div class="filter-item">
+          <Button @click="handleBatchSms" :disabled="state.selectedRows.length === 0">
+            <Icon type="ios-mail-outline" />
+            批量短信通知
+          </Button>
+        </div>
       </div>
     </div>
 
@@ -348,20 +349,6 @@ initData()
 
       .filter-date {
         width: 260px;
-      }
-    }
-
-    .filter-actions {
-      display: flex;
-      gap: var(--spacing-md);
-
-      .ivu-btn {
-        display: inline-flex;
-        align-items: center;
-
-        .ivu-icon {
-          margin-right: 4px;
-        }
       }
     }
   }

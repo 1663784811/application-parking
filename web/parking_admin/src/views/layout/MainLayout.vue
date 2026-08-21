@@ -20,16 +20,36 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import LayoutHeader from './components/Header.vue'
 import LayoutSider from './components/Sider.vue'
 import ParkingSidebar from './components/ParkingSidebar.vue'
+import { useUserStore } from '@/stores/user'
+import { userApi } from '@/api'
 
 const route = useRoute()
+const userStore = useUserStore()
 
 const showParkingSidebar = computed(() => {
   return route.meta.showParkingSidebar === true
+})
+
+// 登录后获取当前用户信息（仅在有 token 且尚未取到时拉取一次）
+const loadUserInfo = async () => {
+  if (!userStore.isLoggedIn()) return
+  if (userStore.state.userInfo) return
+  try {
+    const res = await userApi.findUserInfo()
+    // res.data = { baseInfo, role, permission, auEnterprise }
+    userStore.setUserInfo(res.data)
+  } catch (e) {
+    // 获取失败由拦截器提示，不阻断页面渲染
+  }
+}
+
+onMounted(() => {
+  loadUserInfo()
 })
 </script>
 

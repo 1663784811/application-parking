@@ -22,8 +22,8 @@
         </div>
         <div class="filter-item"><Button type="primary" @click="handleSearch">查询</Button></div>
         <div class="filter-item"><Button @click="handleReset">重置</Button></div>
+        <div class="filter-item"><Button type="primary" @click="handleAdd"><Icon type="ios-add" />添加设备</Button></div>
       </div>
-      <div class="filter-actions"><Button type="primary" @click="handleAdd"><Icon type="ios-add" />添加设备</Button></div>
     </div>
     <div class="stats-row">
       <div class="stat-item total"><span class="stat-label">设备总数</span><span class="stat-value">{{ state.stats.total }}</span></div>
@@ -105,7 +105,6 @@ initData()
 .device-list-page {
   .filter-bar { padding: var(--spacing-xl); background: var(--bg-color); border-radius: var(--border-radius-base); margin-bottom: var(--spacing-lg); box-shadow: var(--shadow-base); }
   .filter-row { display: flex; flex-wrap: wrap; gap: var(--spacing-md); margin-bottom: var(--spacing-md); .filter-item { flex-shrink: 0; } .filter-select { width: 150px; } .filter-input { width: 200px; } }
-  .filter-actions { display: flex; gap: var(--spacing-md); }
   .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--spacing-lg); margin-bottom: var(--spacing-lg); .stat-item { padding: var(--spacing-xl); background: var(--bg-color); border-radius: var(--border-radius-base); box-shadow: var(--shadow-base); display: flex; flex-direction: column; .stat-label { font-size: var(--font-size-sm); color: var(--text-color-secondary); margin-bottom: var(--spacing-xs); } .stat-value { font-size: 24px; font-weight: 600; color: var(--text-color-title); } &.online .stat-value { color: var(--success-color); } &.offline .stat-value { color: var(--text-color-secondary); } &.fault .stat-value { color: var(--error-color); } } }
   .table-container { background: var(--bg-color); border-radius: var(--border-radius-base); padding: var(--spacing-xl); box-shadow: var(--shadow-base); .device-type { padding: 2px 8px; background: rgba(22,93,255,0.1); color: #165DFF; border-radius: var(--border-radius-sm); font-size: var(--font-size-xs); } .text-danger { color: var(--error-color); } .text-warning { color: var(--warning-color); } .pagination-wrapper { display: flex; justify-content: flex-end; margin-top: var(--spacing-xl); } }
 }

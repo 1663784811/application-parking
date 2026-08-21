@@ -18,12 +18,12 @@
         </div>
         <div class="filter-item"><Button type="primary" @click="handleSearch">查询</Button></div>
         <div class="filter-item"><Button @click="handleReset">重置</Button></div>
-      </div>
-      <div class="filter-actions">
-        <Button @click="handleBatchRed" :disabled="state.selectedRows.length === 0">
-          <Icon type="ios-undo" />
-          批量冲红
-        </Button>
+        <div class="filter-item">
+          <Button @click="handleBatchRed" :disabled="state.selectedRows.length === 0">
+            <Icon type="ios-undo" />
+            批量冲红
+          </Button>
+        </div>
       </div>
     </div>
 
@@ -119,7 +119,6 @@ initData()
 .invoice-manage-page {
   .filter-bar { padding: var(--spacing-xl); background: var(--bg-color); border-radius: var(--border-radius-base); margin-bottom: var(--spacing-lg); box-shadow: var(--shadow-base); }
   .filter-row { display: flex; flex-wrap: wrap; gap: var(--spacing-md); margin-bottom: var(--spacing-md); .filter-item { flex-shrink: 0; } .filter-input { width: 220px; } .filter-date { width: 260px; } .filter-select { width: 150px; } }
-  .filter-actions { display: flex; gap: var(--spacing-md); }
   .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--spacing-lg); margin-bottom: var(--spacing-lg); .stat-item { padding: var(--spacing-xl); background: var(--bg-color); border-radius: var(--border-radius-base); box-shadow: var(--shadow-base); display: flex; flex-direction: column; .stat-label { font-size: var(--font-size-sm); color: var(--text-color-secondary); margin-bottom: var(--spacing-xs); } .stat-value { font-size: 24px; font-weight: 600; color: var(--text-color-title); } } }
   .table-container { background: var(--bg-color); border-radius: var(--border-radius-base); padding: var(--spacing-xl); box-shadow: var(--shadow-base); .text-danger { color: var(--error-color); } .pagination-wrapper { display: flex; justify-content: flex-end; margin-top: var(--spacing-xl); } }
 }

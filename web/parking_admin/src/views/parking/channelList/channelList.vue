@@ -35,9 +35,9 @@
         <div class="filter-item">
           <Button @click="handleReset">重置</Button>
         </div>
-      </div>
-      <div class="filter-actions">
-        <Button type="primary" icon="ios-add" @click="handleAdd">新增通道</Button>
+        <div class="filter-item">
+          <Button type="primary" icon="ios-add" @click="handleAdd">新增通道</Button>
+        </div>
       </div>
     </div>
 
@@ -350,11 +350,6 @@ onMounted(() => {
       .filter-input {
         width: 200px;
       }
-    }
-
-    .filter-actions {
-      display: flex;
-      justify-content: flex-end;
     }
   }
 

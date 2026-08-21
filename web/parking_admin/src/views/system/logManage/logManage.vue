@@ -16,12 +16,12 @@
         </div>
         <div class="filter-item"><Button type="primary" @click="handleSearch">查询</Button></div>
         <div class="filter-item"><Button @click="handleReset">重置</Button></div>
-      </div>
-      <div class="filter-actions">
-        <Button @click="handleExport">
-          <Icon type="ios-download-outline"/>
-          导出
-        </Button>
+        <div class="filter-item">
+          <Button @click="handleExport">
+            <Icon type="ios-download-outline"/>
+            导出
+          </Button>
+        </div>
       </div>
     </div>
     <div class="table-container">
@@ -259,11 +259,6 @@ initData()
       .filter-input {
         width: 200px;
       }
-    }
-
-    .filter-actions {
-      display: flex;
-      gap: var(--spacing-md);
     }
   }
 

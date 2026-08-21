@@ -4,34 +4,10 @@
     <div class="filter-bar">
       <div class="filter-row">
         <div class="filter-item">
-          <RangePicker
-            v-model="state.searchForm.dateRange"
-            :show-time="true"
-            format="YYYY-MM-DD HH:mm:ss"
-            placeholder="通行时间"
-            class="filter-date"
-          />
-        </div>
-
-        <div class="filter-item">
           <Select v-model="state.searchForm.parkingId" placeholder="选择停车场" class="filter-select" clearable>
             <Option v-for="item in state.parkingList" :key="item.id" :value="item.id">
               {{ item.name }}
             </Option>
-          </Select>
-        </div>
-
-        <div class="filter-item">
-          <Select v-model="state.searchForm.passageType" placeholder="通行类型" class="filter-select" clearable>
-            <Option value="in">进场</Option>
-            <Option value="out">出场</Option>
-          </Select>
-        </div>
-
-        <div class="filter-item">
-          <Select v-model="state.searchForm.carType" placeholder="车辆类型" class="filter-select" clearable>
-            <Option value="temp">临时车</Option>
-            <Option value="fixed">固定车</Option>
           </Select>
         </div>
 
@@ -41,46 +17,26 @@
             placeholder="输入车牌号"
             class="filter-input"
             clearable
+            @on-enter="handleSearch"
           />
         </div>
       </div>
 
       <div class="filter-row">
-        <div class="filter-item">
-          <Select v-model="state.searchForm.hasPaid" placeholder="是否缴费" class="filter-select" clearable>
-            <Option :value="1">已缴费</Option>
-            <Option :value="0">未缴费</Option>
-          </Select>
-        </div>
-
-        <div class="filter-item">
-          <Select v-model="state.searchForm.hasException" placeholder="有无异常" class="filter-select" clearable>
-            <Option :value="1">有异常</Option>
-            <Option :value="0">正常</Option>
-          </Select>
-        </div>
-
-        <div class="filter-item">
-          <Select v-model="state.searchForm.channelId" placeholder="通道" class="filter-select" clearable>
-            <Option value="1">1号入口</Option>
-            <Option value="2">2号出口</Option>
-            <Option value="3">地下入口</Option>
-          </Select>
-        </div>
-
         <div class="filter-item"><Button type="primary" @click="handleSearch">查询</Button></div>
         <div class="filter-item"><Button @click="handleReset">重置</Button></div>
-      </div>
-
-      <div class="filter-actions">
-        <Button @click="handleExport">
-          <Icon type="ios-download-outline" />
-          导出Excel
-        </Button>
-        <Button @click="handlePrint">
-          <Icon type="ios-print-outline" />
-          批量打印小票
-        </Button>
+        <div class="filter-item">
+          <Button @click="handleExport">
+            <Icon type="ios-download-outline" />
+            导出Excel
+          </Button>
+        </div>
+        <div class="filter-item">
+          <Button @click="handlePrint">
+            <Icon type="ios-print-outline" />
+            批量打印小票
+          </Button>
+        </div>
       </div>
     </div>
 
@@ -93,18 +49,6 @@
         :selection="true"
         @on-selection-change="handleSelectionChange"
       >
-        <template #passageType="{ row }">
-          <Tag :color="row.passageType === 'in' ? 'blue' : 'green'">
-            {{ row.passageType === 'in' ? '进场' : '出场' }}
-          </Tag>
-        </template>
-        <template #carType="{ row }">
-          <span>{{ getCarTypeText(row.carType) }}</span>
-        </template>
-        <template #hasPaid="{ row }">
-          <Badge status="success" text="已缴" v-if="row.hasPaid" />
-          <Badge status="error" text="未缴" v-else />
-        </template>
         <template #status="{ row }">
           <span class="status-tag" :class="getStatusClass(row.status)">
             {{ getStatusText(row.status) }}
@@ -112,7 +56,6 @@
         </template>
         <template #action="{ row }">
           <Button type="text" size="small" @click="handleViewDetail(row)">查看记录</Button>
-          <Button type="text" size="small" @click="handlePay(row)" v-if="!row.hasPaid">补费</Button>
         </template>
       </Table>
 
@@ -127,46 +70,66 @@
         />
       </div>
     </div>
+
+    <!-- 记录详情弹窗 -->
+    <Modal v-model="state.detailVisible" title="通行记录详情" width="560" :footer-hide="true">
+      <div class="detail-list" v-if="state.detailData.id">
+        <div class="detail-row">
+          <span class="detail-label">车牌号</span>
+          <span>{{ state.detailData.carNumber }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">车辆类型</span>
+          <span>{{ state.detailData.carType || '—' }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">进场时间</span>
+          <span>{{ state.detailData.entryTime }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">出场时间</span>
+          <span>{{ state.detailData.outTime || '—' }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">状态</span>
+          <span>{{ getStatusText(state.detailData.status) }}</span>
+        </div>
+      </div>
+    </Modal>
   </div>
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { reactive, onMounted } from 'vue'
 import {
-  RangePicker,
   Select,
   Option,
   Input,
   Button,
   Icon,
   Table,
-  Tag,
-  Badge,
   Page,
   Modal,
   Message
 } from 'view-ui-plus'
+import { parkingApi, passageApi } from '@/api'
 
 const state = reactive({
+  // 搜索表单
   searchForm: {
-    dateRange: [],
     parkingId: null,
-    passageType: null,
-    carType: null,
-    plate: '',
-    hasPaid: null,
-    hasException: null,
-    channelId: null
+    plate: ''
   },
 
-  parkingList: [
-    { id: 1, name: '城西停车场' },
-    { id: 2, name: '城东停车场' }
-  ],
+  parkingList: [],
 
   tableData: [],
   loading: false,
   selectedRows: [],
+
+  // 记录详情
+  detailVisible: false,
+  detailData: {},
 
   pagination: {
     total: 0,
@@ -175,174 +138,111 @@ const state = reactive({
   }
 })
 
+// 表格列定义
 const columns = [
   { type: 'selection', width: 80, align: 'center' },
-  { title: '抓拍图', key: 'captureImage', minWidth: 100, align: 'center' },
-  { title: '车牌号', key: 'plate', minWidth: 120 },
-  { title: '通道', key: 'channel', minWidth: 100 },
-  { title: '通行类型', slot: 'passageType', minWidth: 100 },
-  { title: '进场时间', key: 'inTime', minWidth: 160 },
+  { title: '车牌号', key: 'carNumber', minWidth: 120 },
+  { title: '车辆类型', key: 'carType', minWidth: 100 },
+  { title: '进场时间', key: 'entryTime', minWidth: 160 },
   { title: '出场时间', key: 'outTime', minWidth: 160 },
-  { title: '停留时长', key: 'duration', minWidth: 100 },
-  { title: '车辆类型', slot: 'carType', minWidth: 100 },
-  { title: '收费金额', key: 'amount', minWidth: 100, align: 'right' },
-  { title: '是否缴费', slot: 'hasPaid', minWidth: 100, align: 'center' },
   { title: '状态', slot: 'status', minWidth: 100, align: 'center' },
-  { title: '操作', slot: 'action', minWidth: 150, fixed: 'right' }
+  { title: '操作', slot: 'action', minWidth: 120, fixed: 'right' }
 ]
 
-const getCarTypeText = (type) => {
-  const map = { temp: '临时车', fixed: '固定车' }
-  return map[type] || type
-}
-
 const getStatusText = (status) => {
-  const map = {
-    normal: '正常',
-    unpaid: '欠费',
-    noPlate: '无牌',
-    blacklist: '黑名单'
-  }
-  return map[status] || status
+  const map = { 0: '场内', 1: '已出场' }
+  return map[status] ?? status
 }
 
 const getStatusClass = (status) => {
-  const map = {
-    normal: 'success',
-    unpaid: 'error',
-    noPlate: 'warning',
-    blacklist: 'error'
-  }
-  return map[status] || 'default'
+  const map = { 0: 'success', 1: 'default' }
+  return map[status] ?? 'default'
 }
 
-const initData = () => {
+// 初始化数据
+const initData = async () => {
   state.loading = true
-  setTimeout(() => {
-    state.tableData = [
-      {
-        id: 1,
-        plate: '京A12345',
-        channel: '1号入口',
-        passageType: 'in',
-        inTime: '2024-01-15 09:00:00',
-        outTime: '-',
-        duration: '-',
-        carType: 'temp',
-        amount: 0,
-        hasPaid: false,
-        status: 'normal'
-      },
-      {
-        id: 2,
-        plate: '京B67890',
-        channel: '2号出口',
-        passageType: 'out',
-        inTime: '2024-01-15 08:00:00',
-        outTime: '2024-01-15 10:30:00',
-        duration: '2小时30分',
-        carType: 'temp',
-        amount: 15,
-        hasPaid: true,
-        status: 'normal'
-      },
-      {
-        id: 3,
-        plate: '京C11111',
-        channel: '1号入口',
-        passageType: 'in',
-        inTime: '2024-01-15 07:00:00',
-        outTime: '-',
-        duration: '-',
-        carType: 'fixed',
-        amount: 0,
-        hasPaid: true,
-        status: 'normal'
-      },
-      {
-        id: 4,
-        plate: '无牌车',
-        channel: '3号入口',
-        passageType: 'in',
-        inTime: '2024-01-15 09:30:00',
-        outTime: '-',
-        duration: '-',
-        carType: 'temp',
-        amount: 0,
-        hasPaid: false,
-        status: 'noPlate'
-      },
-      {
-        id: 5,
-        plate: '浙D22222',
-        channel: '2号出口',
-        passageType: 'out',
-        inTime: '2024-01-15 10:00:00',
-        outTime: '2024-01-15 14:00:00',
-        duration: '4小时',
-        carType: 'temp',
-        amount: 30,
-        hasPaid: false,
-        status: 'unpaid'
-      }
-    ]
-    state.pagination.total = 5
+  try {
+    const res = await passageApi.getRecordList({
+      page: state.pagination.current,
+      size: state.pagination.pageSize,
+      parkingId: state.searchForm.parkingId,
+      carNumber: state.searchForm.plate || undefined
+    })
+    state.tableData = res.data || []
+    if (res.result) {
+      state.pagination.total = res.result.total || 0
+    }
+  } catch (e) {
+    console.error('获取通行记录失败', e)
+  } finally {
     state.loading = false
-  }, 500)
+  }
 }
 
+// 加载停车场列表
+const loadParkingList = async () => {
+  try {
+    // size 取较大值以一次性加载全部停车场供选择器使用
+    const res = await parkingApi.getParkingList({ size: 1000 })
+    state.parkingList = res.data || []
+  } catch (e) {
+    console.error('获取停车场列表失败', e)
+  }
+}
+
+// 搜索
 const handleSearch = () => {
   state.pagination.current = 1
   initData()
 }
 
+// 重置
 const handleReset = () => {
   state.searchForm = {
-    dateRange: [],
     parkingId: null,
-    passageType: null,
-    carType: null,
-    plate: '',
-    hasPaid: null,
-    hasException: null,
-    channelId: null
+    plate: ''
   }
   handleSearch()
 }
 
+// 批量选择
 const handleSelectionChange = (selection) => {
   state.selectedRows = selection
 }
 
+// 导出
 const handleExport = () => {
   Message.info('正在导出...')
 }
 
+// 打印
 const handlePrint = () => {
   Message.info('正在打印...')
 }
 
-const handleViewDetail = (row) => {
-  console.log('查看详情', row)
+// 查看记录详情
+const handleViewDetail = async (row) => {
+  try {
+    const res = await passageApi.getRecordDetail(row.id)
+    state.detailData = res.data || {}
+    state.detailVisible = true
+  } catch (e) {
+    console.error('获取通行记录详情失败', e)
+  }
 }
 
-const handlePay = (row) => {
-  Modal.confirm({
-    title: '确认补缴',
-    content: `确认收取车辆 "${row.plate}" 停车费用 ¥${row.amount}？`,
-    onOk: () => {
-      Message.success('补缴成功')
-      initData()
-    }
-  })
-}
-
+// 分页
 const handlePageChange = (page) => {
   state.pagination.current = page
   initData()
 }
 
-initData()
+// 初始化
+onMounted(() => {
+  loadParkingList()
+  initData()
+})
 </script>
 
 <style lang="less" scoped>
@@ -368,30 +268,12 @@ initData()
         flex-shrink: 0;
       }
 
-      .filter-date {
-        width: 320px;
-      }
-
       .filter-select {
         width: 150px;
       }
 
       .filter-input {
         width: 180px;
-      }
-    }
-
-    .filter-actions {
-      display: flex;
-      gap: var(--spacing-md);
-
-      .ivu-btn {
-        display: inline-flex;
-        align-items: center;
-
-        .ivu-icon {
-          margin-right: 4px;
-        }
       }
     }
   }
@@ -412,6 +294,11 @@ initData()
         color: var(--success-color);
       }
 
+      &.default {
+        background-color: rgba(134, 144, 156, 0.1);
+        color: var(--text-color-secondary);
+      }
+
       &.warning {
         background-color: rgba(255, 125, 0, 0.1);
         color: var(--warning-color);
@@ -420,6 +307,24 @@ initData()
       &.error {
         background-color: rgba(245, 63, 63, 0.1);
         color: var(--error-color);
+      }
+    }
+
+    .detail-list {
+      .detail-row {
+        display: flex;
+        padding: var(--spacing-sm) 0;
+        border-bottom: 1px solid var(--border-color-light);
+
+        &:last-child {
+          border-bottom: none;
+        }
+      }
+
+      .detail-label {
+        width: 100px;
+        flex-shrink: 0;
+        color: var(--text-color-secondary);
       }
     }
 

@@ -41,23 +41,28 @@
 
         <div class="filter-item"><Button type="primary" @click="handleSearch">查询</Button></div>
         <div class="filter-item"><Button @click="handleReset">重置</Button></div>
-      </div>
-
-      <div class="filter-actions">
-        <Button type="primary" @click="handleAdd">
-          <Icon type="ios-add" />
-          新增停车场
-        </Button>
-        <Button @click="handleBatchEnable" :disabled="state.selectedRows.length === 0">
-          批量启用
-        </Button>
-        <Button @click="handleBatchDisable" :disabled="state.selectedRows.length === 0">
-          批量停用
-        </Button>
-        <Button @click="handleExport">
-          <Icon type="ios-download-outline" />
-          导出
-        </Button>
+        <div class="filter-item">
+          <Button type="primary" @click="handleAdd">
+            <Icon type="ios-add" />
+            新增停车场
+          </Button>
+        </div>
+        <div class="filter-item">
+          <Button @click="handleBatchEnable" :disabled="state.selectedRows.length === 0">
+            批量启用
+          </Button>
+        </div>
+        <div class="filter-item">
+          <Button @click="handleBatchDisable" :disabled="state.selectedRows.length === 0">
+            批量停用
+          </Button>
+        </div>
+        <div class="filter-item">
+          <Button @click="handleExport">
+            <Icon type="ios-download-outline" />
+            导出
+          </Button>
+        </div>
       </div>
     </div>
 
@@ -71,7 +76,7 @@
         @on-selection-change="handleSelectionChange"
       >
         <template #status="{ row }">
-          <Badge status="success" text="启用" v-if="row.status === 1" />
+          <Badge status="success" text="启用" v-if="row.openingUp === 0" />
           <Badge status="error" text="停用" v-else />
         </template>
 
@@ -117,10 +122,6 @@
           <Input v-model="state.formData.name" placeholder="请输入停车场名称" />
         </FormItem>
 
-        <FormItem label="所在区域" prop="region">
-          <Input v-model="state.formData.region" placeholder="请输入所在区域" />
-        </FormItem>
-
         <FormItem label="详细地址" prop="address">
           <Input v-model="state.formData.address" placeholder="请输入详细地址" />
         </FormItem>
@@ -132,22 +133,6 @@
             placeholder="请输入总车位数"
             style="min-width: 100%"
           />
-        </FormItem>
-
-        <FormItem label="联系人" prop="contact">
-          <Input v-model="state.formData.contact" placeholder="请输入联系人" />
-        </FormItem>
-
-        <FormItem label="联系电话" prop="phone">
-          <Input v-model="state.formData.phone" placeholder="请输入联系电话" />
-        </FormItem>
-
-        <FormItem label="收费模板" prop="chargeTemplate">
-          <Select v-model="state.formData.chargeTemplate" placeholder="请选择收费模板">
-            <Option :value="1">标准收费</Option>
-            <Option :value="2">商场收费</Option>
-            <Option :value="3">大厦收费</Option>
-          </Select>
         </FormItem>
 
         <FormItem label="运营状态" prop="status">
@@ -169,7 +154,7 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { reactive, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   Input,
@@ -189,6 +174,7 @@ import {
   Badge,
   Message
 } from 'view-ui-plus'
+import { parkingApi } from '@/api'
 
 const router = useRouter()
 const formRef = ref(null)
@@ -222,12 +208,8 @@ const state = reactive({
   formData: {
     id: null,
     name: '',
-    region: '',
     address: '',
     totalSpaces: 100,
-    contact: '',
-    phone: '',
-    chargeTemplate: null,
     status: 1
   },
 
@@ -236,14 +218,8 @@ const state = reactive({
     name: [
       { required: true, message: '请输入停车场名称', trigger: 'blur' }
     ],
-    region: [
-      { required: true, message: '请输入所在区域', trigger: 'blur' }
-    ],
     totalSpaces: [
       { required: true, type: 'number', message: '请输入总车位数', trigger: 'blur' }
-    ],
-    phone: [
-      { required: true, message: '请输入联系电话', trigger: 'blur' }
     ]
   }
 })
@@ -273,25 +249,9 @@ const columns = [
   },
   {
     title: '总车位',
-    key: 'totalSpaces',
+    key: 'capacity',
     minWidth: 100,
     align: 'center'
-  },
-  {
-    title: '空闲车位',
-    key: 'freeSpaces',
-    minWidth: 100,
-    align: 'center'
-  },
-  {
-    title: '管理员',
-    key: 'contact',
-    minWidth: 120
-  },
-  {
-    title: '联系电话',
-    key: 'phone',
-    minWidth: 130
   },
   {
     title: '创建时间',
@@ -314,66 +274,24 @@ const columns = [
 ]
 
 // 初始化数据
-const initData = () => {
+const initData = async () => {
   state.loading = true
-  setTimeout(() => {
-    state.tableData = [
-      {
-        id: 1001,
-        name: '城西停车场',
-        address: '北京市朝阳区城西路88号',
-        region: '朝阳区',
-        totalSpaces: 300,
-        freeSpaces: 156,
-        contact: '张经理',
-        phone: '13800138001',
-        chargeTemplate: 1,
-        status: 1,
-        createTime: '2024-01-01 10:00:00'
-      },
-      {
-        id: 1002,
-        name: '购物中心停车场',
-        address: '北京市海淀区中关村大街100号',
-        region: '海淀区',
-        totalSpaces: 500,
-        freeSpaces: 234,
-        contact: '李经理',
-        phone: '13800138002',
-        chargeTemplate: 2,
-        status: 1,
-        createTime: '2024-01-05 14:30:00'
-      },
-      {
-        id: 1003,
-        name: '城东停车场',
-        address: '北京市东城区东四大街66号',
-        region: '东城区',
-        totalSpaces: 200,
-        freeSpaces: 89,
-        contact: '王经理',
-        phone: '13800138003',
-        chargeTemplate: 1,
-        status: 1,
-        createTime: '2024-01-10 09:00:00'
-      },
-      {
-        id: 1004,
-        name: '写字楼停车场',
-        address: '北京市西城区金融街8号',
-        region: '西城区',
-        totalSpaces: 150,
-        freeSpaces: 0,
-        contact: '刘经理',
-        phone: '13800138004',
-        chargeTemplate: 3,
-        status: 0,
-        createTime: '2024-01-15 16:00:00'
-      }
-    ]
-    state.pagination.total = 4
+  try {
+    const res = await parkingApi.getParkingList({
+      page: state.pagination.current,
+      size: state.pagination.pageSize,
+      name: state.searchForm.name || undefined,
+      status: state.searchForm.status
+    })
+    state.tableData = res.data || []
+    if (res.result) {
+      state.pagination.total = res.result.total || 0
+    }
+  } catch (e) {
+    console.error('获取停车场列表失败', e)
+  } finally {
     state.loading = false
-  }, 500)
+  }
 }
 
 // 搜索
@@ -398,12 +316,8 @@ const handleAdd = () => {
   state.formData = {
     id: null,
     name: '',
-    region: '',
     address: '',
     totalSpaces: 100,
-    contact: '',
-    phone: '',
-    chargeTemplate: null,
     status: 1
   }
   state.modalVisible = true
@@ -412,18 +326,29 @@ const handleAdd = () => {
 // 编辑
 const handleEdit = (row) => {
   state.modalType = 'edit'
-  state.formData = { ...row }
+  state.formData = {
+    id: row.id,
+    name: row.name,
+    address: row.address,
+    totalSpaces: row.capacity,
+    status: row.openingUp === 0 ? 1 : 0
+  }
   state.modalVisible = true
 }
 
 // 删除
-const handleDelete = (row) => {
+const handleDelete = async (row) => {
   Modal.confirm({
     title: '确认删除',
     content: `确定要删除停车场"${row.name}"吗？删除后无法恢复。`,
-    onOk: () => {
-      Message.success('删除成功')
-      initData()
+    onOk: async () => {
+      try {
+        await parkingApi.deleteParking(row.id)
+        Message.success('删除成功')
+        initData()
+      } catch (e) {
+        console.error('删除失败', e)
+      }
     }
   })
 }
@@ -467,14 +392,23 @@ const handleSubmit = async () => {
     await formRef.value.validate()
     state.submitLoading = true
 
-    setTimeout(() => {
-      Message.success(state.modalType === 'add' ? '新增成功' : '编辑成功')
-      state.modalVisible = false
-      state.submitLoading = false
-      initData()
-    }, 500)
+    const params = {
+      name: state.formData.name,
+      address: state.formData.address,
+      capacity: state.formData.totalSpaces,
+      openingUp: state.formData.status === 1 ? 0 : 1
+    }
+    if (state.formData.id) {
+      params.id = state.formData.id
+    }
+
+    await parkingApi.editParking(params)
+    Message.success(state.modalType === 'add' ? '新增成功' : '编辑成功')
+    state.modalVisible = false
+    state.submitLoading = false
+    initData()
   } catch (e) {
-    console.error('表单验证失败', e)
+    console.error('操作失败', e)
   } finally {
     state.submitLoading = false
   }
@@ -493,7 +427,9 @@ const handlePageSizeChange = (size) => {
 }
 
 // 初始化
-initData()
+onMounted(() => {
+  initData()
+})
 </script>
 
 <style lang="less" scoped>
@@ -525,20 +461,6 @@ initData()
 
       .filter-date {
         width: 260px;
-      }
-    }
-
-    .filter-actions {
-      display: flex;
-      gap: var(--spacing-md);
-
-      .ivu-btn {
-        display: inline-flex;
-        align-items: center;
-
-        .ivu-icon {
-          margin-right: 4px;
-        }
       }
     }
   }

@@ -82,10 +82,10 @@
               </Input>
             </FormItem>
 
-            <FormItem prop="captcha">
+            <FormItem prop="code">
               <div class="captcha-wrapper">
                 <Input
-                  v-model="state.formData.captcha"
+                  v-model="state.formData.code"
                   size="large"
                   placeholder="请输入验证码"
                   @keyup.enter="handleLogin"
@@ -119,6 +119,16 @@
               </Button>
             </FormItem>
           </Form>
+
+          <div class="login-footer">
+            <router-link :to="{ name: 'welcome' }" class="back-welcome">
+              <Icon type="ios-arrow-back" />
+              返回首页
+            </router-link>
+            <span class="footer-sep">|</span>
+            <span>还没有账号？</span>
+            <router-link :to="{ name: 'register' }" class="register-link">注册企业</router-link>
+          </div>
         </div>
       </div>
     </div>
@@ -130,6 +140,8 @@ import { reactive, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Form, FormItem, Input, Button, Checkbox, Icon, Message } from 'view-ui-plus'
 import { useUserStore } from '@/stores/user'
+import { enterpriseApi } from '@/api'
+import { getFingerprint } from '@/utils/fingerprint'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -137,28 +149,32 @@ const formRef = ref(null)
 
 const state = reactive({
   formData: {
-    username: 'admin',
-    password: '123456',
-    captcha: '',
-    captchaId: ''
+    username: '',
+    password: '',
+    code: ''
   },
   rules: {
     username: [
-      { required: true, message: '请输入用户名', trigger: 'blur' },
-      { min: 2, max: 20, message: '用户名长度为2-20个字符', trigger: 'blur' }
+      { required: true, message: '请输入用户名', trigger: 'blur' }
     ],
     password: [
       { required: true, message: '请输入密码', trigger: 'blur' },
-      { min: 6, max: 30, message: '密码长度为6-30个字符', trigger: 'blur' }
+      { min: 6, message: '密码至少6位', trigger: 'blur' }
     ],
-    captcha: [
-      { required: true, message: '请输入验证码', trigger: 'blur' },
-      { len: 4, message: '验证码为4位字符', trigger: 'blur' }
+    code: [
+      { required: true, message: '请输入验证码', trigger: 'blur' }
     ]
   },
   loading: false,
   remember: false,
   showPassword: false,
+  // 设备指纹：获取验证码与登录提交须使用同一指纹，否则验证码归属校验失败
+  fingerprint: getFingerprint(),
+  // 企业 ID：登录接口必填，由 findAny 返回的 AuEnterprise.id 取得
+  // 保持字符串：后端 Long 序列化为字符串即为避免 JS 精度溢出，勿转 Number
+  enId: '',
+  // 图片验证码键值：getVerifyCode 返回，用于拼接验证码图片地址
+  keyCode: '',
   captchaUrl: ''
 })
 
@@ -189,40 +205,74 @@ const saveRememberedAccount = () => {
   }
 }
 
-// 刷新验证码
-const refreshCaptcha = () => {
-  state.captchaUrl = `/api/captcha?t=${Date.now()}`
+// 查询企业是否存在并取企业 ID
+//   存在 → 记录 enId 供登录使用；不存在 → 跳转注册企业页
+const loadEnterprise = async () => {
+  try {
+    const res = await enterpriseApi.checkEnterpriseExists()
+    if (res.data) {
+      // enId 取企业主键 id（AuEnterprise.id，后端 Long 序列化为字符串，直接保持字符串避免 JS 精度溢出）
+      state.enId = res.data.id
+    } else {
+      Message.info('系统尚未注册企业，请先完成企业注册')
+      router.push({ name: 'register' })
+    }
+  } catch (e) {
+    // 查询异常时不阻断页面，登录提交由后端兜底校验
+  }
+}
+
+// 刷新图片验证码：先取 keyCode，再拼图片地址
+const refreshCaptcha = async () => {
+  try {
+    const res = await enterpriseApi.getVerifyCode({ fingerprint: state.fingerprint })
+    // res.data 为验证码键值 keyCode
+    state.keyCode = res.data
+    state.captchaUrl = enterpriseApi.getVerifyImgUrl(state.keyCode)
+  } catch (e) {
+    // publicRequest 拦截器已弹出错误提示
+  }
 }
 
 // 登录
 const handleLogin = async () => {
   try {
+    // 用户名/密码去首尾空格，避免误输空格致校验或登录失败
+    state.formData.username = state.formData.username.trim()
+    state.formData.password = state.formData.password.trim()
+
     const valid = await formRef.value.validate()
     if (!valid) return
 
-    state.loading = true
+    // 未取到企业 ID 时先补查一次，仍无则提示并引导注册
+    if (!state.enId) {
+      await loadEnterprise()
+      if (!state.enId) {
+        Message.error('未检测到企业信息，请先注册企业')
+        return
+      }
+    }
 
-    // 保存记住密码
+    state.loading = true
     saveRememberedAccount()
 
-    // 模拟登录请求
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-
-    // 模拟登录成功
-    userStore.setToken('mock_token_' + Date.now())
-    userStore.setUserInfo({
-      id: 1,
-      name: state.formData.username,
-      role: 'admin'
+    const res = await enterpriseApi.adminLogin({
+      enId: state.enId,
+      username: state.formData.username,
+      password: state.formData.password,
+      code: state.formData.code,
+      fingerprint: state.fingerprint
     })
+    // res.data = { jwtToken, refreshToken }
+    userStore.setToken(res.data.jwtToken)
+    localStorage.setItem('refreshToken', res.data.refreshToken)
 
     Message.success('登录成功')
     router.push({ name: 'home' })
-  } catch (error) {
-    // 登录失败，刷新验证码
+  } catch (e) {
+    // 登录失败：刷新验证码并清空验证码输入，publicRequest 拦截器已提示错误原因
+    state.formData.code = ''
     refreshCaptcha()
-    state.formData.captcha = ''
-    Message.error('登录失败，请重试')
   } finally {
     state.loading = false
   }
@@ -230,6 +280,7 @@ const handleLogin = async () => {
 
 onMounted(() => {
   loadRememberedAccount()
+  loadEnterprise()
   refreshCaptcha()
 })
 </script>
@@ -457,6 +508,47 @@ onMounted(() => {
             &:hover {
               opacity: 0.8;
             }
+          }
+        }
+      }
+
+      .login-footer {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: var(--spacing-xl);
+        font-size: var(--font-size-sm);
+        color: var(--text-color-secondary);
+
+        .back-welcome {
+          display: inline-flex;
+          align-items: center;
+          color: var(--text-color-secondary);
+          text-decoration: none;
+          transition: color 0.3s;
+
+          .ivu-icon {
+            margin-right: 4px;
+          }
+
+          &:hover {
+            color: var(--primary-color);
+          }
+        }
+
+        .footer-sep {
+          margin: 0 var(--spacing-sm);
+          color: var(--border-color);
+        }
+
+        .register-link {
+          color: var(--primary-color);
+          text-decoration: none;
+          transition: opacity 0.3s;
+
+          &:hover {
+            opacity: 0.8;
           }
         }
       }

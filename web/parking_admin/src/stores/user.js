@@ -15,9 +15,13 @@ export const useUserStore = defineStore('user', () => {
   const loading = ref(false)
 
   // 设置 Token
+  // 统一存裸 JWT：后端 login/refreshToken 返回的 jwtToken 可能自带 "Bearer " 前缀，
+  // 而各请求拦截器（axiosRequest / authRequest）会再拼一次 "Bearer "，
+  // 故在此剥掉前缀，保证 localStorage.token 始终为裸 JWT，避免出现 "Bearer Bearer xxx" 双前缀。
   const setToken = (token) => {
-    state.token = token
-    localStorage.setItem('token', token)
+    const raw = (token || '').replace(/^Bearer\s+/i, '')
+    state.token = raw
+    localStorage.setItem('token', raw)
   }
 
   // 设置用户信息

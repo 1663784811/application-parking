@@ -62,13 +62,12 @@
         <div class="filter-item">
           <Button @click="handleReset">重置</Button>
         </div>
-      </div>
-
-      <div class="filter-actions">
-        <Button @click="handleRefreshGrid">
-          <Icon type="ios-refresh"/>
-          刷新
-        </Button>
+        <div class="filter-item">
+          <Button @click="handleRefreshGrid">
+            <Icon type="ios-refresh"/>
+            刷新
+          </Button>
+        </div>
       </div>
     </div>
 
@@ -378,11 +377,6 @@ onMounted(() => {
       .filter-input {
         width: 200px;
       }
-    }
-
-    .filter-actions {
-      display: flex;
-      justify-content: flex-end;
     }
   }
 

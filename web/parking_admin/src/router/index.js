@@ -2,18 +2,39 @@
  * 路由配置
  */
 import { createRouter, createWebHistory } from 'vue-router'
+import { Message } from 'view-ui-plus'
+import { enterpriseApi } from '@/api'
 
 const routes = [
   {
     path: '/',
-    redirect: '/home'
+    redirect: '/welcome'
+  },
+  {
+    path: '/welcome',
+    name: 'welcome',
+    component: () => import('@/views/welcome/welcome.vue'),
+    meta: {
+      title: '欢迎',
+      public: true
+    }
   },
   {
     path: '/login',
     name: 'login',
     component: () => import('@/views/login/login.vue'),
     meta: {
-      title: '登录'
+      title: '登录',
+      public: true
+    }
+  },
+  {
+    path: '/register',
+    name: 'register',
+    component: () => import('@/views/register/register.vue'),
+    meta: {
+      title: '注册企业',
+      public: true
     }
   },
   {
@@ -258,7 +279,7 @@ const router = createRouter({
 })
 
 // 路由守卫
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   // 设置页面标题
   if (to.meta.title) {
     document.title = `${to.meta.title} - 智慧停车场管理平台`
@@ -266,10 +287,26 @@ router.beforeEach((to, from, next) => {
 
   // 判断是否需要登录
   const token = localStorage.getItem('token')
-  if (to.path !== '/login' && !token) {
+  if (!token && !to.meta.public) {
+    // 未登录且访问需登录的页面 → 跳转登录
     next({ name: 'login' })
-  } else if (to.path === '/login' && token) {
+  } else if (token && (to.name === 'login' || to.name === 'register')) {
+    // 已登录仍访问登录/注册页 → 跳转首页
     next({ name: 'home' })
+  } else if (!token && to.name === 'register') {
+    // 未登录访问注册页：若系统已存在企业则禁止重复注册，跳转登录
+    try {
+      const res = await enterpriseApi.checkEnterpriseExists()
+      if (res.data) {
+        Message.info('系统已存在企业，请直接登录')
+        next({ name: 'login' })
+      } else {
+        next()
+      }
+    } catch (e) {
+      // 查询异常时放行，注册提交时由后端再次校验
+      next()
+    }
   } else {
     next()
   }

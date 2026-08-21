@@ -20,10 +20,12 @@
         </div>
         <div class="filter-item"><Button type="primary" @click="handleSearch">查询</Button></div>
         <div class="filter-item"><Button @click="handleReset">重置</Button></div>
-      </div>
-      <div class="filter-actions">
-        <Button type="primary" @click="handleAdd"><Icon type="ios-add" />新增会员</Button>
-        <Button @click="handleBatchExport"><Icon type="ios-download-outline" />导出</Button>
+        <div class="filter-item">
+          <Button type="primary" @click="handleAdd"><Icon type="ios-add" />新增会员</Button>
+        </div>
+        <div class="filter-item">
+          <Button @click="handleBatchExport"><Icon type="ios-download-outline" />导出</Button>
+        </div>
       </div>
     </div>
 
@@ -118,7 +120,6 @@ initData()
 .member-list-page {
   .filter-bar { padding: var(--spacing-xl); background: var(--bg-color); border-radius: var(--border-radius-base); margin-bottom: var(--spacing-lg); box-shadow: var(--shadow-base); }
   .filter-row { display: flex; flex-wrap: wrap; gap: var(--spacing-md); margin-bottom: var(--spacing-md); .filter-item { flex-shrink: 0; } .filter-input { width: 180px; } .filter-select { width: 150px; } }
-  .filter-actions { display: flex; gap: var(--spacing-md); }
   .stats-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--spacing-lg); margin-bottom: var(--spacing-lg); .stat-item { padding: var(--spacing-xl); background: var(--bg-color); border-radius: var(--border-radius-base); box-shadow: var(--shadow-base); display: flex; flex-direction: column; &.warning .stat-value { color: var(--warning-color); } .stat-label { font-size: var(--font-size-sm); color: var(--text-color-secondary); margin-bottom: var(--spacing-xs); } .stat-value { font-size: 24px; font-weight: 600; color: var(--text-color-title); } } }
   .table-container { background: var(--bg-color); border-radius: var(--border-radius-base); padding: var(--spacing-xl); box-shadow: var(--shadow-base); .card-type { padding: 2px 8px; border-radius: var(--border-radius-sm); font-size: var(--font-size-xs); &.type-1 { background: rgba(22,93,255,0.1); color: #165DFF; } &.type-2 { background: rgba(15,198,194,0.1); color: #0FC6C2; } &.type-3 { background: rgba(114,46,209,0.1); color: #722ED1; } } .text-warning { color: var(--warning-color); } .text-error { color: var(--error-color); } .pagination-wrapper { display: flex; justify-content: flex-end; margin-top: var(--spacing-xl); } }
 }
