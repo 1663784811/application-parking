@@ -23,22 +23,22 @@
 
     <dependencies>
 
-        <!-- JWT -->
+        <!-- JWT：与 application-user 统一为 0.12.6；使用 gson 桥接，规避 Spring Boot 4(Jackson 3) 冲突 -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
-            <version>0.11.5</version>
+            <version>0.12.6</version>
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-impl</artifactId>
-            <version>0.11.5</version>
+            <version>0.12.6</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-jackson</artifactId>
-            <version>0.11.5</version>
+            <artifactId>jjwt-gson</artifactId>
+            <version>0.12.6</version>
             <scope>runtime</scope>
         </dependency>
 
