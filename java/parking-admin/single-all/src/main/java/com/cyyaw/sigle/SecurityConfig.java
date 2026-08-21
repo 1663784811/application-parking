@@ -42,34 +42,34 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable()).authorizeHttpRequests(auth -> {
-            auth.
-                    // 允许公开访问的URI
-                            requestMatchers(
-                            "/swagger-ui/**",
-                            "/v3/api-docs/**",
-                            "/doc.html",
-                            "/webjars/**",
-                            "/admin/login/**",
-                            "/app/login/**",
-                            "/store/login/**",
-                            "/common/**",
-                            "/root/sql/downloadExcel",
-                            // 验证码
-                            "/common/verify/getVerifyCode",
-                            // 产品
-                            "/app/product/**",
-                            "/root/login/registerEnterprise",
-                            // 扫码点餐
-                            "/app/mqtt/mqttConnectInfo/**",
-                            "/app/food/h5/**"
-                    ).permitAll()
-                    // 需要ADMIN角色
-                    // .requestMatchers("/admin/**").hasRole("ADMIN")
-                    // 其他请求需要认证
-                    .anyRequest().authenticated();
-        }).sessionManagement(session -> {
-            session.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
-        })
+                    auth.
+                            // 允许公开访问的URI
+                                    requestMatchers(
+                                    "/swagger-ui/**",
+                                    "/v3/api-docs/**",
+                                    "/doc.html",
+                                    "/webjars/**",
+                                    "/admin/login/**",
+                                    "/app/login/**",
+                                    "/store/login/**",
+                                    "/common/**",
+                                    "/root/sql/downloadExcel",
+                                    // 验证码
+                                    "/common/verify/getVerifyCode",
+                                    // 产品
+                                    "/app/product/**",
+                                    "/root/login/registerEnterprise",
+                                    // 扫码点餐
+                                    "/app/mqtt/mqttConnectInfo/**",
+                                    "/app/food/h5/**"
+                            ).permitAll()
+                            // 需要ADMIN角色
+                            // .requestMatchers("/admin/**").hasRole("ADMIN")
+                            // 其他请求需要认证
+                            .anyRequest().authenticated();
+                }).sessionManagement(session -> {
+                    session.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+                })
 //                .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         http.cors(cors -> cors.configurationSource(corsConfigurationSource()));
@@ -128,12 +128,16 @@ public class SecurityConfig {
     @Bean
     public AuthenticationEntryPoint authenticationEntryPoint() {
         return (request, response, authException) -> {
+            authException.getCause().printStackTrace();
+            authException.getMessage();
             response.setContentType(MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
             response.setStatus(HttpStatus.UNAUTHORIZED.value());
             JSONObject json = new JSONObject();
             json.set("code", WebErrCodeEnum.WEB_NOT_LOGIN.getCode());
             json.set("msg", WebErrCodeEnum.WEB_NOT_LOGIN.getMsg());
             response.getWriter().write(json.toString());
+            response.getWriter().flush();
+            response.getWriter().close();
         };
     }
 

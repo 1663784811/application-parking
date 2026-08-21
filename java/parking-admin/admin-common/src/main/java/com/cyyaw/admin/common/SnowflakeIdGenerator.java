@@ -88,7 +88,7 @@ public class SnowflakeIdGenerator {
         long currentTimestamp = System.currentTimeMillis();
         // 禁止时钟回拨（服务器时间不准时抛出异常）
         if (currentTimestamp < lastTimestamp) {
-            throw new RuntimeException("时钟回拨，拒绝生成ID");
+            WebException.fail("时钟回拨，拒绝生成ID");
         }
         // 同一毫秒内，序列号自增
         if (currentTimestamp == lastTimestamp) {

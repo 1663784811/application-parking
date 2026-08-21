@@ -1,0 +1,18 @@
+version: '3.1'
+services:
+  db:
+    image: library/mysql:9.5.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: v7L9pX2qR5sK3mN8bY4cZ6wA1dE0fG2h
+      MYSQL_INITDB_ARGS: "--character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci"
+    ports:
+      - 3306:3306
+    volumes:
+      - ./data:/var/lib/mysql
+
+
+
+
+
+

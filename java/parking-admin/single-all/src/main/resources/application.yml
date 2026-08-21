@@ -4,7 +4,7 @@ server:
 
 spring:
   profiles:
-    active: log,mysql,mybatis
+    active: log,mysql,mybatis,redis
   application:
     name: cloud-application-user
 

@@ -87,7 +87,7 @@ public class AdminLoginServiceImpl implements AdminLoginService {
         Long enId = adminRegisterRequest.getEnId();
         // 1. 验证码校验
         if (!StringUtils.hasText(code)) {
-            throw new RuntimeException("验证码不能为空");
+            WebException.fail("验证码不能为空");
         }
         String key = RedisKey.phoneVerifyCodeKey(phone, fingerprint);
         if (!verifyCodeService.verifyCode(key, code)) {
@@ -120,12 +120,12 @@ public class AdminLoginServiceImpl implements AdminLoginService {
     @Transactional(readOnly = true)
     public AuAdmin findAdminInfo(String token) {
         if (!StringUtils.hasText(token)) {
-            throw new RuntimeException("token不能为空");
+            WebException.fail("token不能为空");
         }
 
         // 1. 验证 token
         if (!JwtTokenUtil.verifierToken(token)) {
-            throw new RuntimeException("无效的token");
+            WebException.fail("无效的token");
         }
 
         // 2. 获取用户信息
@@ -134,7 +134,7 @@ public class AdminLoginServiceImpl implements AdminLoginService {
         AuAdmin admin = null;
 
         if (admin == null) {
-            throw new RuntimeException("用户不存在");
+            WebException.fail("用户不存在");
         }
 
         return admin;
@@ -143,12 +143,12 @@ public class AdminLoginServiceImpl implements AdminLoginService {
     @Override
     public void logout(String token) {
         if (!StringUtils.hasText(token)) {
-            throw new RuntimeException("token不能为空");
+            WebException.fail("token不能为空");
         }
 
         // 1. 验证 token
         if (!JwtTokenUtil.verifierToken(token)) {
-            throw new RuntimeException("无效的token");
+            WebException.fail("无效的token");
         }
 
         // 2. 使 token 失效
@@ -169,12 +169,12 @@ public class AdminLoginServiceImpl implements AdminLoginService {
         // ===========================================   验证数据
         AuEnterprise enterprisePhone = auEnterpriseService.findEnterpriseByPhone(phone);
         if (enterprisePhone != null) {
-            throw new RuntimeException("手机号已经被注册！");
+            WebException.fail("手机号已经被注册！");
         }
         String eCode = confSysService.createNewCode();
         AuEnterprise enterprise = auEnterpriseService.findEnterpriseByCode(eCode);
         if (enterprise != null) {
-            throw new RuntimeException("企业编号已经存在");
+            WebException.fail("企业编号已经存在");
         }
         // ===========================================
         AuEnterprise ent = new AuEnterprise();

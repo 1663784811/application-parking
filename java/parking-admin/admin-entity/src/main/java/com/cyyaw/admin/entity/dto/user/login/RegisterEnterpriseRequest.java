@@ -26,7 +26,7 @@ public class RegisterEnterpriseRequest extends VerifyRequest implements Serializ
     @Pattern(regexp = "^.{2,}$", message = "联系人,【2位以上长度】")
     private String person;
 
-    @Schema( description = "手机号", example = "12345678901")
+    @Schema( description = "手机号", example = "\"12345678901\"")
     @NotBlank(message = "联系人手机号不能为空")
     @Pattern(regexp = Reg.PHONE_REGEX, message = "手机号格式不正确,【11位手机号】")
     private String phone;

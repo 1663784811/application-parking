@@ -22,6 +22,7 @@ public class AuEnterpriseServiceImpl implements AuEnterpriseService {
 
     @Override
     public AuEnterprise saveEnterprise(AuEnterprise enterprise) {
+        enterprise.setEnId(0L);
         return auEnterpriseDao.save(enterprise);
     }
 
