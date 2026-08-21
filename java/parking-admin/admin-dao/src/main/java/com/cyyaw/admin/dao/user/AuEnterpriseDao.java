@@ -13,4 +13,11 @@ public interface AuEnterpriseDao extends BaseMapperPlus<AuEnterpriseDao, AuEnter
     @Select("SELECT * FROM au_enterprise WHERE phone = #{phone}")
     AuEnterprise findByPhone(String phone);
 
+    /**
+     * 查询是否存在企业（只取一条，用于判断系统是否已初始化）
+     * del_time 未标 @TableLogic，此处手动过滤软删除
+     */
+    @Select("SELECT * FROM au_enterprise WHERE del_time = 0 LIMIT 1")
+    AuEnterprise findAny();
+
 }

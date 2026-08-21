@@ -37,4 +37,9 @@ public class AuEnterpriseServiceImpl implements AuEnterpriseService {
         return auEnterpriseDao.findByPhone(phone);
     }
 
+    @Override
+    public AuEnterprise findAnyEnterprise() {
+        return auEnterpriseDao.findAny();
+    }
+
 }

@@ -15,4 +15,9 @@ public interface AuEnterpriseService {
 
     AuEnterprise findEnterpriseByPhone(String phone);
 
+    /**
+     * 查询是否存在企业（只取一条）。无企业时返回 null。
+     */
+    AuEnterprise findAnyEnterprise();
+
 }

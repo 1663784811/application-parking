@@ -2,11 +2,10 @@ package com.cyyaw.admin.config.utils;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 
 import java.nio.charset.StandardCharsets;
-import java.security.Key;
+import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -49,7 +48,7 @@ public final class JwtTokenUtil {
         claims.put("data", data);
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + (rememberMe ? longExpiration : shortExpiration));
-        return TOKEN_PREFIX + Jwts.builder().setClaims(claims).setSubject(subject).setIssuedAt(now).setExpiration(expiryDate).signWith(getSigningKey(), SignatureAlgorithm.HS256).compact();
+        return TOKEN_PREFIX + Jwts.builder().claims(claims).subject(subject).issuedAt(now).expiration(expiryDate).signWith(getSigningKey(), Jwts.SIG.HS256).compact();
     }
 
 
@@ -63,11 +62,11 @@ public final class JwtTokenUtil {
     }
 
     private static Claims getAllClaimsFromToken(String token) {
-        return Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(token).getBody();
+        return Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token).getPayload();
     }
     // ===============================================================
 
-    private static Key getSigningKey() {
+    private static SecretKey getSigningKey() {
         byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
         return Keys.hmacShaKeyFor(keyBytes);
     }
@@ -99,4 +98,4 @@ public final class JwtTokenUtil {
     }
 
 
-} 
+}

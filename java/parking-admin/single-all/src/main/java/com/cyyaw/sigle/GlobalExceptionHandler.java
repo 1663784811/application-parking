@@ -17,12 +17,17 @@ public class GlobalExceptionHandler {
         return BaseResult.fail(msg);
     }
 
-    @ExceptionHandler(WebException.class)
-    public BaseResult<?> handleWebException(WebException e) {
-        BaseResult<String> res = new BaseResult<>();
-        res.setCode(e.getCode());
-        res.setMsg(e.getMsg());
-        return res;
+    @ExceptionHandler(Exception.class)
+    public BaseResult<?> handleException(Exception e) {
+        if (e instanceof WebException) {
+            WebException webException = (WebException) e;
+            BaseResult<String> res = new BaseResult<>();
+            res.setCode(webException.getCode());
+            res.setMsg(webException.getMsg());
+            return res;
+        }
+        e.printStackTrace();
+        return BaseResult.fail();
     }
 
 }
