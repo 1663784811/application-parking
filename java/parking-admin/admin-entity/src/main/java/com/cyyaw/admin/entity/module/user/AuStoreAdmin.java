@@ -11,6 +11,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Data
 @Entity
@@ -53,4 +54,11 @@ public class AuStoreAdmin extends BaseEntity {
 
     @Column(name = "email", columnDefinition = "varchar(100) COMMENT '邮箱'")
     private String email;
-} 
+
+    @Column(name = "status", columnDefinition = "int default 1 COMMENT '状态{0:禁用,1:启用}'")
+    private Integer status;
+
+    @Column(name = "last_login_time", columnDefinition = "datetime COMMENT '最后登录时间'")
+    private LocalDateTime lastLoginTime;
+
+}

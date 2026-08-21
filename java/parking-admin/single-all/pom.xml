@@ -31,6 +31,18 @@
             <version>1.0.1</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.cyyaw.admin</groupId>
+            <artifactId>application-order</artifactId>
+            <version>1.0.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.cyyaw.admin</groupId>
+            <artifactId>application-parking</artifactId>
+            <version>1.0.1</version>
+        </dependency>
+
 
         <dependency>
             <groupId>com.github.xiaoymin</groupId>

@@ -30,6 +30,8 @@
 
         <!--================     应用服务    =================-->
         <module>../application-user</module>
+        <module>../application-order</module>
+        <module>../application-parking</module>
 
 
         <!--================       集群      ======================-->
@@ -64,6 +66,13 @@
                 <artifactId>mybatis-plus-spring-boot4-starter</artifactId>
                 <version>3.5.15</version>
             </dependency>
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-jsqlparser</artifactId>
+                <version>3.5.15</version>
+            </dependency>
+
+
 
             <dependency>
                 <groupId>org.springdoc</groupId>
