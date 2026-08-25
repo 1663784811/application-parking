@@ -10,7 +10,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.time.LocalTime;
 
 @Data
@@ -24,10 +24,6 @@ public class PkCostRules extends BaseEntity {
     @Column(name = "app_id", columnDefinition = "bigint COMMENT '应用ID'")
     private Long appId;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING)
-    @Column(name = "parking_id", columnDefinition = "bigint COMMENT '停车场ID'")
-    private Long parkingId;
-
     // ===============================================================
 
     @Column(name = "name", columnDefinition = "varchar(255) COMMENT '规则名称'")
@@ -35,11 +31,11 @@ public class PkCostRules extends BaseEntity {
 
     @JsonFormat(pattern = "yyyy-MM-dd")
     @Column(name = "effective_start_time", columnDefinition = "date COMMENT '规则有效开始日期'")
-    private LocalDateTime effectiveStartTime;
+    private LocalDate effectiveStartTime;
 
     @JsonFormat(pattern = "yyyy-MM-dd")
     @Column(name = "effective_end_time", columnDefinition = "date COMMENT '规则有效结束日期'")
-    private LocalDateTime effectiveEndTime;
+    private LocalDate effectiveEndTime;
 
     @Column(name = "car_type", columnDefinition = "varchar(32) not null COMMENT '车辆类型{0:小型汽车,1:中型汽车,2:大型汽车}'")
     private String carType;

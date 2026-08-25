@@ -32,8 +32,10 @@ public class OrOrderServiceImpl implements OrOrderService {
     private OrOrderStatusLogDao orOrderStatusLogDao;
 
     @Override
-    public Page<OrOrder> findPage(Integer page, Integer size) {
-        return orOrderDao.selectPage(new Page<>(page, size), new QueryWrapper<OrOrder>().orderByDesc("create_time"));
+    public Page<OrOrder> findPage(Integer page, Integer size, QueryWrapper<OrOrder> wrapper) {
+        // 排序固定按创建时间倒序，保证列表顺序一致
+        wrapper.orderByDesc("create_time");
+        return orOrderDao.selectPage(new Page<>(page, size), wrapper);
     }
 
     @Override

@@ -67,4 +67,11 @@ public class PkCarLogController {
         return BaseResult.ok(carLog);
     }
 
+    @Operation(summary = "今日通行数", description = "统计今日入场车辆数")
+    @GetMapping("/todayCount")
+    public BaseResult<Integer> todayCount() {
+        int count = pkCarLogService.selectTodayCount();
+        return BaseResult.ok(count);
+    }
+
 }

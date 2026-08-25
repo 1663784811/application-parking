@@ -37,6 +37,11 @@ public class PkCarLogServiceImpl implements PkCarLogService {
     }
 
     @Override
+    public int selectTodayCount() {
+        return pkCarLogDao.selectTodayCount();
+    }
+
+    @Override
     public List<PkCarLog> findByParkingId(Long parkingId) {
         return pkCarLogDao.selectList(
                 new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<PkCarLog>()

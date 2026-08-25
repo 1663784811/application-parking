@@ -1,5 +1,6 @@
 package com.cyyaw.admin.entity.module.user;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.cyyaw.admin.entity.utils.BaseEntity;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
@@ -26,5 +27,11 @@ public class AuRole extends BaseEntity {
 
     @Column(name = "is_system", columnDefinition = "int default 0 COMMENT '是否系统角色{0:自定义,1:系统}'")
     private Integer isSystem;
+
+    /**
+     * 成员数（非持久化字段，由服务层按 au_admin_role 统计填充）
+     */
+    @TableField(exist = false)
+    private Integer memberCount;
 
 }

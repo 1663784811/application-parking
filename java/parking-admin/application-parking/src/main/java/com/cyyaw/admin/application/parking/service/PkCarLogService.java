@@ -16,6 +16,8 @@ public interface PkCarLogService {
 
     PkCarLog selectByParkingIdAndCarNumber(Long parkingId, String carNumber);
 
+    int selectTodayCount();
+
     List<PkCarLog> findByParkingId(Long parkingId);
 
     Page<PkCarLog> findPage(Integer page, Integer size, QueryWrapper<PkCarLog> wrapper);

@@ -2,19 +2,18 @@ package com.cyyaw.admin.application.user.controller.login;
 
 
 import com.cyyaw.admin.application.user.service.AppLoginService;
+import com.cyyaw.admin.application.user.service.AuAppService;
 import com.cyyaw.admin.application.user.service.AuUserService;
 import com.cyyaw.admin.common.BaseResult;
 import com.cyyaw.admin.entity.dto.user.login.*;
+import com.cyyaw.admin.entity.module.user.AuApp;
 import com.cyyaw.admin.entity.module.user.AuUser;
 import com.cyyaw.admin.entity.utils.LoginInfo;
 import com.cyyaw.admin.entity.utils.LoginInfoContext;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @Tag(name = "用户登录模块")
@@ -27,6 +26,15 @@ public class AppLoginController {
     @Autowired
     private AuUserService auUserService;
 
+    @Autowired
+    private AuAppService auAppService;
+
+    @GetMapping("/findApp")
+    @Operation(summary = "查询app", description = "查询app")
+    public BaseResult<AuApp> findApp(String appType) {
+        AuApp appByType = auAppService.findAppByType(appType);
+        return BaseResult.ok(appByType);
+    }
 
     @PostMapping("/login")
     @Operation(summary = "用户登录-用户名密码登录", description = "用户名密码登录")

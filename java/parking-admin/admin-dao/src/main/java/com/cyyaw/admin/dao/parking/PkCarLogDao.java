@@ -12,4 +12,7 @@ public interface PkCarLogDao extends BaseMapperPlus<PkCarLogDao, PkCarLog> {
     @Select("select * from pk_car_log where parking_id = #{parkingId} and car_number = #{carNumber} and `status` = 0 limit 1")
     PkCarLog selectByParkingIdAndCarNumber(Long parkingId, String carNumber);
 
+    @Select("select count(*) from pk_car_log where entry_time >= CURDATE()")
+    int selectTodayCount();
+
 }

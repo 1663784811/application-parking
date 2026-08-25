@@ -1,5 +1,6 @@
 package com.cyyaw.admin.entity.module.user;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.cyyaw.admin.entity.utils.BaseEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -12,6 +13,7 @@ import lombok.EqualsAndHashCode;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Entity
@@ -54,5 +56,19 @@ public class AuAdmin extends BaseEntity {
 
     @Column(name = "last_login_time", columnDefinition = "datetime COMMENT '最后登录时间'")
     private LocalDateTime lastLoginTime;
+
+    /**
+     * 关联角色ID集合（非持久化，save 入参 / find/list 出参，供前端回显与提交）。
+     * 用 List&lt;String&gt; 承载雪花ID，避免 JS 精度丢失（项目无全局 Long→String 序列化器）。
+     * 管理员与角色为多对多，经 au_admin_role 关联。
+     */
+    @TableField(exist = false)
+    private List<String> roleIds;
+
+    /**
+     * 角色名称（非持久化，多角色逗号拼接，列表展示用）
+     */
+    @TableField(exist = false)
+    private String roleName;
 
 }

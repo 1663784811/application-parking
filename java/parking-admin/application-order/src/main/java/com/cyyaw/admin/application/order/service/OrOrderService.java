@@ -1,5 +1,6 @@
 package com.cyyaw.admin.application.order.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cyyaw.admin.entity.module.or.OrOrder;
 import com.cyyaw.admin.entity.module.or.OrOrderDetail;
@@ -10,7 +11,10 @@ import java.util.List;
 
 public interface OrOrderService {
 
-    Page<OrOrder> findPage(Integer page, Integer size);
+    /**
+     * 分页查询订单（条件由调用方构造 QueryWrapper 传入）。
+     */
+    Page<OrOrder> findPage(Integer page, Integer size, QueryWrapper<OrOrder> wrapper);
 
     OrOrder findByOrderNo(String orderNo);
 

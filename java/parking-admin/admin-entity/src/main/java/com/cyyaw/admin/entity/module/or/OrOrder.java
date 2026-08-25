@@ -1,12 +1,12 @@
 package com.cyyaw.admin.entity.module.or;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.cyyaw.admin.entity.utils.BaseEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -79,7 +79,7 @@ public class OrOrder extends BaseEntity {
     private String remark;
 
     // ========================
-    @Transient
+    @TableField(exist = false)
     private List<OrOrderDetail> orderDetailList;
 
 }

@@ -23,11 +23,33 @@ public class OrOrderController {
     @Autowired
     private OrOrderService orOrderService;
 
-    @Operation(summary = "订单列表", description = "分页查询订单列表")
+    @Operation(summary = "订单列表", description = "分页查询订单列表（支持订单号、订单状态、支付状态、创建时间区间筛选）")
     @GetMapping("/list")
     public BaseResult<List<OrOrder>> list(@RequestParam(defaultValue = "1") Integer page,
-                                          @RequestParam(defaultValue = "10") Integer size) {
-        Page<OrOrder> pageResult = orOrderService.findPage(page, size);
+                                          @RequestParam(defaultValue = "10") Integer size,
+                                          @RequestParam(required = false) String orderNo,
+                                          @RequestParam(required = false) Integer orderStatus,
+                                          @RequestParam(required = false) Integer payStatus,
+                                          @RequestParam(required = false) String startDate,
+                                          @RequestParam(required = false) String endDate) {
+        QueryWrapper<OrOrder> wrapper = new QueryWrapper<>();
+        if (orderNo != null && !orderNo.isEmpty()) {
+            wrapper.like("order_no", orderNo);
+        }
+        if (orderStatus != null) {
+            wrapper.eq("order_status", orderStatus);
+        }
+        if (payStatus != null) {
+            wrapper.eq("pay_status", payStatus);
+        }
+        // 创建时间区间（含端点）
+        if (startDate != null && !startDate.isEmpty()) {
+            wrapper.ge("create_time", startDate + " 00:00:00");
+        }
+        if (endDate != null && !endDate.isEmpty()) {
+            wrapper.le("create_time", endDate + " 23:59:59");
+        }
+        Page<OrOrder> pageResult = orOrderService.findPage(page, size, wrapper);
         BaseResult.Result result = new BaseResult.Result(page, size, pageResult.getTotal());
         return BaseResult.ok(pageResult.getRecords(), result);
     }

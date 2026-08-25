@@ -15,4 +15,6 @@ public interface AuAppService {
 
     List<AuApp> findAppByEnIdAndType(Long enId, String type);
 
+    AuApp findAppByType(String appType);
+
 }
