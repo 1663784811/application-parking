@@ -19,7 +19,8 @@
       </div>
     </div>
     <div class="table-container">
-      <Table :columns="columns" :data="state.tableData" :loading="state.loading">
+      <TableColumnSetting :columns="columns" v-model:visible="visibleFields" v-model:open="colSettingVisible" @reset="resetColumns" />
+      <Table :columns="displayColumns" :data="state.tableData" :loading="state.loading">
         <template #cardType="{ row }"><span class="card-type" :class="'type-' + row.cardType">{{ getCardTypeText(row.cardType) }}</span></template>
         <template #action="{ row }"><Button type="text" size="small" @click="handleView(row)">详情</Button></template>
       </Table>
@@ -29,8 +30,11 @@
 </template>
 
 <script setup>
-import { reactive } from 'vue'
-import { Button, Icon, Table, Page, DatePicker, Input, Select, Option } from 'view-ui-plus'
+import { reactive, onMounted } from 'vue'
+import { Button, Icon, Table, Page, DatePicker, Input, Select, Option, Message } from 'view-ui-plus'
+import { memberApi } from '@/api'
+import TableColumnSetting from '@/components/TableColumnSetting.vue'
+import { useTableColumns } from '@/composables/useTableColumns'
 
 const state = reactive({
   searchForm: { dateRange: [], plate: '', cardType: null },
@@ -40,40 +44,61 @@ const state = reactive({
 })
 
 const columns = [
-  { title: '订单号', key: 'orderNo', minWidth: 180 },
-  { title: '车牌号', key: 'plate', minWidth: 120 },
-  { title: '车主姓名', key: 'name', minWidth: 100 },
-  { title: '卡类型', slot: 'cardType', minWidth: 100 },
-  { title: '续费时长', key: 'duration', minWidth: 100, render: (h, p) => h('span', p.row.cardType === 1 ? '1个月' : p.row.cardType === 2 ? '1季度' : '1年') },
-  { title: '续费金额', key: 'amount', minWidth: 120, align: 'right', render: (h, p) => h('span', '¥' + p.row.amount) },
-  { title: '操作员', key: 'operator', minWidth: 100 },
-  { title: '续费时间', key: 'renewalTime', minWidth: 160 },
+  { field: 'orderNo', title: '订单号', key: 'orderNo', minWidth: 180 },
+  { field: 'plate', title: '车牌号', key: 'plate', minWidth: 120 },
+  { field: 'name', title: '车主姓名', key: 'name', minWidth: 100 },
+  { field: 'cardType', title: '卡类型', slot: 'cardType', minWidth: 100 },
+  { field: 'duration', title: '续费时长', key: 'duration', minWidth: 100, render: (h, p) => h('span', p.row.cardType === 1 ? '1个月' : p.row.cardType === 2 ? '1季度' : '1年') },
+  { field: 'amount', title: '续费金额', key: 'amount', minWidth: 120, align: 'right', render: (h, p) => h('span', '¥' + p.row.amount) },
+  { field: 'operator', title: '操作员', key: 'operator', minWidth: 100 },
+  { field: 'renewalTime', title: '续费时间', key: 'renewalTime', minWidth: 160 },
   { title: '操作', slot: 'action', minWidth: 80 }
 ]
 
+const { visibleFields, colSettingVisible, displayColumns, resetColumns } = useTableColumns(columns, 'renewalRecord:columnVisible')
+
 const getCardTypeText = (t) => ({ 1: '月卡', 2: '季卡', 3: '年卡' }[t] || t)
 
-const initData = () => {
+// 将 DatePicker 的日期值格式化为日期字符串（后端再拼接 00:00:00 / 23:59:59）
+const formatDateOnly = (val) => {
+  if (!val) return null
+  if (typeof val === 'string') return val
+  const d = new Date(val)
+  const pad = n => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
+// 续费记录列表（只读，分页）
+const initData = async () => {
   state.loading = true
-  setTimeout(() => {
-    state.tableData = [
-      { id: 1, orderNo: 'R20240115100001', plate: '京A12345', name: '张三', cardType: 1, amount: 300, operator: '管理员', renewalTime: '2024-01-15 10:00:00' },
-      { id: 2, orderNo: 'R20240114150002', plate: '京B67890', name: '李四', cardType: 2, amount: 800, operator: '管理员', renewalTime: '2024-01-14 15:00:00' },
-      { id: 3, orderNo: 'R20240113120003', plate: '浙C11111', name: '王五', cardType: 3, amount: 2800, operator: '管理员', renewalTime: '2024-01-13 12:00:00' },
-      { id: 4, orderNo: 'R20240112180004', plate: '京D22222', name: '赵六', cardType: 1, amount: 300, operator: '管理员', renewalTime: '2024-01-12 18:00:00' }
-    ]
-    state.pagination.total = 4
+  try {
+    const dateRange = state.searchForm.dateRange || []
+    const res = await memberApi.getRenewalList({
+      page: state.pagination.current,
+      size: state.pagination.pageSize,
+      plate: state.searchForm.plate,
+      cardType: state.searchForm.cardType,
+      startTime: dateRange[0] ? formatDateOnly(dateRange[0]) : null,
+      endTime: dateRange[1] ? formatDateOnly(dateRange[1]) : null
+    })
+    state.tableData = res.data || []
+    state.pagination.total = (res.result && res.result.total) || 0
+  } catch (e) {
+    console.error('获取续费记录失败', e)
+  } finally {
     state.loading = false
-  }, 500)
+  }
 }
 
 const handleSearch = () => { state.pagination.current = 1; initData() }
 const handleReset = () => { state.searchForm = { dateRange: [], plate: '', cardType: null }; handleSearch() }
-const handleExport = () => import('view-ui-plus').then(m => m.Message.info('导出中...'))
-const handleView = (r) => console.log('查看', r)
+const handleExport = () => Message.info('导出功能待对接')
+const handleView = (r) => Message.info('详情功能待对接')
 const handlePageChange = (p) => { state.pagination.current = p; initData() }
 
-initData()
+onMounted(() => {
+  initData()
+})
 </script>
 
 <style lang="less" scoped>

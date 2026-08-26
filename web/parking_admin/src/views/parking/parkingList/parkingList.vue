@@ -68,8 +68,16 @@
 
     <!-- 数据表格 -->
     <div class="table-container">
+      <!-- 列设置：表格上方右侧 -->
+      <TableColumnSetting
+        :columns="allColumns"
+        v-model:visible="visibleFields"
+        v-model:open="colSettingVisible"
+        @reset="resetColumns"
+      />
+
       <Table
-        :columns="columns"
+        :columns="displayColumns"
         :data="state.tableData"
         :loading="state.loading"
         :selection="true"
@@ -82,6 +90,7 @@
 
         <template #action="{ row }">
           <Button type="text" size="small" @click="handleEdit(row)">编辑</Button>
+          <Button type="text" size="small" @click="handleSetRules(row)">设置收费规则</Button>
           <Button type="text" size="small" @click="handleViewSpaces(row)">查看车位</Button>
           <Button type="text" size="small" @click="handleDelete(row)" class="text-danger">
             删除
@@ -126,6 +135,14 @@
           <Input v-model="state.formData.address" placeholder="请输入详细地址" />
         </FormItem>
 
+        <FormItem label="经度" prop="longitude">
+          <Input v-model="state.formData.longitude" placeholder="如 116.404153" />
+        </FormItem>
+
+        <FormItem label="纬度" prop="latitude">
+          <Input v-model="state.formData.latitude" placeholder="如 39.915031" />
+        </FormItem>
+
         <FormItem label="总车位数" prop="totalSpaces">
           <InputNumber
             v-model="state.formData.totalSpaces"
@@ -146,6 +163,36 @@
       <template #footer>
         <Button @click="handleModalCancel">取消</Button>
         <Button type="primary" :loading="state.submitLoading" @click="handleSubmit">
+          确定
+        </Button>
+      </template>
+    </Modal>
+
+    <!-- 设置收费规则弹窗 -->
+    <Modal
+      v-model="state.ruleModalVisible"
+      title="设置收费规则"
+      width="600"
+      @on-cancel="state.ruleModalVisible = false"
+    >
+      <p v-if="state.currentParking" style="margin-bottom: 12px; color: var(--text-color-secondary)">
+        为「{{ state.currentParking.name }}」选择适用的收费规则
+      </p>
+      <Select
+        v-model="state.selectedRuleIds"
+        multiple
+        filterable
+        placeholder="请选择收费规则"
+        :loading="state.ruleLoading"
+        style="width: 100%"
+      >
+        <Option v-for="item in state.allCostRules" :key="item.id" :value="item.id">
+          {{ item.name }}
+        </Option>
+      </Select>
+      <template #footer>
+        <Button @click="state.ruleModalVisible = false">取消</Button>
+        <Button type="primary" :loading="state.ruleSaving" @click="handleSaveRules">
           确定
         </Button>
       </template>
@@ -174,10 +221,98 @@ import {
   Badge,
   Message
 } from 'view-ui-plus'
-import { parkingApi } from '@/api'
+import { parkingApi, costRulesApi } from '@/api'
+import TableColumnSetting from '@/components/TableColumnSetting.vue'
+import { useTableColumns } from '@/composables/useTableColumns'
 
 const router = useRouter()
 const formRef = ref(null)
+
+// 经纬度校验：留空合法；非空须为数字且在合法范围内
+const coordValidator = (min, max, label) => (rule, value, callback) => {
+  if (value === '' || value == null) return callback()
+  const n = Number(value)
+  if (isNaN(n)) return callback(new Error(`请输入有效的${label}`))
+  if (n < min || n > max) return callback(new Error(`${label}范围 ${min} ~ ${max}`))
+  callback()
+}
+
+// 表格列定义：selection/操作固定显示，带 field 的列可由「列设置」控制显隐
+const allColumns = [
+  {
+    type: 'selection',
+    width: 80,
+    align: 'center'
+  },
+  {
+    field: 'id',
+    title: '停车场ID',
+    key: 'id',
+    minWidth: 100
+  },
+  {
+    field: 'name',
+    title: '停车场名称',
+    key: 'name',
+    minWidth: 180
+  },
+  {
+    field: 'address',
+    title: '地址',
+    key: 'address',
+    minWidth: 200,
+    tooltip: true
+  },
+  {
+    field: 'longLat',
+    title: '经纬度',
+    key: 'longLat',
+    minWidth: 160,
+    tooltip: true
+  },
+  {
+    field: 'capacity',
+    title: '总车位',
+    key: 'capacity',
+    minWidth: 80,
+    align: 'center'
+  },
+  {
+    field: 'remaining',
+    title: '剩余车位',
+    key: 'capacity',
+    minWidth: 80,
+    align: 'center'
+  },
+  {
+    field: 'createTime',
+    title: '创建时间',
+    key: 'createTime',
+    minWidth: 160
+  },
+  {
+    field: 'status',
+    title: '状态',
+    slot: 'status',
+    minWidth: 100,
+    align: 'center'
+  },
+  {
+    title: '操作',
+    slot: 'action',
+    minWidth: 260,
+    fixed: 'right',
+    align: 'center'
+  }
+]
+
+// 表格列设置（显隐 + 持久化到 localStorage）
+const {
+  visibleFields,
+  colSettingVisible,
+  displayColumns,
+  resetColumns
+} = useTableColumns(allColumns, 'parkingList:columnVisible')
 
 const state = reactive({
   // 搜索表单
@@ -209,6 +344,8 @@ const state = reactive({
     id: null,
     name: '',
     address: '',
+    longitude: '',
+    latitude: '',
     totalSpaces: 100,
     status: 1
   },
@@ -218,60 +355,25 @@ const state = reactive({
     name: [
       { required: true, message: '请输入停车场名称', trigger: 'blur' }
     ],
+    longitude: [
+      { validator: coordValidator(-180, 180, '经度'), trigger: 'blur' }
+    ],
+    latitude: [
+      { validator: coordValidator(-90, 90, '纬度'), trigger: 'blur' }
+    ],
     totalSpaces: [
       { required: true, type: 'number', message: '请输入总车位数', trigger: 'blur' }
     ]
-  }
-})
+  },
 
-// 表格列定义
-const columns = [
-  {
-    type: 'selection',
-    width: 80,
-    align: 'center'
-  },
-  {
-    title: '停车场ID',
-    key: 'id',
-    minWidth: 100
-  },
-  {
-    title: '停车场名称',
-    key: 'name',
-    minWidth: 180
-  },
-  {
-    title: '地址',
-    key: 'address',
-    minWidth: 200,
-    tooltip: true
-  },
-  {
-    title: '总车位',
-    key: 'capacity',
-    minWidth: 100,
-    align: 'center'
-  },
-  {
-    title: '创建时间',
-    key: 'createTime',
-    minWidth: 160
-  },
-  {
-    title: '状态',
-    slot: 'status',
-    minWidth: 100,
-    align: 'center'
-  },
-  {
-    title: '操作',
-    slot: 'action',
-    minWidth: 180,
-    fixed: 'right',
-    align: 'center'
-  }
-]
+  // 设置收费规则弹窗
+  ruleModalVisible: false,
+  ruleLoading: false,
+  ruleSaving: false,
+  currentParking: null,      // 当前设置规则的停车场行
+  allCostRules: [],          // 全部收费规则（供多选下拉）
+  selectedRuleIds: []        // 已选规则ID（字符串，防雪花ID精度丢失）
+})
 
 // 初始化数据
 const initData = async () => {
@@ -317,6 +419,8 @@ const handleAdd = () => {
     id: null,
     name: '',
     address: '',
+    longitude: '',
+    latitude: '',
     totalSpaces: 100,
     status: 1
   }
@@ -325,11 +429,15 @@ const handleAdd = () => {
 
 // 编辑
 const handleEdit = (row) => {
+  // longLat 存储格式 "经度,纬度"（long,lat），回填到两个输入框
+  const [lng, lat] = (row.longLat || '').split(',')
   state.modalType = 'edit'
   state.formData = {
     id: row.id,
     name: row.name,
     address: row.address,
+    longitude: lng ? lng.trim() : '',
+    latitude: lat ? lat.trim() : '',
     totalSpaces: row.capacity,
     status: row.openingUp === 0 ? 1 : 0
   }
@@ -356,6 +464,42 @@ const handleDelete = async (row) => {
 // 查看车位
 const handleViewSpaces = (row) => {
   router.push({ name: 'spaceManagement', query: { parkingId: row.id } })
+}
+
+// 设置收费规则：打开弹窗，加载全部规则（缓存）+ 该停车场已关联规则
+const handleSetRules = async (row) => {
+  state.currentParking = row
+  state.selectedRuleIds = []
+  state.ruleModalVisible = true
+  state.ruleLoading = true
+  try {
+    // 规则总量不大，size 取较大值一次性加载供多选；已加载则复用缓存
+    if (state.allCostRules.length === 0) {
+      const rulesRes = await costRulesApi.getCostRulesList({ size: 1000 })
+      state.allCostRules = rulesRes.data || []
+    }
+    const res = await costRulesApi.getCostRulesByParking(row.id)
+    state.selectedRuleIds = Array.isArray(res.data) ? [...res.data] : []
+  } catch (e) {
+    console.error('获取收费规则关联失败', e)
+  } finally {
+    state.ruleLoading = false
+  }
+}
+
+// 保存收费规则关联（按停车场同步多对多）
+const handleSaveRules = async () => {
+  if (!state.currentParking) return
+  state.ruleSaving = true
+  try {
+    await costRulesApi.saveCostRulesByParking(state.currentParking.id, state.selectedRuleIds)
+    Message.success('收费规则设置成功')
+    state.ruleModalVisible = false
+  } catch (e) {
+    console.error('保存收费规则失败', e)
+  } finally {
+    state.ruleSaving = false
+  }
 }
 
 // 批量选择
@@ -395,6 +539,9 @@ const handleSubmit = async () => {
     const params = {
       name: state.formData.name,
       address: state.formData.address,
+      longLat: state.formData.longitude && state.formData.latitude
+        ? `${state.formData.longitude},${state.formData.latitude}`
+        : '',
       capacity: state.formData.totalSpaces,
       openingUp: state.formData.status === 1 ? 0 : 1
     }

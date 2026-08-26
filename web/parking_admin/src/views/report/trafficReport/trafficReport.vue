@@ -4,7 +4,10 @@
       <Select v-model="state.timeType" class="filter-select-sm" @on-change="handleSearch">
         <Option value="day">按日</Option><Option value="week">按周</Option><Option value="month">按月</Option>
       </Select>
-      <Select v-model="state.parkingId" placeholder="选择停车场" class="filter-select" clearable><Option value="1">全部停车场</Option><Option value="2">城西停车场</Option></Select>
+      <Select v-model="state.parkingId" placeholder="选择停车场" class="filter-select" clearable>
+        <Option value="" :key="'all'">全部停车场</Option>
+        <Option v-for="item in state.parkingList" :key="item.id" :value="item.id">{{ item.name }}</Option>
+      </Select>
       <Button type="primary" @click="handleSearch">查询</Button><Button @click="handleExport">导出</Button>
     </div>
     <div class="stats-row">
@@ -17,71 +20,153 @@
       <div class="chart-card"><div class="chart-title">分时段车流量</div><div ref="hourChartRef" class="chart-body"></div></div>
       <div class="chart-card"><div class="chart-title">七日对比</div><div ref="compareChartRef" class="chart-body"></div></div>
     </div>
-    <div class="table-section"><Table :columns="columns" :data="state.tableData" :loading="state.loading" /></div>
+    <div class="table-section"><TableColumnSetting :columns="columns" v-model:visible="visibleFields" v-model:open="colSettingVisible" @reset="resetColumns" /><Table :columns="displayColumns" :data="state.tableData" :loading="state.loading" /></div>
   </div>
 </template>
 
 <script setup>
-import { reactive, ref, onMounted, nextTick } from 'vue'
+import { reactive, ref, onMounted, onUnmounted, nextTick } from 'vue'
 import * as echarts from 'echarts'
 import { Select, Option, Button, Table, Message } from 'view-ui-plus'
+import { reportApi, parkingApi } from '@/api'
+import TableColumnSetting from '@/components/TableColumnSetting.vue'
+import { useTableColumns } from '@/composables/useTableColumns'
 
 const hourChartRef = ref(null)
 const compareChartRef = ref(null)
 
 const state = reactive({
   timeType: 'day',
-  parkingId: null,
-  stats: { todayIn: 165, todayOut: 142, currentIn: 156, peakHour: '9:00-11:00' },
+  parkingId: '',
+  parkingList: [],
+  stats: { todayIn: 0, todayOut: 0, currentIn: 0, peakHour: '--' },
+  hourly: [],
+  daily: [],
   tableData: [],
   loading: false
 })
 
 const columns = [
-  { title: '时段', key: 'period', minWidth: 150 },
-  { title: '入园', key: 'inCount', minWidth: 100, align: 'center' },
-  { title: '出园', key: 'outCount', minWidth: 100, align: 'center' },
-  { title: '在场', key: 'inPark', minWidth: 100, align: 'center' },
-  { title: '入场峰值', key: 'inPeak', minWidth: 120, align: 'center' },
-  { title: '出场峰值', key: 'outPeak', minWidth: 120, align: 'center' }
+  { field: 'period', title: '时段', key: 'period', minWidth: 150 },
+  { field: 'inCount', title: '入园', key: 'inCount', minWidth: 100, align: 'center' },
+  { field: 'outCount', title: '出园', key: 'outCount', minWidth: 100, align: 'center' },
+  { field: 'inPark', title: '在场', key: 'inPark', minWidth: 100, align: 'center' },
+  { field: 'inPeak', title: '入场峰值', key: 'inPeak', minWidth: 120, align: 'center' },
+  { field: 'outPeak', title: '出场峰值', key: 'outPeak', minWidth: 120, align: 'center' }
 ]
 
-const initCharts = () => {
-  nextTick(() => {
-    if (hourChartRef.value) echarts.init(hourChartRef.value).setOption({
-      tooltip: { trigger: 'axis' },
-      grid: { left: 40, right: 20, top: 20, bottom: 40 },
-      xAxis: { type: 'category', data: ['0', '2', '4', '6', '8', '10', '12', '14', '16', '18', '20', '22'], axisLine: { lineStyle: { color: '#E5E6EB' } }, axisLabel: { color: '#86909C' } },
-      yAxis: { type: 'value', axisLine: { show: false }, splitLine: { lineStyle: { color: '#F2F3F5' } } },
-      series: [{ name: '入园', type: 'line', data: [5, 3, 2, 8, 35, 45, 28, 32, 38, 25, 15, 8], smooth: true, areaStyle: { color: 'rgba(22,93,255,0.1)' }, itemStyle: { color: '#165DFF' }, lineStyle: { color: '#165DFF' } }, { name: '出园', type: 'line', data: [3, 2, 1, 5, 20, 30, 35, 28, 22, 30, 18, 10], smooth: true, areaStyle: { color: 'rgba(0,180,42,0.1)' }, itemStyle: { color: '#00B42A' }, lineStyle: { color: '#00B42A' } }]
-    })
-    if (compareChartRef.value) echarts.init(compareChartRef.value).setOption({
-      tooltip: { trigger: 'axis' },
-      grid: { left: 40, right: 20, top: 20, bottom: 40 },
-      xAxis: { type: 'category', data: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'], axisLine: { lineStyle: { color: '#E5E6EB' } }, axisLabel: { color: '#86909C' } },
-      yAxis: { type: 'value', axisLine: { show: false }, splitLine: { lineStyle: { color: '#F2F3F5' } } },
-      series: [{ type: 'bar', data: [280, 265, 290, 310, 340, 420, 385], barWidth: 24, itemStyle: { color: '#165DFF', borderRadius: [4, 4, 0, 0] } }]
-    })
-  })
+const { visibleFields, colSettingVisible, displayColumns, resetColumns } = useTableColumns(columns, 'trafficReport:columnVisible')
+
+// 日期标签：2024-01-09 → 1月9日
+const formatDateLabel = (d) => {
+  if (!d) return ''
+  const parts = String(d).split('-')
+  if (parts.length !== 3) return d
+  return `${parseInt(parts[1], 10)}月${parseInt(parts[2], 10)}日`
 }
 
-const initData = () => {
+// 写入汇总
+const applyStats = (s) => {
+  if (!s) return
+  state.stats.todayIn = Number(s.todayIn ?? 0)
+  state.stats.todayOut = Number(s.todayOut ?? 0)
+  state.stats.currentIn = Number(s.currentIn ?? 0)
+  state.stats.peakHour = s.peakHour || '--'
+}
+
+// 加载停车场下拉
+const loadParkingList = async () => {
+  try {
+    const res = await parkingApi.getParkingList({ size: 1000 })
+    state.parkingList = res.data || []
+  } catch (e) {
+    // 忽略：下拉为空不影响主流程
+  }
+}
+
+// 全量加载（汇总 + 分小时 + 近7日 + 2小时分段明细）
+const loadData = async () => {
   state.loading = true
-  setTimeout(() => {
-    state.tableData = [
-      { period: '08:00-10:00', inCount: 85, outCount: 45, inPark: 240, inPeak: 62, outPeak: 28 },
-      { period: '10:00-12:00', inCount: 65, outCount: 58, inPark: 247, inPeak: 38, outPeak: 35 },
-      { period: '12:00-14:00', inCount: 45, outCount: 72, inPark: 220, inPeak: 28, outPeak: 42 },
-      { period: '14:00-16:00', inCount: 58, outCount: 52, inPark: 226, inPeak: 35, outPeak: 32 }
-    ]
+  const parkingId = state.parkingId || null
+  try {
+    const [stats, hourly, daily, table] = await Promise.all([
+      reportApi.getTrafficStats({ parkingId }),
+      reportApi.getTrafficHourly({ parkingId }),
+      reportApi.getTrafficDaily({ parkingId }),
+      reportApi.getTrafficTable({ parkingId })
+    ])
+    applyStats(stats.data)
+    state.hourly = hourly.data || []
+    state.daily = daily.data || []
+    state.tableData = table.data || []
+  } catch (e) {
+    // authRequest 已统一提示
+  } finally {
     state.loading = false
-  }, 500)
+  }
+  await nextTick()
+  initCharts()
 }
 
-const handleSearch = () => initData()
-const handleExport = () => Message.info('导出中...')
+// 分时段车流量（24 小时） + 七日对比
+const initCharts = () => {
+  const hourly = state.hourly || []
+  const daily = state.daily || []
+  if (hourChartRef.value) {
+    const chart = echarts.getInstanceByDom(hourChartRef.value) || echarts.init(hourChartRef.value)
+    chart.setOption({
+      tooltip: { trigger: 'axis' },
+      legend: { data: ['入园', '出园'], top: 0, textStyle: { color: '#86909C' } },
+      grid: { left: 40, right: 20, top: 30, bottom: 40 },
+      xAxis: { type: 'category', data: hourly.map((i) => String(i.hour)), axisLine: { lineStyle: { color: '#E5E6EB' } }, axisLabel: { color: '#86909C' } },
+      yAxis: { type: 'value', axisLine: { show: false }, splitLine: { lineStyle: { color: '#F2F3F5' } }, axisLabel: { color: '#86909C' } },
+      series: [
+        { name: '入园', type: 'line', data: hourly.map((i) => Number(i.inCount ?? 0)), smooth: true, areaStyle: { color: 'rgba(22,93,255,0.1)' }, itemStyle: { color: '#165DFF' }, lineStyle: { color: '#165DFF' } },
+        { name: '出园', type: 'line', data: hourly.map((i) => Number(i.outCount ?? 0)), smooth: true, areaStyle: { color: 'rgba(0,180,42,0.1)' }, itemStyle: { color: '#00B42A' }, lineStyle: { color: '#00B42A' } }
+      ]
+    }, true)
+  }
+  if (compareChartRef.value) {
+    const chart = echarts.getInstanceByDom(compareChartRef.value) || echarts.init(compareChartRef.value)
+    chart.setOption({
+      tooltip: { trigger: 'axis' },
+      legend: { data: ['入园', '出园'], top: 0, textStyle: { color: '#86909C' } },
+      grid: { left: 40, right: 20, top: 30, bottom: 40 },
+      xAxis: { type: 'category', data: daily.map((i) => formatDateLabel(i.date)), axisLine: { lineStyle: { color: '#E5E6EB' } }, axisLabel: { color: '#86909C' } },
+      yAxis: { type: 'value', axisLine: { show: false }, splitLine: { lineStyle: { color: '#F2F3F5' } }, axisLabel: { color: '#86909C' } },
+      series: [
+        { name: '入园', type: 'bar', data: daily.map((i) => Number(i.inCount ?? 0)), barWidth: 12, itemStyle: { color: '#165DFF', borderRadius: [4, 4, 0, 0] } },
+        { name: '出园', type: 'bar', data: daily.map((i) => Number(i.outCount ?? 0)), barWidth: 12, itemStyle: { color: '#00B42A', borderRadius: [4, 4, 0, 0] } }
+      ]
+    }, true)
+  }
+}
 
-onMounted(() => { initData(); initCharts() })
+const handleSearch = () => {
+  if (state.timeType !== 'day') {
+    Message.info('按周/月维度待对接')
+    return
+  }
+  loadData()
+}
+const handleExport = () => Message.info('导出功能待对接')
+
+const handleResize = () => {
+  if (hourChartRef.value) echarts.getInstanceByDom(hourChartRef.value)?.resize()
+  if (compareChartRef.value) echarts.getInstanceByDom(compareChartRef.value)?.resize()
+}
+
+onMounted(async () => {
+  await loadParkingList()
+  await loadData()
+  window.addEventListener('resize', handleResize)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
+  if (hourChartRef.value) echarts.getInstanceByDom(hourChartRef.value)?.dispose()
+  if (compareChartRef.value) echarts.getInstanceByDom(compareChartRef.value)?.dispose()
+})
 </script>
 
 <style lang="less" scoped>

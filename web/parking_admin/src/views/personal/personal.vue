@@ -233,8 +233,9 @@
             <h3 class="panel-title">操作日志</h3>
           </div>
           <div class="panel-body">
+            <TableColumnSetting :columns="logColumns" v-model:visible="visibleFields" v-model:open="colSettingVisible" @reset="resetColumns" />
             <Table
-              :columns="logColumns"
+              :columns="displayColumns"
               :data="state.logList"
               :loading="state.logLoading"
               size="small"
@@ -268,6 +269,8 @@ import { reactive, onMounted, watch } from 'vue'
 import { Icon, Form, FormItem, Input, Button, Tag, Switch, Upload, Table, Page, Message, Modal } from 'view-ui-plus'
 import { useUserStore } from '@/stores/user'
 import { userApi } from '@/api'
+import TableColumnSetting from '@/components/TableColumnSetting.vue'
+import { useTableColumns } from '@/composables/useTableColumns'
 
 const userStore = useUserStore()
 
@@ -331,12 +334,14 @@ const navList = [
 ]
 
 const logColumns = [
-  { title: '时间', key: 'time', minWidth: 180 },
-  { title: '操作类型', slot: 'actionType', minWidth: 120 },
-  { title: '操作内容', key: 'content' },
-  { title: 'IP地址', key: 'ip', minWidth: 140 },
-  { title: '设备', key: 'device', minWidth: 160 }
+  { field: 'time', title: '时间', key: 'time', minWidth: 180 },
+  { field: 'actionType', title: '操作类型', slot: 'actionType', minWidth: 120 },
+  { field: 'content', title: '操作内容', key: 'content' },
+  { field: 'ip', title: 'IP地址', key: 'ip', minWidth: 140 },
+  { field: 'device', title: '设备', key: 'device', minWidth: 160 }
 ]
+
+const { visibleFields, colSettingVisible, displayColumns, resetColumns } = useTableColumns(logColumns, 'personal:log:columnVisible')
 
 // 基本信息保存：后端个人中心接口暂未提供资料修改接口，不模拟成功
 const handleSaveInfo = () => {

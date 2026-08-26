@@ -87,8 +87,9 @@
 
     <!-- 数据表格 -->
     <div class="table-container">
+      <TableColumnSetting :columns="columns" v-model:visible="visibleFields" v-model:open="colSettingVisible" @reset="resetColumns" />
       <Table
-        :columns="columns"
+        :columns="displayColumns"
         :data="state.tableData"
         :loading="state.loading"
         :selection="true"
@@ -144,6 +145,8 @@ import {
   Modal,
   Message
 } from 'view-ui-plus'
+import TableColumnSetting from '@/components/TableColumnSetting.vue'
+import { useTableColumns } from '@/composables/useTableColumns'
 
 const state = reactive({
   searchForm: {
@@ -172,16 +175,18 @@ const state = reactive({
 
 const columns = [
   { type: 'selection', width: 80, align: 'center' },
-  { title: '车牌号', key: 'plate', minWidth: 120 },
-  { title: '异常类型', slot: 'exceptionType', minWidth: 120 },
-  { title: '发生时间', key: 'exceptionTime', minWidth: 160 },
-  { title: '停车场', key: 'parkingName', minWidth: 150 },
-  { title: '通道', key: 'channel', minWidth: 100 },
-  { title: '异常描述', key: 'description', minWidth: 200, tooltip: true },
-  { title: '待缴费金额', key: 'unpaidAmount', minWidth: 120, align: 'right' },
-  { title: '处理状态', slot: 'status', minWidth: 100, align: 'center' },
+  { field: 'plate', title: '车牌号', key: 'plate', minWidth: 120 },
+  { field: 'exceptionType', title: '异常类型', slot: 'exceptionType', minWidth: 120 },
+  { field: 'exceptionTime', title: '发生时间', key: 'exceptionTime', minWidth: 160 },
+  { field: 'parkingName', title: '停车场', key: 'parkingName', minWidth: 150 },
+  { field: 'channel', title: '通道', key: 'channel', minWidth: 100 },
+  { field: 'description', title: '异常描述', key: 'description', minWidth: 200, tooltip: true },
+  { field: 'unpaidAmount', title: '待缴费金额', key: 'unpaidAmount', minWidth: 120, align: 'right' },
+  { field: 'status', title: '处理状态', slot: 'status', minWidth: 100, align: 'center' },
   { title: '操作', slot: 'action', minWidth: 250, fixed: 'right' }
 ]
+
+const { visibleFields, colSettingVisible, displayColumns, resetColumns } = useTableColumns(columns, 'exceptionRecord:columnVisible')
 
 const getExceptionTypeText = (type) => {
   const map = {

@@ -42,8 +42,9 @@
 
     <!-- 数据表格 -->
     <div class="table-container">
+      <TableColumnSetting :columns="columns" v-model:visible="visibleFields" v-model:open="colSettingVisible" @reset="resetColumns" />
       <Table
-        :columns="columns"
+        :columns="displayColumns"
         :data="state.tableData"
         :loading="state.loading"
         :selection="true"
@@ -113,6 +114,8 @@ import {
   Message
 } from 'view-ui-plus'
 import { parkingApi, passageApi } from '@/api'
+import TableColumnSetting from '@/components/TableColumnSetting.vue'
+import { useTableColumns } from '@/composables/useTableColumns'
 
 const state = reactive({
   // 搜索表单
@@ -141,13 +144,15 @@ const state = reactive({
 // 表格列定义
 const columns = [
   { type: 'selection', width: 80, align: 'center' },
-  { title: '车牌号', key: 'carNumber', minWidth: 120 },
-  { title: '车辆类型', key: 'carType', minWidth: 100 },
-  { title: '进场时间', key: 'entryTime', minWidth: 160 },
-  { title: '出场时间', key: 'outTime', minWidth: 160 },
-  { title: '状态', slot: 'status', minWidth: 100, align: 'center' },
+  { field: 'carNumber', title: '车牌号', key: 'carNumber', minWidth: 120 },
+  { field: 'carType', title: '车辆类型', key: 'carType', minWidth: 100 },
+  { field: 'entryTime', title: '进场时间', key: 'entryTime', minWidth: 160 },
+  { field: 'outTime', title: '出场时间', key: 'outTime', minWidth: 160 },
+  { field: 'status', title: '状态', slot: 'status', minWidth: 100, align: 'center' },
   { title: '操作', slot: 'action', minWidth: 120, fixed: 'right' }
 ]
+
+const { visibleFields, colSettingVisible, displayColumns, resetColumns } = useTableColumns(columns, 'passageRecord:columnVisible')
 
 const getStatusText = (status) => {
   const map = { 0: '场内', 1: '已出场' }

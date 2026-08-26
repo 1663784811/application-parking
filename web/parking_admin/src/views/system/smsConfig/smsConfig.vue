@@ -9,7 +9,8 @@
       </div>
     </div>
     <div class="table-container">
-      <Table :columns="columns" :data="state.tableData" :loading="state.loading">
+      <TableColumnSetting :columns="columns" v-model:visible="visibleFields" v-model:open="colSettingVisible" @reset="resetColumns" />
+      <Table :columns="displayColumns" :data="state.tableData" :loading="state.loading">
         <template #status="{ row }">
           <i-switch :value="row.status === 1" @on-change="v => handleToggleStatus(row, v)"/>
         </template>
@@ -46,92 +47,100 @@
 </template>
 
 <script setup>
-import {reactive} from 'vue'
-import {Button, Form, FormItem, Icon, Input, Message, Modal, Option, Select, Table} from 'view-ui-plus'
+import { reactive, onMounted } from 'vue'
+import { Button, Form, FormItem, Icon, Input, Message, Modal, Option, Select, Table } from 'view-ui-plus'
+import { systemApi } from '@/api'
+import TableColumnSetting from '@/components/TableColumnSetting.vue'
+import { useTableColumns } from '@/composables/useTableColumns'
 
 const state = reactive({
   tableData: [],
   loading: false,
   modalVisible: false,
   modalType: 'add',
-  formData: {id: null, name: '', type: 1, content: '', statusShow: true}
+  formData: { id: null, name: '', type: 1, content: '', statusShow: true }
 })
 
 const columns = [
-  {title: '模板名称', key: 'name', minWidth: 150},
-  {title: '类型', key: 'typeName', minWidth: 120},
-  {title: '内容预览', key: 'content', minWidth: 200, tooltip: true},
-  {title: '状态', slot: 'status', minWidth: 80, align: 'center'},
-  {title: '操作', slot: 'action', minWidth: 120}
+  { field: 'name', title: '模板名称', key: 'name', minWidth: 150 },
+  { field: 'typeName', title: '类型', key: 'typeName', minWidth: 120 },
+  { field: 'content', title: '内容预览', key: 'content', minWidth: 200, tooltip: true },
+  { field: 'status', title: '状态', slot: 'status', minWidth: 80, align: 'center' },
+  { title: '操作', slot: 'action', minWidth: 120 }
 ]
 
-const typeMap = {1: '到期提醒', 2: '欠费催缴', 3: '入场通知', 4: '出场通知'}
+const { visibleFields, colSettingVisible, displayColumns, resetColumns } = useTableColumns(columns, 'smsConfig:columnVisible')
 
-const initData = () => {
+const typeMap = { 1: '到期提醒', 2: '欠费催缴', 3: '入场通知', 4: '出场通知' }
+
+// 短信模板列表（全部，按创建时间倒序）
+const loadData = async () => {
   state.loading = true
-  setTimeout(() => {
-    state.tableData = [
-      {
-        id: 1,
-        name: '月卡到期提醒',
-        type: 1,
-        typeName: '到期提醒',
-        content: '尊敬的{plate}车主，您的月卡将于{time}到期，请及时续费。',
-        status: 1
-      },
-      {
-        id: 2,
-        name: '停车欠费通知',
-        type: 2,
-        typeName: '欠费催缴',
-        content: '您的车辆{plate}在{parking}产生停车费{amount}元，请及时缴纳。',
-        status: 1
-      },
-      {
-        id: 3,
-        name: '入场通知',
-        type: 3,
-        typeName: '入场通知',
-        content: '您的车辆{plate}已于{time}入场{parking}，祝您停车愉快。',
-        status: 1
-      },
-      {
-        id: 4,
-        name: '出场通知',
-        type: 4,
-        typeName: '出场通知',
-        content: '您的车辆{plate}已于{time}出场，停车费{amount}元。',
-        status: 0
-      }
-    ]
+  try {
+    const res = await systemApi.getSmsTemplateList()
+    state.tableData = (res.data || []).map(r => ({ ...r, typeName: typeMap[r.type] || r.type }))
+  } catch (e) {
+    console.error('获取短信模板列表失败', e)
+  } finally {
     state.loading = false
-  }, 500)
+  }
 }
 
 const handleAdd = () => {
-  state.modalType = 'add';
-  state.formData = {id: null, name: '', type: 1, content: '', statusShow: true};
+  state.modalType = 'add'
+  state.formData = { id: null, name: '', type: 1, content: '', statusShow: true }
   state.modalVisible = true
 }
+
 const handleEdit = r => {
-  state.modalType = 'edit';
-  state.formData = {...r, statusShow: r.status === 1};
+  state.modalType = 'edit'
+  state.formData = { ...r, statusShow: r.status === 1 }
   state.modalVisible = true
 }
-const handleSubmit = () => {
-  Message.success(state.modalType === 'add' ? '新增成功' : '编辑成功');
-  state.modalVisible = false;
-  initData()
+
+const handleSubmit = async () => {
+  if (!state.formData.name) {
+    Message.warning('请输入模板名称')
+    return
+  }
+  try {
+    const payload = { ...state.formData, status: state.formData.statusShow ? 1 : 0 }
+    await systemApi.saveSmsTemplate(payload)
+    Message.success(state.modalType === 'add' ? '新增成功' : '编辑成功')
+    state.modalVisible = false
+    loadData()
+  } catch (e) {
+    console.error('保存短信模板失败', e)
+  }
 }
-const handleToggleStatus = (r, v) => Message.success(`已${v ? '启用' : '停用'}`)
+
+const handleToggleStatus = async (r, v) => {
+  try {
+    await systemApi.saveSmsTemplate({ ...r, status: v ? 1 : 0 })
+    Message.success(`已${v ? '启用' : '停用'}`)
+    loadData()
+  } catch (e) {
+    console.error('切换短信模板状态失败', e)
+  }
+}
+
 const handleDelete = r => Modal.confirm({
-  title: '确认删除', content: `删除模板"${r.name}"？`, onOk: () => {
-    Message.success('删除成功');
-    initData()
+  title: '确认删除',
+  content: `删除模板"${r.name}"？`,
+  onOk: async () => {
+    try {
+      await systemApi.deleteSmsTemplate(r.id)
+      Message.success('删除成功')
+      loadData()
+    } catch (e) {
+      console.error('删除短信模板失败', e)
+    }
   }
 })
 
-initData()
+onMounted(() => {
+  loadData()
+})
 </script>
 
 <style lang="less" scoped>

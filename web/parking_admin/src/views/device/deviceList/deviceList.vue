@@ -9,7 +9,7 @@
         </div>
         <div class="filter-item">
           <Select v-model="state.searchForm.parkingId" placeholder="停车场" class="filter-select" clearable>
-            <Option value="1">城西停车场</Option><Option value="2">城东停车场</Option>
+            <Option v-for="item in state.parkingList" :key="item.id" :value="item.id">{{ item.name }}</Option>
           </Select>
         </div>
         <div class="filter-item">
@@ -32,7 +32,8 @@
       <div class="stat-item fault"><span class="stat-label">故障</span><span class="stat-value">{{ state.stats.fault }}</span></div>
     </div>
     <div class="table-container">
-      <Table :columns="columns" :data="state.tableData" :loading="state.loading">
+      <TableColumnSetting :columns="columns" v-model:visible="visibleFields" v-model:open="colSettingVisible" @reset="resetColumns" />
+      <Table :columns="displayColumns" :data="state.tableData" :loading="state.loading">
         <template #type="{ row }"><span class="device-type">{{ getTypeText(row.type) }}</span></template>
         <template #onlineStatus="{ row }"><Badge :status="row.onlineStatus === 1 ? 'success' : 'error'" :text="row.onlineStatus === 1 ? '在线' : '离线'" /></template>
         <template #action="{ row }">
@@ -44,61 +45,217 @@
       </Table>
       <div class="pagination-wrapper"><Page :total="state.pagination.total" :current="state.pagination.current" :page-size="state.pagination.pageSize" show-total show-elevator @on-change="handlePageChange" /></div>
     </div>
+
+    <Modal v-model="state.modalVisible" :title="state.modalType === 'add' ? '添加设备' : '编辑设备'" width="520">
+      <Form :model="state.formData" :rules="state.rules" :label-width="100">
+        <FormItem label="设备编号" prop="code"><Input v-model="state.formData.code" placeholder="如：DVC001" /></FormItem>
+        <FormItem label="设备名称" prop="name"><Input v-model="state.formData.name" placeholder="请输入设备名称" /></FormItem>
+        <FormItem label="设备类型" prop="type">
+          <Select v-model="state.formData.type">
+            <Option value="camera">摄像头</Option><Option value="gate">道闸</Option><Option value="screen">显示屏</Option><Option value="sensor">地感</Option>
+          </Select>
+        </FormItem>
+        <FormItem label="所属停车场" prop="parkingId">
+          <Select v-model="state.formData.parkingId" filterable>
+            <Option v-for="item in state.parkingList" :key="item.id" :value="item.id">{{ item.name }}</Option>
+          </Select>
+        </FormItem>
+        <FormItem label="安装通道" prop="channel"><Input v-model="state.formData.channel" placeholder="如：1号入口" /></FormItem>
+        <FormItem label="IP地址" prop="ip"><Input v-model="state.formData.ip" placeholder="如：192.168.1.101" /></FormItem>
+      </Form>
+      <template #footer><Button @click="state.modalVisible = false">取消</Button><Button type="primary" @click="handleSubmit">确定</Button></template>
+    </Modal>
+
+    <Modal v-model="state.faultModalVisible" title="设备报修" width="420">
+      <Form :model="state.faultForm" :label-width="100">
+        <FormItem label="设备名称">{{ state.faultForm.deviceName }}</FormItem>
+        <FormItem label="故障类型"><Input v-model="state.faultForm.faultType" placeholder="如：画面丢失" /></FormItem>
+      </Form>
+      <template #footer><Button @click="state.faultModalVisible = false">取消</Button><Button type="primary" @click="handleFaultSubmit">提交报修</Button></template>
+    </Modal>
   </div>
 </template>
 
 <script setup>
-import { reactive } from 'vue'
-import { Button, Icon, Table, Badge, Page, Select, Option, Input, Modal, Message } from 'view-ui-plus'
+import { reactive, onMounted } from 'vue'
+import { Button, Icon, Table, Badge, Page, Select, Option, Input, Modal, Form, FormItem, Message } from 'view-ui-plus'
+import { parkingApi, deviceApi } from '@/api'
+import TableColumnSetting from '@/components/TableColumnSetting.vue'
+import { useTableColumns } from '@/composables/useTableColumns'
 
 const state = reactive({
   searchForm: { type: null, parkingId: null, onlineStatus: null, keyword: '' },
-  stats: { total: 48, online: 42, offline: 4, fault: 2 },
+  stats: { total: 0, online: 0, offline: 0, fault: 0 },
   tableData: [],
   loading: false,
-  pagination: { total: 0, current: 1, pageSize: 10 }
+  pagination: { total: 0, current: 1, pageSize: 10 },
+  parkingList: [],
+  parkingMap: {},
+  modalVisible: false,
+  modalType: 'add',
+  formData: { id: null, code: '', name: '', type: 'camera', parkingId: null, channel: '', ip: '' },
+  rules: {
+    code: [{ required: true, message: '请输入设备编号', trigger: 'blur' }],
+    name: [{ required: true, message: '请输入设备名称', trigger: 'blur' }],
+    type: [{ required: true, message: '请选择设备类型', trigger: 'change' }],
+    parkingId: [{ required: true, message: '请选择所属停车场', trigger: 'change' }]
+  },
+  faultModalVisible: false,
+  faultForm: { deviceId: null, deviceName: '', faultType: '' }
 })
 
 const columns = [
-  { title: '设备编号', key: 'code', minWidth: 120 },
-  { title: '设备名称', key: 'name', minWidth: 150 },
-  { title: '设备类型', slot: 'type', minWidth: 100 },
-  { title: '所属停车场', key: 'parkingName', minWidth: 150 },
-  { title: '安装通道', key: 'channel', minWidth: 100 },
-  { title: 'IP地址', key: 'ip', minWidth: 140 },
-  { title: '在线状态', slot: 'onlineStatus', minWidth: 100, align: 'center' },
-  { title: '最后在线', key: 'lastOnline', minWidth: 160 },
+  { field: 'code', title: '设备编号', key: 'code', minWidth: 120 },
+  { field: 'name', title: '设备名称', key: 'name', minWidth: 150 },
+  { field: 'type', title: '设备类型', slot: 'type', minWidth: 100 },
+  { field: 'parkingName', title: '所属停车场', key: 'parkingName', minWidth: 150 },
+  { field: 'channel', title: '安装通道', key: 'channel', minWidth: 100 },
+  { field: 'ip', title: 'IP地址', key: 'ip', minWidth: 140 },
+  { field: 'onlineStatus', title: '在线状态', slot: 'onlineStatus', minWidth: 100, align: 'center' },
+  { field: 'lastOnline', title: '最后在线', key: 'lastOnline', minWidth: 160 },
   { title: '操作', slot: 'action', minWidth: 200, fixed: 'right' }
 ]
 
+const { visibleFields, colSettingVisible, displayColumns, resetColumns } = useTableColumns(columns, 'deviceList:columnVisible')
+
 const getTypeText = (t) => ({ camera: '摄像头', gate: '道闸', screen: '显示屏', sensor: '地感' }[t] || t)
 
-const initData = () => {
+// 停车场列表（下拉选择 + 名称映射用）
+const loadParkingList = async () => {
+  try {
+    const res = await parkingApi.getParkingList({ size: 1000 })
+    const list = res.data || []
+    state.parkingList = list
+    const map = {}
+    list.forEach(p => { map[String(p.id)] = p.name })
+    state.parkingMap = map
+  } catch (e) {
+    console.error('获取停车场列表失败', e)
+  }
+}
+
+// 设备数量统计
+const loadStats = async () => {
+  try {
+    const res = await deviceApi.getDeviceStats()
+    state.stats = { total: 0, online: 0, offline: 0, fault: 0, ...(res.data || {}) }
+  } catch (e) {
+    console.error('获取设备统计失败', e)
+  }
+}
+
+// 设备列表（分页，parkingName 由前端按 parkingId 映射）
+const initData = async () => {
   state.loading = true
-  setTimeout(() => {
-    state.tableData = [
-      { id: 1, code: 'DVC001', name: '入口摄像头1', type: 'camera', parkingName: '城西停车场', channel: '1号入口', ip: '192.168.1.101', onlineStatus: 1, lastOnline: '2024-01-15 14:30:00' },
-      { id: 2, code: 'DVC002', name: '出口摄像头1', type: 'camera', parkingName: '城西停车场', channel: '2号出口', ip: '192.168.1.102', onlineStatus: 1, lastOnline: '2024-01-15 14:29:00' },
-      { id: 3, code: 'GTW001', name: '1号道闸', type: 'gate', parkingName: '城西停车场', channel: '1号入口', ip: '192.168.1.103', onlineStatus: 1, lastOnline: '2024-01-15 14:30:00' },
-      { id: 4, code: 'DVC003', name: '地下摄像头', type: 'camera', parkingName: '城东停车场', channel: '地下入口', ip: '192.168.1.104', onlineStatus: 0, lastOnline: '2024-01-15 10:00:00' },
-      { id: 5, code: 'SCR001', name: 'LED显示屏', type: 'screen', parkingName: '城西停车场', channel: '主通道', ip: '192.168.1.105', onlineStatus: 1, lastOnline: '2024-01-15 14:30:00' },
-      { id: 6, code: 'SNS001', name: '地感A1', type: 'sensor', parkingName: '城西停车场', channel: 'A1区域', ip: '192.168.1.106', onlineStatus: 1, lastOnline: '2024-01-15 14:30:00' }
-    ]
-    state.pagination.total = 6
+  try {
+    const res = await deviceApi.getDeviceList({
+      page: state.pagination.current,
+      size: state.pagination.pageSize,
+      type: state.searchForm.type,
+      parkingId: state.searchForm.parkingId,
+      onlineStatus: state.searchForm.onlineStatus,
+      keyword: state.searchForm.keyword
+    })
+    state.tableData = (res.data || []).map(r => ({
+      ...r,
+      parkingName: state.parkingMap[String(r.parkingId)] || ''
+    }))
+    state.pagination.total = (res.result && res.result.total) || 0
+  } catch (e) {
+    console.error('获取设备列表失败', e)
+  } finally {
     state.loading = false
-  }, 500)
+  }
 }
 
 const handleSearch = () => { state.pagination.current = 1; initData() }
 const handleReset = () => { state.searchForm = { type: null, parkingId: null, onlineStatus: null, keyword: '' }; handleSearch() }
-const handleAdd = () => Message.info('添加设备')
-const handleEdit = (r) => console.log('编辑', r)
-const handleRestart = (r) => Modal.confirm({ title: '确认重启', content: `确定重启设备"${r.name}"吗？`, onOk: () => Message.success('重启命令已发送') })
-const handleReportFault = (r) => Message.success('报修成功')
-const handleDelete = (r) => Modal.confirm({ title: '确认删除', content: `删除设备"${r.name}"？`, onOk: () => Message.success('删除成功') })
+
+const handleAdd = () => {
+  state.modalType = 'add'
+  state.formData = { id: null, code: '', name: '', type: 'camera', parkingId: null, channel: '', ip: '' }
+  state.modalVisible = true
+}
+
+const handleEdit = (r) => {
+  state.modalType = 'edit'
+  state.formData = { ...r }
+  state.modalVisible = true
+}
+
+const handleSubmit = async () => {
+  if (!state.formData.code) { Message.warning('请输入设备编号'); return }
+  if (!state.formData.name) { Message.warning('请输入设备名称'); return }
+  if (!state.formData.type) { Message.warning('请选择设备类型'); return }
+  if (!state.formData.parkingId) { Message.warning('请选择所属停车场'); return }
+  try {
+    await (state.modalType === 'add' ? deviceApi.addDevice : deviceApi.editDevice)({ ...state.formData })
+    Message.success(state.modalType === 'add' ? '添加成功' : '编辑成功')
+    state.modalVisible = false
+    loadStats()
+    initData()
+  } catch (e) {
+    console.error('保存设备失败', e)
+  }
+}
+
+const handleRestart = (r) => {
+  Modal.confirm({
+    title: '确认重启',
+    content: `确定重启设备"${r.name}"吗？`,
+    onOk: async () => {
+      try {
+        await deviceApi.remoteRestart(r.id)
+        Message.success('重启命令已发送')
+      } catch (e) {
+        console.error('重启失败', e)
+      }
+    }
+  })
+}
+
+const handleReportFault = (r) => {
+  state.faultForm = { deviceId: r.id, deviceName: r.name, faultType: '' }
+  state.faultModalVisible = true
+}
+
+const handleFaultSubmit = async () => {
+  if (!state.faultForm.faultType) { Message.warning('请输入故障类型'); return }
+  try {
+    await deviceApi.createFault({ deviceId: state.faultForm.deviceId, faultType: state.faultForm.faultType })
+    Message.success('报修成功')
+    state.faultModalVisible = false
+    loadStats()
+  } catch (e) {
+    console.error('报修失败', e)
+    Message.error('报修失败')
+  }
+}
+
+const handleDelete = (r) => {
+  Modal.confirm({
+    title: '确认删除',
+    content: `删除设备"${r.name}"？`,
+    onOk: async () => {
+      try {
+        await deviceApi.deleteDevice(r.id)
+        Message.success('删除成功')
+        loadStats()
+        initData()
+      } catch (e) {
+        console.error('删除失败', e)
+      }
+    }
+  })
+}
+
 const handlePageChange = (p) => { state.pagination.current = p; initData() }
 
-initData()
+onMounted(() => {
+  loadParkingList()
+  loadStats()
+  initData()
+})
 </script>
 
 <style lang="less" scoped>

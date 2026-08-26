@@ -17,6 +17,7 @@
     <!-- 导航菜单 -->
     <div class="sider-menu-wrapper">
       <Menu
+        ref="menuRef"
         :active-name="activeMenu"
         :theme="'light'"
         :width="'100%'"
@@ -49,7 +50,7 @@
 </template>
 
 <script setup>
-import { computed, reactive } from 'vue'
+import { computed, reactive, ref, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Menu, Submenu, MenuItem, Icon } from 'view-ui-plus'
 import { useCommonStore } from '@/stores/common.js'
@@ -57,6 +58,8 @@ import { useCommonStore } from '@/stores/common.js'
 const route = useRoute()
 const router = useRouter()
 const commonStore = useCommonStore()
+
+const menuRef = ref(null)
 
 const state = reactive({
   isCollapsed: commonStore.state.siderCollapsed
@@ -212,6 +215,11 @@ const menuList = [
         path: '/report/spaceUsageReport'
       },
       {
+        name: 'memberRevenueReport',
+        title: '月卡营收',
+        path: '/report/memberRevenueReport'
+      },
+      {
         name: 'exportReport',
         title: '导出报表',
         path: '/report/exportReport'
@@ -265,17 +273,24 @@ const activeMenu = computed(() => {
   return route.name
 })
 
-// 展开菜单
+// 展开菜单：根据当前路由名称定位所属的父级菜单
+// （路由均为 MainLayout 的扁平子路由，route.matched 无法提供父级菜单信息，
+//  必须从 menuList 结构中查找）
 const openMenus = computed(() => {
-  const matched = route.matched
-  if (matched.length > 1) {
-    return [matched[matched.length - 2].name]
-  }
-  // 根据当前路由找到父级菜单
-  const currentMenu = menuList.find(item =>
+  const parent = menuList.find(item =>
     item.children.some(child => child.name === route.name)
   )
-  return currentMenu ? [currentMenu.name] : []
+  return parent ? [parent.name] : []
+})
+
+// 路由变化时同步子菜单展开状态
+// view-ui-plus 的 Menu 仅在 mounted 时把 open-names 应用到各 Submenu 的 opened 标志上，
+// 之后 open-names 变化只会更新内部 openedNames 而不会重新展开/收起子菜单，
+// 因此切换路由（尤其是跨菜单组的跳转）后需手动调用 updateOpened 重新应用展开状态。
+watch(() => route.name, () => {
+  nextTick(() => {
+    menuRef.value?.updateOpened?.()
+  })
 })
 
 // 切换折叠

@@ -47,7 +47,8 @@
     </div>
 
     <div class="table-container">
-      <Table :columns="columns" :data="state.tableData" :loading="state.loading" :selection="true" @on-selection-change="handleSelectionChange">
+      <TableColumnSetting :columns="columns" v-model:visible="visibleFields" v-model:open="colSettingVisible" @reset="resetColumns" />
+      <Table :columns="displayColumns" :data="state.tableData" :loading="state.loading" :selection="true" @on-selection-change="handleSelectionChange">
         <template #status="{ row }">
           <Badge :status="getStatusBadge(row.status)" :text="getStatusText(row.status)" />
         </template>
@@ -66,6 +67,8 @@
 <script setup>
 import { reactive } from 'vue'
 import { Input, Button, Icon, Table, Badge, Page, DatePicker, Select, Option, Modal, Message } from 'view-ui-plus'
+import TableColumnSetting from '@/components/TableColumnSetting.vue'
+import { useTableColumns } from '@/composables/useTableColumns'
 
 const state = reactive({
   searchForm: { keyword: '', dateRange: [], status: null },
@@ -78,14 +81,16 @@ const state = reactive({
 
 const columns = [
   { type: 'selection', width: 80, align: 'center' },
-  { title: '发票抬头', key: 'title', minWidth: 180 },
-  { title: '税号', key: 'taxNo', minWidth: 180 },
-  { title: '发票金额', key: 'amount', minWidth: 120, align: 'right' },
-  { title: '订单号', key: 'orderNo', minWidth: 180 },
-  { title: '开票时间', key: 'createTime', minWidth: 160 },
-  { title: '状态', slot: 'status', minWidth: 100, align: 'center' },
+  { field: 'title', title: '发票抬头', key: 'title', minWidth: 180 },
+  { field: 'taxNo', title: '税号', key: 'taxNo', minWidth: 180 },
+  { field: 'amount', title: '发票金额', key: 'amount', minWidth: 120, align: 'right' },
+  { field: 'orderNo', title: '订单号', key: 'orderNo', minWidth: 180 },
+  { field: 'createTime', title: '开票时间', key: 'createTime', minWidth: 160 },
+  { field: 'status', title: '状态', slot: 'status', minWidth: 100, align: 'center' },
   { title: '操作', slot: 'action', minWidth: 120 }
 ]
+
+const { visibleFields, colSettingVisible, displayColumns, resetColumns } = useTableColumns(columns, 'invoiceManage:columnVisible')
 
 const getStatusText = (s) => ({ pending: '待开票', processing: '开票中', completed: '已完成', cancelled: '已冲红' }[s] || s)
 const getStatusBadge = (s) => ({ pending: 'warning', processing: 'processing', completed: 'success', cancelled: 'error' }[s] || 'default')

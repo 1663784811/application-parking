@@ -1,0 +1,49 @@
+main.js:12 [Vue warn]: Invalid prop: type check failed for prop "value". Expected String | Number, got Null
+  at <IOption value=null key="all" >
+  at <BaseTransition appear=false persisted=false mode=undefined  ... >
+  at <Transition name="transition-drop" >
+  at <Drop ref="dropdown" classes=
+{ivu-select-dropdown-transfer: false, ivu-select-multiple: false, ivu-auto-complete: false, undefined: undefined}
+ visible=false  ... >
+  at <ISelect modelValue=null onUpdate:modelValue=fn placeholder="选择停车场"  ... >
+  at <RevenueReport onVnodeUnmounted=fn<onVnodeUnmounted> ref=Ref< undefined > >
+  at <RouterView>
+  at <MainLayout onVnodeUnmounted=fn<onVnodeUnmounted> ref=Ref< undefined > >
+  at <RouterView>
+  at <App>
+main.js:12 [Vue warn]: Invalid prop: type check failed for prop "value". Expected String | Number, got Null
+  at <IOption value=null key="all" >
+  at <BaseTransition appear=false persisted=false mode=undefined  ... >
+  at <Transition name="transition-drop" >
+  at <Drop ref="dropdown" classes=
+{ivu-select-dropdown-transfer: false, ivu-select-multiple: false, ivu-auto-complete: false, undefined: undefined}
+ visible=false  ... >
+  at <ISelect modelValue=null onUpdate:modelValue=fn placeholder="选择停车场"  ... >
+  at <RevenueReport onVnodeUnmounted=fn<onVnodeUnmounted> ref=Ref<
+Proxy(Object) {__v_skip: true}
+ > >
+  at <RouterView>
+  at <MainLayout onVnodeUnmounted=fn<onVnodeUnmounted> ref=Ref<
+Proxy(Object) {__v_skip: true}
+ > >
+  at <RouterView>
+  at <App>
+revenueReport.vue:169 [Vue warn]: Invalid prop: type check failed for prop "value". Expected String | Number, got Null
+  at <IOption value=null key="all" >
+  at <BaseTransition appear=false persisted=false mode=undefined  ... >
+  at <Transition name="transition-drop" >
+  at <Drop ref="dropdown" classes=
+{ivu-select-dropdown-transfer: false, ivu-select-multiple: false, ivu-auto-complete: false, undefined: undefined}
+ visible=false  ... >
+  at <ISelect modelValue=null onUpdate:modelValue=fn placeholder="选择停车场"  ... >
+  at <RevenueReport onVnodeUnmounted=fn<onVnodeUnmounted> ref=Ref<
+Proxy(Object) {__v_skip: true}
+ > >
+  at <RouterView>
+  at <MainLayout onVnodeUnmounted=fn<onVnodeUnmounted> ref=Ref<
+Proxy(Object) {__v_skip: true}
+ > >
+  at <RouterView>
+  at <App>
+﻿
+

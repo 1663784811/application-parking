@@ -12,7 +12,8 @@
 
     <!-- 优惠券列表 -->
     <div class="coupon-table">
-      <Table :columns="columns" :data="state.tableData" :loading="state.loading">
+      <TableColumnSetting :columns="columns" v-model:visible="visibleFields" v-model:open="colSettingVisible" @reset="resetColumns" />
+      <Table :columns="displayColumns" :data="state.tableData" :loading="state.loading">
         <template #type="{ row }">
           <span class="coupon-type" :class="'type-' + row.type">{{ getTypeText(row.type) }}</span>
         </template>
@@ -70,8 +71,11 @@
 </template>
 
 <script setup>
-import { reactive } from 'vue'
+import { reactive, onMounted } from 'vue'
 import { Button, Icon, Table, Modal, Form, FormItem, Input, InputNumber, Select, Option, RadioGroup, Radio, Switch, Message } from 'view-ui-plus'
+import { chargeApi } from '@/api'
+import TableColumnSetting from '@/components/TableColumnSetting.vue'
+import { useTableColumns } from '@/composables/useTableColumns'
 
 const state = reactive({
   tableData: [],
@@ -94,16 +98,18 @@ const state = reactive({
 })
 
 const columns = [
-  { title: '优惠券名称', key: 'name', minWidth: 200 },
-  { title: '类型', slot: 'type', minWidth: 120 },
-  { title: '使用门槛', key: 'threshold', minWidth: 120, render: (h, p) => h('span', p.row.threshold > 0 ? `满${p.row.threshold}元` : '无门槛') },
-  { title: '优惠内容', key: 'discount', minWidth: 150, render: (h, p) => h('span', getDiscountText(p.row)) },
-  { title: '发放数量', key: 'totalCount', minWidth: 100, align: 'center' },
-  { title: '已使用', key: 'usedCount', minWidth: 100, align: 'center' },
-  { title: '有效期', key: 'validDays', minWidth: 100, render: (h, p) => h('span', `领取后${p.row.validDays}天`) },
-  { title: '状态', slot: 'status', minWidth: 80, align: 'center' },
+  { field: 'name', title: '优惠券名称', key: 'name', minWidth: 200 },
+  { field: 'type', title: '类型', slot: 'type', minWidth: 120 },
+  { field: 'threshold', title: '使用门槛', key: 'threshold', minWidth: 120, render: (h, p) => h('span', p.row.threshold > 0 ? `满${p.row.threshold}元` : '无门槛') },
+  { field: 'discount', title: '优惠内容', key: 'discount', minWidth: 150, render: (h, p) => h('span', getDiscountText(p.row)) },
+  { field: 'totalCount', title: '发放数量', key: 'totalCount', minWidth: 100, align: 'center' },
+  { field: 'usedCount', title: '已使用', key: 'usedCount', minWidth: 100, align: 'center' },
+  { field: 'validDays', title: '有效期', key: 'validDays', minWidth: 100, render: (h, p) => h('span', `领取后${p.row.validDays}天`) },
+  { field: 'status', title: '状态', slot: 'status', minWidth: 80, align: 'center' },
   { title: '操作', slot: 'action', minWidth: 120 }
 ]
+
+const { visibleFields, colSettingVisible, displayColumns, resetColumns } = useTableColumns(columns, 'couponConfig:columnVisible')
 
 const getTypeText = (type) => {
   return { 1: '满减券', 2: '折扣券', 3: '免费时长券' }[type] || type
@@ -116,17 +122,17 @@ const getDiscountText = (row) => {
   return row.discount
 }
 
-const initData = () => {
+// 优惠券列表（全部，按创建时间倒序）
+const loadData = async () => {
   state.loading = true
-  setTimeout(() => {
-    state.tableData = [
-      { id: 1, name: '新人满减券', type: 1, threshold: 10, discount: 5, totalCount: 500, usedCount: 123, validDays: 30, status: 1 },
-      { id: 2, name: '8折停车券', type: 2, threshold: 0, discount: 8, totalCount: 200, usedCount: 45, validDays: 7, status: 1 },
-      { id: 3, name: '30分钟免费券', type: 3, threshold: 0, discount: 30, totalCount: 1000, usedCount: 567, validDays: 15, status: 1 },
-      { id: 4, name: '满50减15', type: 1, threshold: 50, discount: 15, totalCount: 100, usedCount: 12, validDays: 7, status: 0 }
-    ]
+  try {
+    const res = await chargeApi.getCouponList()
+    state.tableData = res.data || []
+  } catch (e) {
+    console.error('获取优惠券列表失败', e)
+  } finally {
     state.loading = false
-  }, 500)
+  }
 }
 
 const handleAdd = () => {
@@ -145,25 +151,50 @@ const handleDelete = (row) => {
   Modal.confirm({
     title: '确认删除',
     content: `确定要删除优惠券"${row.name}"吗？`,
-    onOk: () => {
-      Message.success('删除成功')
-      initData()
+    onOk: async () => {
+      try {
+        await chargeApi.deleteCoupon(row.id)
+        Message.success('删除成功')
+        loadData()
+      } catch (e) {
+        console.error('删除优惠券失败', e)
+      }
     }
   })
 }
 
-const handleToggleStatus = (row) => {
-  Message.success(`已${row.status === 1 ? '停用' : '启用'}`)
-  initData()
+const handleToggleStatus = async (row) => {
+  try {
+    await chargeApi.editCoupon({ ...row, status: row.status === 1 ? 0 : 1 })
+    Message.success(`已${row.status === 1 ? '停用' : '启用'}`)
+    loadData()
+  } catch (e) {
+    console.error('切换优惠券状态失败', e)
+  }
 }
 
-const handleSubmit = () => {
-  Message.success(state.modalType === 'add' ? '新增成功' : '编辑成功')
-  state.modalVisible = false
-  initData()
+const handleSubmit = async () => {
+  if (!state.formData.name) {
+    Message.warning('请输入优惠券名称')
+    return
+  }
+  try {
+    if (state.modalType === 'add') {
+      await chargeApi.addCoupon({ ...state.formData })
+    } else {
+      await chargeApi.editCoupon({ ...state.formData })
+    }
+    Message.success(state.modalType === 'add' ? '新增成功' : '编辑成功')
+    state.modalVisible = false
+    loadData()
+  } catch (e) {
+    console.error('保存优惠券失败', e)
+  }
 }
 
-initData()
+onMounted(() => {
+  loadData()
+})
 </script>
 
 <style lang="less" scoped>

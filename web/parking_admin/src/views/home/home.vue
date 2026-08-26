@@ -9,7 +9,7 @@
         <div class="stat-content">
           <div class="stat-label">今日总营收</div>
           <div class="stat-value">
-            ¥{{ state.stats.todayRevenue }}
+            ¥{{ formatRevenue(state.stats.todayRevenue) }}
             <span class="stat-trend" :class="state.stats.revenueTrend < 0 ? 'down' : 'up'">
               {{ state.stats.revenueTrend >= 0 ? '↑' : '↓' }}{{ Math.abs(state.stats.revenueTrend) }}%
             </span>
@@ -88,7 +88,7 @@
       <div class="chart-card">
         <div class="chart-header">
           <h3 class="chart-title">近7日营收趋势</h3>
-          <RadioGroup v-model="state.revenueChartType" type="button" size="small">
+          <RadioGroup v-model="state.revenueChartType" type="button" size="small" @on-change="handleRevenueChartTypeChange">
             <Radio label="日">日</Radio>
             <Radio label="周">周</Radio>
             <Radio label="月">月</Radio>
@@ -129,8 +129,10 @@
         </div>
       </div>
       <div class="card-content">
+        <div class="section-tip">抓拍图片需对接摄像头设备，下方为通行记录占位缩略图</div>
+        <TableColumnSetting :columns="passageColumns" v-model:visible="visibleFields" v-model:open="colSettingVisible" @reset="resetColumns" />
         <Table
-          :columns="passageColumns"
+          :columns="displayColumns"
           :data="state.passageList"
           :loading="state.passageLoading"
           size="small"
@@ -165,30 +167,35 @@ import { reactive, ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { Icon, RadioGroup, Radio, Progress, Table, Button, Tag, Message } from 'view-ui-plus'
 import * as echarts from 'echarts'
+import { dashboardApi, passageApi } from '@/api'
+import TableColumnSetting from '@/components/TableColumnSetting.vue'
+import { useTableColumns } from '@/composables/useTableColumns'
 
 const router = useRouter()
 const revenueChartRef = ref(null)
 const trafficChartRef = ref(null)
 
 const state = reactive({
-  // 统计数据
+  // 核心指标
   stats: {
-    todayRevenue: '12,580',
-    revenueTrend: 15.6,
-    currentVehicles: 156,
-    totalSpaces: 300,
-    spaceUsageRate: 52,
-    todayIn: 89,
-    todayOut: 76,
-    exceptionCount: 8,
-    unpaidCount: 4,
-    noPlateCount: 2,
-    faultCount: 2
+    todayRevenue: 0,
+    yesterdayRevenue: 0,
+    revenueTrend: 0,
+    currentVehicles: 0,
+    totalSpaces: 0,
+    spaceUsageRate: 0,
+    todayIn: 0,
+    todayOut: 0,
+    exceptionCount: 0,
+    unpaidCount: 0,
+    noPlateCount: 0,
+    faultCount: 0
   },
-
-  // 营收图表类型
+  // 近7日趋势
+  revenueSeries: [],
+  trafficSeries: [],
+  // 营收图表维度（仅"日"已对接）
   revenueChartType: '日',
-
   // 实时通行列表
   passageList: [],
   passageLoading: false
@@ -196,127 +203,131 @@ const state = reactive({
 
 // 通行记录表格列
 const passageColumns = [
-  {
-    title: '抓拍图片',
-    slot: 'captureImage',
-    width: 90,
-    align: 'center'
-  },
-  {
-    title: '车牌',
-    key: 'plate',
-    minWidth: 120
-  },
-  {
-    title: '进场时间',
-    key: 'inTime',
-    minWidth: 160
-  },
-  {
-    title: '通道',
-    key: 'channel',
-    minWidth: 100
-  },
-  {
-    title: '车辆类型',
-    key: 'carType',
-    minWidth: 90,
-    render: (h, params) => {
-      const types = { temp: '临时车', fixed: '固定车' }
-      return h('span', types[params.row.carType] || '-')
-    }
-  },
-  {
-    title: '状态',
-    slot: 'status',
-    minWidth: 100
-  },
-  {
-    title: '操作',
-    slot: 'action',
-    minWidth: 150,
-    fixed: 'right'
-  }
+  { field: 'captureImage', title: '抓拍图片', slot: 'captureImage', width: 90, align: 'center' },
+  { field: 'plate', title: '车牌', key: 'plate', minWidth: 120 },
+  { field: 'inTime', title: '通行时间', key: 'inTime', minWidth: 160 },
+  { field: 'channel', title: '通道', key: 'channel', minWidth: 100 },
+  { field: 'carType', title: '车辆类型', key: 'carType', minWidth: 90, render: (h, params) => h('span', params.row.carType || '-') },
+  { field: 'status', title: '状态', slot: 'status', minWidth: 100 },
+  { title: '操作', slot: 'action', minWidth: 150, fixed: 'right' }
 ]
 
-// 初始化实时通行列表
-const initPassageList = () => {
+const { visibleFields, colSettingVisible, displayColumns, resetColumns } = useTableColumns(passageColumns, 'home:passage:columnVisible')
+
+// 金额格式化（千分位 + 两位小数）
+const formatRevenue = (n) => Number(n || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+// 日期标签：2024-01-09 → 1月9日
+const formatDateLabel = (d) => {
+  if (!d) return ''
+  const parts = String(d).split('-')
+  if (parts.length !== 3) return d
+  return `${parseInt(parts[1], 10)}月${parseInt(parts[2], 10)}日`
+}
+
+// 停车记录 → 实时通行行
+const mapCarLog = (log) => ({
+  id: log.id,
+  plate: log.carNumber || '无牌车',
+  passageType: log.outTime ? 'out' : 'in',
+  inTime: log.outTime || log.entryTime || '',
+  channel: '—',
+  carType: log.carType || '',
+  status: log.carNumber ? 'normal' : 'noPlate',
+  canOpen: true
+})
+
+// 写入核心指标
+const applyStats = (s) => {
+  if (!s) return
+  state.stats.todayRevenue = Number(s.todayRevenue ?? 0)
+  state.stats.yesterdayRevenue = Number(s.yesterdayRevenue ?? 0)
+  state.stats.revenueTrend = Number(s.revenueTrend ?? 0)
+  state.stats.currentVehicles = Number(s.currentVehicles ?? 0)
+  state.stats.totalSpaces = Number(s.totalSpaces ?? 0)
+  state.stats.spaceUsageRate = Number(s.spaceUsageRate ?? 0)
+  state.stats.todayIn = Number(s.todayIn ?? 0)
+  state.stats.todayOut = Number(s.todayOut ?? 0)
+  state.stats.exceptionCount = Number(s.exceptionCount ?? 0)
+  state.stats.unpaidCount = Number(s.unpaidCount ?? 0)
+  state.stats.noPlateCount = Number(s.noPlateCount ?? 0)
+  state.stats.faultCount = Number(s.faultCount ?? 0)
+}
+
+// 写入实时通行
+const applyPassage = (list) => {
+  state.passageList = (list || []).map(mapCarLog)
+}
+
+// 全量加载（首屏：指标 + 趋势 + 通行）
+const loadData = async () => {
   state.passageLoading = true
-  setTimeout(() => {
-    state.passageList = [
-      { id: 1, plate: '京A12345', channel: '1号入口', passageType: 'in', inTime: '2024-01-15 09:23:15', carType: 'fixed', status: 'normal', canOpen: true },
-      { id: 2, plate: '京B67890', channel: '2号出口', passageType: 'out', inTime: '2024-01-15 08:15:00', carType: 'temp', status: 'normal', canOpen: true },
-      { id: 3, plate: '无牌车', channel: '3号入口', passageType: 'in', inTime: '2024-01-15 09:18:00', carType: 'temp', status: 'noPlate', canOpen: false },
-      { id: 4, plate: '京C11111', channel: '1号入口', passageType: 'in', inTime: '2024-01-15 09:12:00', carType: 'fixed', status: 'normal', canOpen: false },
-      { id: 5, plate: '京D22222', channel: '地下入口', passageType: 'in', inTime: '2024-01-15 09:05:00', carType: 'temp', status: 'normal', canOpen: false },
-      { id: 6, plate: '黑名单', channel: '2号出口', passageType: 'out', inTime: '2024-01-14 22:30:00', carType: 'temp', status: 'blacklist', canOpen: false }
-    ]
+  try {
+    const [stats, revenue, traffic, passage] = await Promise.all([
+      dashboardApi.getDashboardStats(),
+      dashboardApi.getRevenueTrend(),
+      dashboardApi.getTrafficTrend(),
+      passageApi.getRecordList({ size: 8 })
+    ])
+    applyStats(stats.data)
+    state.revenueSeries = revenue.data || []
+    state.trafficSeries = traffic.data || []
+    applyPassage(passage.data)
+  } catch (e) {
+    // authRequest 已统一提示
+  } finally {
     state.passageLoading = false
-  }, 500)
-}
-
-// 获取状态标签样式
-const getStatusTag = (status) => {
-  const map = {
-    normal: 'success',
-    noPlate: 'warning',
-    blacklist: 'error'
   }
-  return map[status] || 'default'
+  await nextTick()
+  initRevenueChart()
+  initTrafficChart()
 }
 
-// 获取状态文本
-const getStatusText = (status) => {
-  const map = {
-    normal: '正常',
-    noPlate: '无牌',
-    blacklist: '黑名单'
+// 实时刷新（每30秒：仅指标 + 通行，趋势按日变化无需高频刷新）
+const refreshRealtime = async () => {
+  try {
+    const [stats, passage] = await Promise.all([
+      dashboardApi.getDashboardStats(),
+      passageApi.getRecordList({ size: 8 })
+    ])
+    applyStats(stats.data)
+    applyPassage(passage.data)
+  } catch (e) {
+    // 忽略静默失败
   }
-  return map[status] || status
 }
 
-// 初始化营收图表
+// 状态标签样式
+const getStatusTag = (status) => ({ normal: 'success', noPlate: 'warning', blacklist: 'error' }[status] || 'default')
+const getStatusText = (status) => ({ normal: '正常', noPlate: '无牌', blacklist: '黑名单' }[status] || status)
+
+// 营收图表
 const initRevenueChart = () => {
   if (!revenueChartRef.value) return
-
-  const chart = echarts.init(revenueChartRef.value)
+  const chart = echarts.getInstanceByDom(revenueChartRef.value) || echarts.init(revenueChartRef.value)
+  const series = state.revenueSeries || []
   const option = {
-    tooltip: {
-      trigger: 'axis',
-      formatter: (params) => {
-        const item = params[0]
-        return `${item.axisValue}<br/>营收: ¥${item.value}`
-      }
-    },
-    grid: {
-      left: 40,
-      right: 20,
-      top: 20,
-      bottom: 30
-    },
+    tooltip: { trigger: 'axis', formatter: (params) => `${params[0].axisValue}<br/>营收: ¥${formatRevenue(params[0].value)}` },
+    grid: { left: 50, right: 20, top: 20, bottom: 30 },
     xAxis: {
       type: 'category',
-      data: ['1月9日', '1月10日', '1月11日', '1月12日', '1月13日', '1月14日', '1月15日'],
+      data: series.map((i) => formatDateLabel(i.date)),
       axisLine: { lineStyle: { color: '#E5E6EB' } },
       axisLabel: { color: '#86909C', fontSize: 12 }
     },
     yAxis: {
       type: 'value',
       axisLine: { show: false },
-      axisLabel: {
-        color: '#86909C',
-        fontSize: 12,
-        formatter: (val) => `¥${val / 1000}k`
-      },
+      axisLabel: { color: '#86909C', fontSize: 12, formatter: (val) => `¥${val / 1000}k` },
       splitLine: { lineStyle: { color: '#F2F3F5' } }
     },
     series: [{
       type: 'line',
-      data: [8200, 9320, 9010, 12340, 12900, 13300, 12580],
+      data: series.map((i) => Number(i.amount ?? 0)),
       smooth: true,
       symbol: 'circle',
       symbolSize: 8,
-      lineStyle: { color: '#165DFF', minWidth: 2 },
+      lineStyle: { color: '#165DFF', width: 2 },
       itemStyle: { color: '#165DFF' },
       areaStyle: {
         color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
@@ -326,107 +337,73 @@ const initRevenueChart = () => {
       }
     }]
   }
-  chart.setOption(option)
+  chart.setOption(option, true)
 }
 
-// 初始化车流量图表
+// 车流量图表
 const initTrafficChart = () => {
   if (!trafficChartRef.value) return
-
-  const chart = echarts.init(trafficChartRef.value)
+  const chart = echarts.getInstanceByDom(trafficChartRef.value) || echarts.init(trafficChartRef.value)
+  const series = state.trafficSeries || []
   const option = {
     tooltip: {
       trigger: 'axis',
       formatter: (params) => {
         let result = params[0].axisValue + '<br/>'
-        params.forEach(item => {
-          result += `${item.marker} ${item.seriesName}: ${item.value}辆<br/>`
-        })
+        params.forEach((item) => { result += `${item.marker} ${item.seriesName}: ${item.value}辆<br/>` })
         return result
       }
     },
-    grid: {
-      left: 40,
-      right: 20,
-      top: 20,
-      bottom: 30
-    },
-    legend: {
-      show: false
-    },
+    grid: { left: 40, right: 20, top: 20, bottom: 30 },
+    legend: { show: false },
     xAxis: {
       type: 'category',
-      data: ['1月9日', '1月10日', '1月11日', '1月12日', '1月13日', '1月14日', '1月15日'],
+      data: series.map((i) => formatDateLabel(i.date)),
       axisLine: { lineStyle: { color: '#E5E6EB' } },
       axisLabel: { color: '#86909C', fontSize: 12 }
     },
-    yAxis: {
-      type: 'value',
-      axisLine: { show: false },
-      axisLabel: { color: '#86909C', fontSize: 12 },
-      splitLine: { lineStyle: { color: '#F2F3F5' } }
-    },
+    yAxis: { type: 'value', axisLine: { show: false }, axisLabel: { color: '#86909C', fontSize: 12 }, splitLine: { lineStyle: { color: '#F2F3F5' } } },
     series: [
-      {
-        name: '进场',
-        type: 'bar',
-        data: [120, 145, 132, 168, 175, 189, 165],
-        barWidth: 16,
-        itemStyle: { color: '#165DFF', borderRadius: [4, 4, 0, 0] }
-      },
-      {
-        name: '出场',
-        type: 'bar',
-        data: [105, 130, 118, 152, 160, 172, 156],
-        barWidth: 16,
-        itemStyle: { color: '#00B42A', borderRadius: [4, 4, 0, 0] }
-      }
+      { name: '进场', type: 'bar', data: series.map((i) => Number(i.inCount ?? 0)), barWidth: 16, itemStyle: { color: '#165DFF', borderRadius: [4, 4, 0, 0] } },
+      { name: '出场', type: 'bar', data: series.map((i) => Number(i.outCount ?? 0)), barWidth: 16, itemStyle: { color: '#00B42A', borderRadius: [4, 4, 0, 0] } }
     ]
   }
-  chart.setOption(option)
+  chart.setOption(option, true)
 }
 
-// 路由跳转方法
+// 路由跳转
 const goToChargeFlow = () => router.push({ name: 'chargeFlow' })
 const goToSpaceManagement = () => router.push({ name: 'spaceManagement' })
 const goToPassageRecord = () => router.push({ name: 'passageRecord' })
 const goToExceptionRecord = () => router.push({ name: 'exceptionRecord' })
-const handleViewDetail = (row) => console.log('查看详情', row)
-const handleOpenGate = (row) => {
-  Message.success(`正在为 ${row.plate} 开闸...`)
+const handleViewDetail = () => router.push({ name: 'passageRecord' })
+const handleOpenGate = () => Message.info('远程开闸需对接道闸设备控制接口')
+const handleRevenueChartTypeChange = (val) => {
+  if (val !== '日') {
+    Message.info('周/月维度统计待对接')
+    state.revenueChartType = '日'
+  }
 }
 
-// 定时刷新实时通行
+// 定时刷新与窗口尺寸
 let refreshTimer = null
+const handleResize = () => {
+  if (revenueChartRef.value) echarts.getInstanceByDom(revenueChartRef.value)?.resize()
+  if (trafficChartRef.value) echarts.getInstanceByDom(trafficChartRef.value)?.resize()
+}
 
-onMounted(() => {
-  initPassageList()
-
-  nextTick(() => {
-    initRevenueChart()
-    initTrafficChart()
-  })
-
-  // 每30秒刷新一次实时通行
-  refreshTimer = setInterval(() => {
-    initPassageList()
-  }, 30000)
-
-  // 监听窗口变化，重绘图表
-  window.addEventListener('resize', () => {
-    if (revenueChartRef.value) {
-      echarts.getInstanceByDom(revenueChartRef.value)?.resize()
-    }
-    if (trafficChartRef.value) {
-      echarts.getInstanceByDom(trafficChartRef.value)?.resize()
-    }
-  })
+onMounted(async () => {
+  await loadData()
+  refreshTimer = setInterval(refreshRealtime, 30000)
+  window.addEventListener('resize', handleResize)
 })
 
 onUnmounted(() => {
-  if (refreshTimer) {
-    clearInterval(refreshTimer)
-  }
+  if (refreshTimer) clearInterval(refreshTimer)
+  window.removeEventListener('resize', handleResize)
+  ;[revenueChartRef, trafficChartRef].forEach((r) => {
+    if (r.value) echarts.getInstanceByDom(r.value)?.dispose()
+  })
 })
 </script>
 
@@ -692,6 +669,12 @@ onUnmounted(() => {
     border-radius: var(--border-radius-sm);
     color: var(--text-color-secondary);
   }
+}
+
+.section-tip {
+  margin-bottom: var(--spacing-sm);
+  font-size: var(--font-size-xs);
+  color: var(--text-color-secondary);
 }
 
 @keyframes pulse {

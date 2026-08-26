@@ -73,7 +73,8 @@ const routes = [
         name: 'channelList',
         component: () => import('@/views/parking/channelList/channelList.vue'),
         meta: {
-          title: '通道列表'
+          title: '通道列表',
+          showParkingSidebar: true
         }
       },
 
@@ -215,6 +216,14 @@ const routes = [
         component: () => import('@/views/report/spaceUsageReport/spaceUsageReport.vue'),
         meta: {
           title: '车位利用率'
+        }
+      },
+      {
+        path: '/report/memberRevenueReport',
+        name: 'memberRevenueReport',
+        component: () => import('@/views/report/memberRevenueReport/memberRevenueReport.vue'),
+        meta: {
+          title: '月卡营收'
         }
       },
       {

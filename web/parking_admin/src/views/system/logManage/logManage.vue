@@ -25,7 +25,8 @@
       </div>
     </div>
     <div class="table-container">
-      <Table :columns="columns" :data="state.tableData" :loading="state.loading">
+      <TableColumnSetting :columns="settingColumns" v-model:visible="visibleFields" v-model:open="colSettingVisible" @reset="resetColumns" />
+      <Table :columns="displayColumns" :data="state.tableData" :loading="state.loading">
         <template #operator="{ row }"><span class="operator-cell">{{ row.operator }}</span></template>
         <template #action="{ row }">
           <Button type="text" size="small" @click="handleViewDetail(row)">详情</Button>
@@ -56,7 +57,7 @@
 </template>
 
 <script setup>
-import {reactive} from 'vue'
+import {reactive, computed, onMounted} from 'vue'
 import {
   Button,
   DatePicker,
@@ -71,6 +72,9 @@ import {
   Select,
   Table
 } from 'view-ui-plus'
+import {systemApi} from '@/api'
+import TableColumnSetting from '@/components/TableColumnSetting.vue'
+import { useTableColumns } from '@/composables/useTableColumns'
 
 const state = reactive({
   logType: 'login',
@@ -84,12 +88,13 @@ const state = reactive({
 })
 
 const loginColumns = [
-  {title: '时间', key: 'time', minWidth: 160},
-  {title: '用户', key: 'operator', minWidth: 120},
-  {title: 'IP地址', key: 'ip', minWidth: 140},
-  {title: '浏览器', key: 'browser', minWidth: 150},
-  {title: '操作系统', key: 'os', minWidth: 120},
+  {field: 'time', title: '时间', key: 'time', minWidth: 160},
+  {field: 'operator', title: '用户', key: 'operator', minWidth: 120},
+  {field: 'ip', title: 'IP地址', key: 'ip', minWidth: 140},
+  {field: 'browser', title: '浏览器', key: 'browser', minWidth: 150},
+  {field: 'os', title: '操作系统', key: 'os', minWidth: 120},
   {
+    field: 'statusName',
     title: '状态',
     key: 'statusName',
     minWidth: 80,
@@ -99,112 +104,114 @@ const loginColumns = [
 ]
 
 const operationColumns = [
-  {title: '时间', key: 'time', minWidth: 160},
-  {title: '操作人', key: 'operator', minWidth: 120},
-  {title: '操作类型', key: 'actionType', minWidth: 120},
-  {title: '操作描述', key: 'description', minWidth: 200, tooltip: true},
-  {title: 'IP地址', key: 'ip', minWidth: 140},
+  {field: 'time', title: '时间', key: 'time', minWidth: 160},
+  {field: 'operator', title: '操作人', key: 'operator', minWidth: 120},
+  {field: 'actionType', title: '操作类型', key: 'actionType', minWidth: 120},
+  {field: 'description', title: '操作描述', key: 'description', minWidth: 200, tooltip: true},
+  {field: 'ip', title: 'IP地址', key: 'ip', minWidth: 140},
   {title: '操作', slot: 'action', minWidth: 80}
 ]
 
-const columns = reactive(loginColumns)
+// 列设置：登录/操作两套列各自持久化到 localStorage（按 tab 独立）
+const loginColSetting = useTableColumns(loginColumns, 'logManage:login:columnVisible')
+const opColSetting = useTableColumns(operationColumns, 'logManage:operation:columnVisible')
+// 当前 tab 对应的列设置实例
+const activeSetting = () => state.logType === 'login' ? loginColSetting : opColSetting
 
-const handleTypeChange = () => {
-  if (state.logType === 'login') {
-    columns.length = 0
-    loginColumns.forEach(c => columns.push(c))
+// 列设置组件展示的可选列（随 tab 切换）
+const settingColumns = computed(() => state.logType === 'login' ? loginColumns : operationColumns)
+// 当前应显示的列（已按列设置过滤）
+const displayColumns = computed(() => activeSetting().displayColumns.value)
+// 列设置显隐状态随 tab 路由到对应实例
+const visibleFields = computed({
+  get: () => activeSetting().visibleFields.value,
+  set: (v) => { activeSetting().visibleFields.value = v }
+})
+const colSettingVisible = computed({
+  get: () => activeSetting().colSettingVisible.value,
+  set: (v) => { activeSetting().colSettingVisible.value = v }
+})
+const resetColumns = () => activeSetting().resetColumns()
+
+// Date → 'YYYY-MM-DD'（后端拼 00:00:00 / 23:59:59）
+const fmtDay = (d) => {
+  if (!d) return null
+  const dt = d instanceof Date ? d : new Date(d)
+  const p = (n) => String(n).padStart(2, '0')
+  return `${dt.getFullYear()}-${p(dt.getMonth() + 1)}-${p(dt.getDate())}`
+}
+
+// 后端 createTime 可能是字符串或 Jackson LocalDateTime 数组，统一格式化为 'YYYY-MM-DD HH:mm:ss'
+const fmtDateTime = (v) => {
+  if (!v) return ''
+  let d
+  if (Array.isArray(v)) {
+    d = new Date(v[0] || 1970, (v[1] || 1) - 1, v[2] || 1, v[3] || 0, v[4] || 0, v[5] || 0)
+  } else if (v instanceof Date) {
+    d = v
   } else {
-    columns.length = 0
-    operationColumns.forEach(c => columns.push(c))
+    d = new Date(String(v).replace('T', ' ').replace(/-/g, '/'))
   }
+  if (isNaN(d.getTime())) return String(v)
+  const p = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`
+}
+
+// 从 userAgent 粗略解析浏览器/操作系统
+const parseBrowser = (ua) => {
+  if (!ua) return ''
+  if (/Edg/.test(ua)) return 'Edge'
+  if (/Chrome/.test(ua)) return 'Chrome'
+  if (/Firefox/.test(ua)) return 'Firefox'
+  if (/Safari/.test(ua)) return 'Safari'
+  return ''
+}
+const parseOs = (ua) => {
+  if (!ua) return ''
+  if (/Windows NT 10/.test(ua)) return 'Windows 10/11'
+  if (/Windows/.test(ua)) return 'Windows'
+  if (/iPhone|iPad|iOS/.test(ua)) return 'iOS'
+  if (/Android/.test(ua)) return 'Android'
+  if (/Mac OS X/.test(ua)) return 'macOS'
+  if (/Linux/.test(ua)) return 'Linux'
+  return ''
+}
+
+// AuLog 字段 → 页面字段映射
+const mapRow = (r) => ({
+  ...r,
+  time: fmtDateTime(r.createTime),
+  operator: r.adminName,
+  browser: parseBrowser(r.userAgent),
+  os: parseOs(r.userAgent),
+  statusName: r.status === 1 ? '成功' : '失败'
+})
+
+// tab 切换：列由 displayColumns 按 logType 自动派生，无需手动替换数组
+const handleTypeChange = () => {
   handleSearch()
 }
 
-const initData = () => {
+// 日志列表（分页，logType + dateRange + keyword）
+const initData = async () => {
   state.loading = true
-  setTimeout(() => {
-    if (state.logType === 'login') {
-      state.tableData = [
-        {
-          id: 1,
-          time: '2024-01-15 14:32:15',
-          operator: 'admin',
-          ip: '192.168.1.100',
-          browser: 'Chrome 120',
-          os: 'Windows 11',
-          status: 1,
-          statusName: '成功'
-        },
-        {
-          id: 2,
-          time: '2024-01-15 10:20:00',
-          operator: 'finance',
-          ip: '192.168.1.101',
-          browser: 'Firefox 121',
-          os: 'Windows 10',
-          status: 1,
-          statusName: '成功'
-        },
-        {
-          id: 3,
-          time: '2024-01-15 09:15:00',
-          operator: 'guard1',
-          ip: '192.168.1.102',
-          browser: 'Safari 17',
-          os: 'macOS',
-          status: 1,
-          statusName: '成功'
-        },
-        {
-          id: 4,
-          time: '2024-01-14 22:00:00',
-          operator: 'unknown',
-          ip: '192.168.1.103',
-          browser: 'Chrome 120',
-          os: 'Windows 11',
-          status: 0,
-          statusName: '失败'
-        }
-      ]
-    } else {
-      state.tableData = [
-        {
-          id: 1,
-          time: '2024-01-15 14:30:00',
-          operator: 'admin',
-          actionType: '退款',
-          description: '对订单P20240115001进行退款操作，退款金额¥30',
-          ip: '192.168.1.100'
-        },
-        {
-          id: 2,
-          time: '2024-01-15 14:00:00',
-          operator: 'finance',
-          actionType: '开闸',
-          description: '远程开闸，车辆：京A12345，通道：1号入口',
-          ip: '192.168.1.101'
-        },
-        {
-          id: 3,
-          time: '2024-01-15 13:30:00',
-          operator: 'admin',
-          actionType: '编辑规则',
-          description: '修改临时车收费规则，首小时费用调整为¥5',
-          ip: '192.168.1.100'
-        },
-        {
-          id: 4,
-          time: '2024-01-15 11:00:00',
-          operator: 'guard1',
-          actionType: '黑名单',
-          description: '将车辆京D88888加入黑名单',
-          ip: '192.168.1.102'
-        }
-      ]
-    }
-    state.pagination.total = 4
+  try {
+    const dr = state.dateRange || []
+    const res = await systemApi.getLogList({
+      page: state.pagination.current,
+      size: state.pagination.pageSize,
+      logType: state.logType,
+      startTime: dr[0] ? fmtDay(dr[0]) : null,
+      endTime: dr[1] ? fmtDay(dr[1]) : null,
+      keyword: state.keyword
+    })
+    state.tableData = (res.data || []).map(mapRow)
+    state.pagination.total = (res.result && res.result.total) || 0
+  } catch (e) {
+    console.error('获取日志列表失败', e)
+  } finally {
     state.loading = false
-  }, 500)
+  }
 }
 
 const handleSearch = () => {
@@ -216,7 +223,7 @@ const handleReset = () => {
   state.keyword = '';
   handleSearch()
 }
-const handleExport = () => Message.info('导出日志')
+const handleExport = () => Message.info('导出日志功能开发中')
 const handlePageChange = p => {
   state.pagination.current = p;
   initData()
@@ -226,7 +233,9 @@ const handleViewDetail = r => {
   state.detailVisible = true
 }
 
-initData()
+onMounted(() => {
+  handleTypeChange()
+})
 </script>
 
 <style lang="less" scoped>

@@ -4,19 +4,6 @@
     <div class="filter-bar">
       <div class="filter-row">
         <div class="filter-item">
-          <Select
-            v-model="state.searchForm.parkingId"
-            placeholder="选择停车场"
-            class="filter-select"
-            clearable
-            @on-change="handleParkingChange"
-          >
-            <Option v-for="item in state.parkingList" :key="item.id" :value="item.id">
-              {{ item.name }}
-            </Option>
-          </Select>
-        </div>
-        <div class="filter-item">
           <Input
             v-model="state.searchForm.keyword"
             placeholder="搜索规则名称"
@@ -36,11 +23,7 @@
           <Button @click="handleReset">重置</Button>
         </div>
         <div class="filter-item">
-          <Button
-            type="primary"
-            :disabled="!state.searchForm.parkingId"
-            @click="handleAdd"
-          >
+          <Button type="primary" @click="handleAdd">
             <Icon type="ios-add" />
             新增规则
           </Button>
@@ -50,7 +33,8 @@
 
     <!-- 表格 -->
     <div class="table-container">
-      <Table :columns="columns" :data="state.tableData" :loading="state.loading">
+      <TableColumnSetting :columns="columns" v-model:visible="visibleFields" v-model:open="colSettingVisible" @reset="resetColumns" />
+      <Table :columns="displayColumns" :data="state.tableData" :loading="state.loading">
         <template #carType="{ row }">
           <span>{{ carTypeText(row.carType) }}</span>
         </template>
@@ -76,6 +60,20 @@
           <Button type="text" size="small" @click="handleDelete(row)" class="text-danger">删除</Button>
         </template>
       </Table>
+
+      <!-- 分页 -->
+      <div class="pagination-wrapper">
+        <Page
+          :total="state.pagination.total"
+          :current="state.pagination.current"
+          :page-size="state.pagination.pageSize"
+          show-total
+          show-elevator
+          show-sizer
+          @on-change="handlePageChange"
+          @on-page-size-change="handlePageSizeChange"
+        />
+      </div>
     </div>
 
     <!-- 新增/编辑弹窗 -->
@@ -172,22 +170,29 @@ import {
   Message,
   Modal,
   Option,
+  Page,
   Select,
   Table,
   Tag
 } from 'view-ui-plus'
-import { costRulesApi, parkingApi } from '@/api'
+import { costRulesApi } from '@/api'
+import TableColumnSetting from '@/components/TableColumnSetting.vue'
+import { useTableColumns } from '@/composables/useTableColumns'
 
 const state = reactive({
   searchForm: {
-    parkingId: null,
     keyword: ''
   },
 
-  parkingList: [],
-
   loading: false,
   tableData: [],
+
+  // 分页
+  pagination: {
+    total: 0,
+    current: 1,
+    pageSize: 10
+  },
 
   modalVisible: false,
   isEdit: false,
@@ -195,7 +200,6 @@ const state = reactive({
 
   form: {
     id: null,
-    parkingId: null,
     name: '',
     carType: '0',
     type: 2,
@@ -213,14 +217,16 @@ const state = reactive({
 })
 
 const columns = [
-  { title: '规则名称', key: 'name', minWidth: 160 },
-  { title: '车辆类型', slot: 'carType', minWidth: 110, align: 'center' },
-  { title: '收费类型', slot: 'type', minWidth: 120, align: 'center' },
-  { title: '计费时段/时长', slot: 'timeRange', minWidth: 180 },
-  { title: '金额', slot: 'amount', minWidth: 110, align: 'right' },
-  { title: '生效日期', slot: 'effective', minWidth: 200 },
+  { field: 'name', title: '规则名称', key: 'name', minWidth: 160 },
+  { field: 'carType', title: '车辆类型', slot: 'carType', minWidth: 110, align: 'center' },
+  { field: 'type', title: '收费类型', slot: 'type', minWidth: 120, align: 'center' },
+  { field: 'timeRange', title: '计费时段/时长', slot: 'timeRange', minWidth: 180 },
+  { field: 'amount', title: '金额', slot: 'amount', minWidth: 110, align: 'right' },
+  { field: 'effective', title: '生效日期', slot: 'effective', minWidth: 200 },
   { title: '操作', slot: 'action', minWidth: 140, fixed: 'right' }
 ]
+
+const { visibleFields, colSettingVisible, displayColumns, resetColumns } = useTableColumns(columns, 'chargeRuleConfig:columnVisible')
 
 const carTypeText = (carType) => {
   const map = { '0': '小型汽车', '1': '中型汽车', '2': '大型汽车' }
@@ -237,33 +243,19 @@ const typeColor = (type) => {
   return map[type] || 'default'
 }
 
-// 加载停车场列表（供选择器使用）
-const loadParkingList = async () => {
-  try {
-    // size 取较大值以一次性加载全部停车场供选择器使用
-    const res = await parkingApi.getParkingList({ size: 1000 })
-    state.parkingList = res.data || []
-  } catch (e) {
-    console.error('获取停车场列表失败', e)
-  }
-}
-
-// 加载计费规则（按停车场ID；列表接口无分页、无服务端筛选）
+// 加载计费规则（分页；关键词按名称在服务端筛选）
 const loadData = async () => {
-  if (!state.searchForm.parkingId) {
-    state.tableData = []
-    return
-  }
   state.loading = true
   try {
-    const res = await costRulesApi.getCostRulesList(state.searchForm.parkingId)
-    let list = res.data || []
-    // 客户端按名称关键词筛选
-    if (state.searchForm.keyword) {
-      const kw = state.searchForm.keyword.trim().toLowerCase()
-      list = list.filter(item => (item.name || '').toLowerCase().includes(kw))
+    const res = await costRulesApi.getCostRulesList({
+      page: state.pagination.current,
+      size: state.pagination.pageSize,
+      name: state.searchForm.keyword || undefined
+    })
+    state.tableData = res.data || []
+    if (res.result) {
+      state.pagination.total = res.result.total || 0
     }
-    state.tableData = list
   } catch (e) {
     console.error('获取计费规则失败', e)
   } finally {
@@ -271,17 +263,26 @@ const loadData = async () => {
   }
 }
 
-const handleParkingChange = () => {
-  loadData()
-}
-
 const handleSearch = () => {
+  state.pagination.current = 1
   loadData()
 }
 
 const handleReset = () => {
-  state.searchForm.parkingId = null
   state.searchForm.keyword = ''
+  state.pagination.current = 1
+  loadData()
+}
+
+// 分页
+const handlePageChange = (page) => {
+  state.pagination.current = page
+  loadData()
+}
+
+const handlePageSizeChange = (size) => {
+  state.pagination.pageSize = size
+  state.pagination.current = 1
   loadData()
 }
 
@@ -318,14 +319,9 @@ const onEffectiveEndChange = (val) => {
 }
 
 const handleAdd = () => {
-  if (!state.searchForm.parkingId) {
-    Message.warning('请先选择停车场')
-    return
-  }
   state.isEdit = false
   state.form = {
     id: null,
-    parkingId: state.searchForm.parkingId,
     name: '',
     carType: '0',
     type: 2,
@@ -341,13 +337,20 @@ const handleAdd = () => {
   state.modalVisible = true
 }
 
-const handleEdit = (row) => {
+// 编辑：列表行不携带完整字段，需调详情接口取回
+const handleEdit = async (row) => {
   state.isEdit = true
-  // 复制整行，保留表单未展示的字段，避免编辑时丢失
-  state.form = { ...row }
-  // week 为逗号分隔的英文星期字符串，拆分为数组供多选；非逗号分隔的旧值会原样保留（见 handleSubmit）
-  state.weekList = row.week ? row.week.split(',').map(s => s.trim()).filter(Boolean) : []
-  state.modalVisible = true
+  try {
+    const res = await costRulesApi.getCostRulesDetail(row.id)
+    const detail = res.data || {}
+    // 复制详情，保留表单未展示的字段，避免编辑时丢失
+    state.form = { ...detail }
+    // week 为逗号分隔的英文星期字符串，拆分为数组供多选
+    state.weekList = detail.week ? detail.week.split(',').map(s => s.trim()).filter(Boolean) : []
+    state.modalVisible = true
+  } catch (e) {
+    console.error('获取规则详情失败', e)
+  }
 }
 
 const handleSubmit = async () => {
@@ -402,7 +405,7 @@ const handleDelete = (row) => {
 }
 
 onMounted(() => {
-  loadParkingList()
+  loadData()
 })
 </script>
 
@@ -429,10 +432,6 @@ onMounted(() => {
         flex-shrink: 0;
       }
 
-      .filter-select {
-        width: 180px;
-      }
-
       .filter-input {
         width: 200px;
       }
@@ -451,6 +450,12 @@ onMounted(() => {
 
     .text-danger {
       color: var(--error-color);
+    }
+
+    .pagination-wrapper {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: var(--spacing-xl);
     }
   }
 

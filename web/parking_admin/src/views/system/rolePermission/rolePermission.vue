@@ -16,7 +16,10 @@
       </div>
     </div>
     <div class="permission-panel" v-if="state.currentRole">
-      <div class="panel-header"><h3>{{ state.currentRole.name }} - 权限配置</h3></div>
+      <div class="panel-header">
+        <h3>{{ state.currentRole.name }} - 权限配置</h3>
+        <p class="panel-tip">下方为菜单结构参考，权限分配功能待 RBAC 菜单-权限映射改造后对接</p>
+      </div>
       <div class="permission-tree">
         <Tree :data="state.permissionData" show-checkbox check-directly></Tree>
       </div>
@@ -33,27 +36,16 @@
 </template>
 
 <script setup>
-import { reactive } from 'vue'
+import { reactive, onMounted } from 'vue'
 import { Button, Icon, Tree, Modal, Form, FormItem, Input, Message } from 'view-ui-plus'
+import { systemApi } from '@/api'
 
+// 权限面板的菜单结构参考（静态，权限分配功能待 RBAC 菜单-权限映射改造后对接）
 const state = reactive({
   tableData: [],
+  loading: false,
   currentRole: null,
-  permissionData: [],
-  modalVisible: false,
-  modalType: 'add',
-  formData: { id: null, name: '', description: '' },
-  rules: { name: [{ required: true, message: '请输入角色名称', trigger: 'blur' }] }
-})
-
-const initData = () => {
-  state.tableData = [
-    { id: 1, name: '超级管理员', description: '拥有系统所有权限', memberCount: 1, isSystem: true },
-    { id: 2, name: '财务', description: '财务人员，拥有收费、对账相关权限', memberCount: 2, isSystem: false },
-    { id: 3, name: '停车场值守', description: '停车场值班人员，具有通行记录查看、开闸等权限', memberCount: 5, isSystem: false },
-    { id: 4, name: '巡检员', description: '设备巡检人员，具有设备查看、故障上报权限', memberCount: 3, isSystem: false }
-  ]
-  state.permissionData = [
+  permissionData: [
     { title: '工作台', expand: true, children: [{ title: '首页查看' }, { title: '数据统计' }] },
     { title: '停车场管理', expand: true, children: [{ title: '停车场列表' }, { title: '车位管理' }] },
     { title: '车辆通行', expand: true, children: [{ title: '实时监控' }, { title: '通行记录' }, { title: '异常记录' }] },
@@ -62,18 +54,95 @@ const initData = () => {
     { title: '设备管理', children: [{ title: '设备列表' }, { title: '故障报修' }] },
     { title: '数据报表', children: [{ title: '营收统计' }, { title: '车流量报表' }, { title: '车位利用率' }, { title: '导出报表' }] },
     { title: '系统设置', children: [{ title: '管理员账号' }, { title: '角色权限' }, { title: '收费规则' }, { title: '短信配置' }, { title: '日志管理' }] }
-  ]
-  state.currentRole = state.tableData[0]
+  ],
+  modalVisible: false,
+  modalType: 'add',
+  formData: { id: null, name: '', description: '' },
+  rules: { name: [{ required: true, message: '请输入角色名称', trigger: 'blur' }] }
+})
+
+// 角色列表（含各角色成员数，按创建时间倒序）
+const loadData = async () => {
+  state.loading = true
+  try {
+    const res = await systemApi.getRoleList()
+    state.tableData = res.data || []
+    // 若当前未选中角色，则默认选中首个以展示权限面板
+    if (state.tableData.length && !state.currentRole) {
+      state.currentRole = state.tableData[0]
+    }
+  } catch (e) {
+    console.error('获取角色列表失败', e)
+  } finally {
+    state.loading = false
+  }
 }
 
-const handleSelectRole = r => state.currentRole = r
-const handleAdd = () => { state.modalType = 'add'; state.formData = { id: null, name: '', description: '' }; state.modalVisible = true }
-const handleEdit = r => { state.modalType = 'edit'; state.formData = { ...r }; state.modalVisible = true }
-const handleSubmit = () => { Message.success(state.modalType === 'add' ? '新增成功' : '编辑成功'); state.modalVisible = false; initData() }
-const handleDelete = r => Modal.confirm({ title: '确认删除', content: `删除角色"${r.name}"？`, onOk: () => Message.success('删除成功') })
-const handleSavePermission = () => Message.success('权限保存成功')
+const handleSelectRole = r => { state.currentRole = r }
 
-initData()
+const handleAdd = () => {
+  state.modalType = 'add'
+  state.formData = { id: null, name: '', description: '' }
+  state.modalVisible = true
+}
+
+const handleEdit = r => {
+  state.modalType = 'edit'
+  state.formData = { ...r }
+  state.modalVisible = true
+}
+
+const handleSubmit = async () => {
+  if (!state.formData.name) {
+    Message.warning('请输入角色名称')
+    return
+  }
+  try {
+    const payload = { ...state.formData }
+    if (state.modalType === 'add') {
+      await systemApi.addRole(payload)
+      Message.success('新增成功')
+    } else {
+      await systemApi.editRole(payload)
+      Message.success('编辑成功')
+    }
+    state.modalVisible = false
+    loadData()
+  } catch (e) {
+    console.error('保存角色失败', e)
+  }
+}
+
+const handleDelete = r => {
+  const tip = r.memberCount > 0
+    ? `角色"${r.name}"下有 ${r.memberCount} 名成员，删除后成员将失去该角色权限，确认删除？`
+    : `删除角色"${r.name}"？`
+  Modal.confirm({
+    title: '确认删除',
+    content: tip,
+    onOk: async () => {
+      try {
+        await systemApi.deleteRole(r.id)
+        Message.success('删除成功')
+        if (state.currentRole && state.currentRole.id === r.id) {
+          state.currentRole = null
+        }
+        loadData()
+      } catch (e) {
+        console.error('删除角色失败', e)
+      }
+    }
+  })
+}
+
+// 权限分配功能待 RBAC 菜单-权限映射改造后对接
+const handleSavePermission = () => {
+  Message.info('权限分配功能待 RBAC 菜单-权限映射改造后对接')
+}
+
+onMounted(() => {
+  loadData()
+})
 </script>
 
 <style lang="less" scoped>
@@ -176,6 +245,12 @@ initData()
       h3 {
         font-size: var(--font-size-md);
         font-weight: 600;
+      }
+
+      .panel-tip {
+        margin-top: var(--spacing-sm);
+        font-size: var(--font-size-xs);
+        color: var(--text-color-secondary);
       }
     }
 

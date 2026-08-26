@@ -114,13 +114,13 @@
       <div class="parking-grid">
         <div
             v-for="space in state.gridData"
-            :key="space.no"
+            :key="space.id"
             class="space-grid-item"
             :class="'space-' + getStatusClass(space.status)"
             @click="handleSpaceClick(space)"
             :title="getSpaceTitle(space)"
         >
-          <span class="space-no">{{ space.no }}</span>
+          <span class="space-no">{{ space.spaceNo }}</span>
           <span class="space-plate" v-if="space.plate">{{ space.plate }}</span>
         </div>
       </div>
@@ -130,10 +130,10 @@
     <Modal v-model="state.assignModalVisible" title="分配车位" width="400">
       <Form :model="state.assignForm" :label-width="100">
         <FormItem label="车位编号">
-          <Input :value="state.currentSpace?.no" disabled/>
+          <Input :value="state.currentSpace?.spaceNo" disabled/>
         </FormItem>
         <FormItem label="绑定车主" prop="memberId">
-          <Select v-model="state.assignForm.memberId" placeholder="请选择车主">
+          <Select v-model="state.assignForm.memberId" placeholder="请选择车主" filterable>
             <Option v-for="item in state.memberList" :key="item.id" :value="item.id">
               {{ item.name }} - {{ item.plate }}
             </Option>
@@ -158,9 +158,8 @@
 
 <script setup>
 import {reactive, onMounted} from 'vue'
-import {useRoute} from 'vue-router'
 import {useCommonStore} from '@/stores/common.js'
-import {parkingApi} from '@/api'
+import {parkingApi, memberApi, spaceApi} from '@/api'
 import {
   Button,
   DatePicker,
@@ -174,7 +173,6 @@ import {
   Select
 } from 'view-ui-plus'
 
-const route = useRoute()
 const commonStore = useCommonStore()
 
 const state = reactive({
@@ -190,25 +188,17 @@ const state = reactive({
   gridData: [],
 
   stats: {
-    free: 156,
-    fixed: 98,
-    temp: 38,
-    fault: 8
+    free: 0,
+    fixed: 0,
+    temp: 0,
+    fault: 0
   },
 
   parkingList: commonStore.state.parkingList.length > 0
     ? commonStore.state.parkingList
-    : [
-      {id: 1, name: '城西停车场'},
-      {id: 2, name: '城东停车场'},
-      {id: 3, name: '购物中心停车场'}
-    ],
+    : [],
 
-  memberList: [
-    {id: 1, name: '张三', plate: '京A12345'},
-    {id: 2, name: '李四', plate: '京B67890'},
-    {id: 3, name: '王五', plate: '京C11111'}
-  ],
+  memberList: [],
 
   assignModalVisible: false,
   currentSpace: null,
@@ -217,6 +207,14 @@ const state = reactive({
     expireDate: ''
   }
 })
+
+const pad = (n) => String(n).padStart(2, '0')
+const toDateStr = (d) => {
+  if (!d) return null
+  const dt = d instanceof Date ? d : new Date(d)
+  if (isNaN(dt.getTime())) return null
+  return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`
+}
 
 const getStatusClass = (status) => {
   const map = {0: 'free', 1: 'occupied', 2: 'fault'}
@@ -230,34 +228,40 @@ const getStatusText = (status) => {
 
 const getSpaceTitle = (space) => {
   if (space.plate) {
-    return `${space.no} - ${space.plate}`
+    return `${space.spaceNo} - ${space.plate}`
   }
-  return `${space.no} - ${getStatusText(space.status)}`
+  return `${space.spaceNo} - ${getStatusText(space.status)}`
 }
 
-const initData = () => {
-  setTimeout(() => {
-    const list = [
-      {id: 1, no: 'A001', area: 'A区', type: 1, memberName: '张三', plate: '京A12345', status: 1},
-      {id: 2, no: 'A002', area: 'A区', type: 1, memberName: '李四', plate: '京B67890', status: 1},
-      {id: 3, no: 'A003', area: 'A区', type: 2, memberName: '-', plate: '京C11111', status: 1},
-      {id: 4, no: 'A004', area: 'A区', type: 2, memberName: '-', plate: '', status: 0},
-      {id: 5, no: 'A005', area: 'A区', type: 3, memberName: '-', plate: '', status: 2},
-      {id: 6, no: 'B001', area: 'B区', type: 1, memberName: '王五', plate: '京D22222', status: 1},
-      {id: 7, no: 'B002', area: 'B区', type: 2, memberName: '-', plate: '', status: 0},
-      {id: 8, no: 'B003', area: 'B区', type: 2, memberName: '-', plate: '', status: 0}
-    ]
+const loadParkingList = async () => {
+  if (commonStore.state.parkingList.length > 0) {
+    state.parkingList = commonStore.state.parkingList
+  } else {
+    try {
+      const res = await parkingApi.getParkingList({size: 1000})
+      state.parkingList = res.data || []
+    } catch (e) { /* ignore */ }
+  }
+  if (!state.searchForm.parkingId && state.parkingList.length > 0) {
+    state.searchForm.parkingId = state.parkingList[0].id
+  }
+}
 
-    state.gridData = list.map(item => ({
-      ...item,
-      status: item.status,
-      plate: item.plate || ''
-    }))
-  }, 300)
+const loadData = async () => {
+  const {parkingId, status, type, keyword} = state.searchForm
+  const params = {parkingId, status, type, keyword}
+  try {
+    const [listRes, statRes] = await Promise.all([
+      spaceApi.getSpaceList(params),
+      parkingId ? spaceApi.getSpaceStats(parkingId) : Promise.resolve(null)
+    ])
+    state.gridData = listRes.data || []
+    state.stats = statRes?.data || {free: 0, fixed: 0, temp: 0, fault: 0}
+  } catch (e) { /* authRequest 已提示 */ }
 }
 
 const handleSearch = () => {
-  initData()
+  loadData()
 }
 
 const handleReset = () => {
@@ -268,51 +272,71 @@ const handleReset = () => {
     type: null,
     keyword: ''
   }
-  handleSearch()
+  loadData()
 }
 
-const handleRefreshGrid = () => {
-  initData()
+const handleRefreshGrid = async () => {
+  await loadData()
   Message.success('已刷新')
 }
 
-const handleAssign = (row) => {
-  state.currentSpace = row
-  state.assignForm = {
-    memberId: null,
-    expireDate: ''
+const handleAssign = async (space) => {
+  state.currentSpace = space
+  state.assignForm = {memberId: null, expireDate: ''}
+  if (state.memberList.length === 0) {
+    try {
+      const res = await memberApi.getMemberList({size: 1000})
+      state.memberList = res.data || []
+    } catch (e) { /* ignore */ }
   }
   state.assignModalVisible = true
 }
 
-const handleAssignSubmit = () => {
+const handleAssignSubmit = async () => {
   if (!state.assignForm.memberId) {
     Message.warning('请选择车主')
     return
   }
-  Message.success('分配成功')
-  state.assignModalVisible = false
-  initData()
+  const member = state.memberList.find(m => m.id === state.assignForm.memberId)
+  const payload = {
+    id: state.currentSpace.id,
+    memberId: member.id,
+    memberName: member.name,
+    plate: member.plate,
+    expireDate: state.assignForm.expireDate ? toDateStr(state.assignForm.expireDate) : null
+  }
+  try {
+    await spaceApi.assignSpace(payload)
+    Message.success('分配成功')
+    state.assignModalVisible = false
+    await loadData()
+  } catch (e) { /* authRequest 已提示 */ }
 }
 
-const handleUnbind = (row) => {
+const handleUnbind = (space) => {
   Modal.confirm({
     title: '确认解绑',
-    content: `确定要解绑车位"${row.no}"吗？`,
-    onOk: () => {
-      Message.success('解绑成功')
-      initData()
+    content: `确定要解绑车位"${space.spaceNo}"吗？`,
+    onOk: async () => {
+      try {
+        await spaceApi.unbindSpace(space.id)
+        Message.success('解绑成功')
+        await loadData()
+      } catch (e) { /* ignore */ }
     }
   })
 }
 
-const handleReportRepair = (row) => {
+const handleReportRepair = (space) => {
   Modal.confirm({
     title: '确认报修',
-    content: `确定要对车位"${row.no}"进行报修吗？`,
-    onOk: () => {
-      Message.success('报修成功')
-      initData()
+    content: `确定要对车位"${space.spaceNo}"进行报修吗？`,
+    onOk: async () => {
+      try {
+        await spaceApi.reportRepair(space.id)
+        Message.success('报修成功')
+        await loadData()
+      } catch (e) { /* ignore */ }
     }
   })
 }
@@ -328,22 +352,8 @@ const handleSpaceClick = (space) => {
   }
 }
 
-// 同步停车场列表
-const syncParkingList = () => {
-  if (commonStore.state.parkingList.length > 0) {
-    state.parkingList = commonStore.state.parkingList
-    if (!state.searchForm.parkingId) {
-      const ids = commonStore.state.selectedParkingIds
-      state.searchForm.parkingId = ids.length > 0 ? ids[0] : commonStore.state.currentParking?.id || null
-    }
-  }
-}
-
-syncParkingList()
-initData()
-
 onMounted(() => {
-  syncParkingList()
+  loadParkingList().then(() => loadData())
 })
 </script>
 

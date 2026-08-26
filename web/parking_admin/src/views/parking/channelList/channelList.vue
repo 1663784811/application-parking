@@ -43,8 +43,9 @@
 
     <!-- 表格 -->
     <div class="table-container">
+      <TableColumnSetting :columns="columns" v-model:visible="visibleFields" v-model:open="colSettingVisible" @reset="resetColumns" />
       <Table
-        :columns="columns"
+        :columns="displayColumns"
         :data="state.tableData"
         :loading="state.loading"
       >
@@ -57,6 +58,7 @@
           </span>
         </template>
         <template #action="{ row }">
+          <Button type="text" size="small" @click="handleShowQr(row)">二维码</Button>
           <Button type="text" size="small" @click="handleEdit(row)">编辑</Button>
           <Button type="text" size="small" @click="handleDelete(row)">删除</Button>
         </template>
@@ -87,6 +89,9 @@
         <FormItem label="通道编号" prop="code">
           <Input v-model="state.form.code" placeholder="请输入通道编号"/>
         </FormItem>
+        <FormItem label="IP地址" prop="ip">
+          <Input v-model="state.form.ip" placeholder="请输入设备IP地址"/>
+        </FormItem>
         <FormItem label="通道类型" prop="type">
           <Select v-model="state.form.type" placeholder="请选择通道类型">
             <Option value="in">入口</Option>
@@ -95,7 +100,7 @@
           </Select>
         </FormItem>
         <FormItem label="所属停车场" prop="parkingId">
-          <Select v-model="state.form.parkingId" placeholder="请选择停车场">
+          <Select v-model="state.form.parkingId" placeholder="请选择停车场" filterable>
             <Option v-for="item in state.parkingList" :key="item.id" :value="item.id">
               {{ item.name }}
             </Option>
@@ -113,11 +118,31 @@
         <Button type="primary" @click="handleSubmit">确定</Button>
       </template>
     </Modal>
+
+    <!-- 通道二维码弹窗 -->
+    <Modal v-model="state.qrModalVisible" title="通道二维码" width="420">
+      <div class="qr-modal-body">
+        <div class="qr-info">
+          <div class="qr-info-row"><span class="qr-label">通道名称</span><span class="qr-value">{{ state.qrChannel?.name }}</span></div>
+          <div class="qr-info-row"><span class="qr-label">通道编号</span><span class="qr-value">{{ state.qrChannel?.code }}</span></div>
+        </div>
+        <div class="qr-canvas-wrap"><canvas ref="qrCanvasRef"></canvas></div>
+        <div class="qr-url-wrap">
+          <Input v-model="state.qrUrl" readonly class="qr-url-input"/>
+          <Button type="primary" size="small" @click="handleCopyUrl">复制链接</Button>
+        </div>
+      </div>
+      <template #footer>
+        <Button @click="state.qrModalVisible = false">关闭</Button>
+        <Button type="primary" @click="handleDownloadQr">下载二维码</Button>
+      </template>
+    </Modal>
   </div>
 </template>
 
 <script setup>
-import {reactive, onMounted} from 'vue'
+import {reactive, ref, nextTick, watch, onMounted} from 'vue'
+import QRCode from 'qrcode'
 import {
   Button,
   Form,
@@ -134,8 +159,12 @@ import {
   Tag
 } from 'view-ui-plus'
 import {useCommonStore} from '@/stores/common.js'
+import {parkingApi, channelApi} from '@/api'
+import TableColumnSetting from '@/components/TableColumnSetting.vue'
+import { useTableColumns } from '@/composables/useTableColumns'
 
 const commonStore = useCommonStore()
+const qrCanvasRef = ref(null)
 
 const state = reactive({
   searchForm: {
@@ -162,39 +191,51 @@ const state = reactive({
   form: {
     name: '',
     code: '',
+    ip: '',
     type: 'in',
     parkingId: null,
     status: 1
-  }
+  },
+
+  // 通道二维码弹窗
+  qrModalVisible: false,
+  qrChannel: null,
+  qrUrl: ''
 })
 
 const columns = [
   {
+    field: 'code',
     title: '通道编号',
     key: 'code',
     minWidth: 120
   },
   {
+    field: 'name',
     title: '通道名称',
     key: 'name',
     minWidth: 160
   },
   {
+    field: 'type',
     title: '通道类型',
     slot: 'type',
     minWidth: 100
   },
   {
+    field: 'parkingName',
     title: '所属停车场',
     key: 'parkingName',
     minWidth: 160
   },
   {
+    field: 'ip',
     title: 'IP地址',
     key: 'ip',
     minWidth: 140
   },
   {
+    field: 'status',
     title: '状态',
     slot: 'status',
     minWidth: 100
@@ -202,9 +243,11 @@ const columns = [
   {
     title: '操作',
     slot: 'action',
-    minWidth: 140
+    minWidth: 200
   }
 ]
+
+const { visibleFields, colSettingVisible, displayColumns, resetColumns } = useTableColumns(columns, 'channelList:columnVisible')
 
 const typeColor = (type) => {
   const map = {in: 'blue', out: 'green', inout: 'orange'}
@@ -216,39 +259,123 @@ const typeText = (type) => {
   return map[type] || '-'
 }
 
-const mockData = () => {
-  return [
-    {id: 1, code: 'CH001', name: '1号入口', type: 'in', parkingName: '万象城停车场', ip: '192.168.1.10', status: 1},
-    {id: 2, code: 'CH002', name: '2号出口', type: 'out', parkingName: '万象城停车场', ip: '192.168.1.11', status: 1},
-    {id: 3, code: 'CH003', name: '3号入口', type: 'in', parkingName: '万象城停车场', ip: '192.168.1.12', status: 1},
-    {id: 4, code: 'CH004', name: '地下入口', type: 'in', parkingName: 'CBD商务中心停车场', ip: '192.168.2.10', status: 1},
-    {id: 5, code: 'CH005', name: '地下出口', type: 'out', parkingName: 'CBD商务中心停车场', ip: '192.168.2.11', status: 0},
-    {id: 6, code: 'CH006', name: '东门入口', type: 'in', parkingName: '科技园停车场', ip: '192.168.3.10', status: 1},
-    {id: 7, code: 'CH007', name: '西门出口', type: 'out', parkingName: '科技园停车场', ip: '192.168.3.11', status: 1},
-    {id: 8, code: 'CH008', name: '主入口', type: 'inout', parkingName: '海岸城购物中心停车场', ip: '192.168.4.10', status: 1}
-  ]
+// 停车场ID → 名称（后端实体只存 parkingId，名称由前端按停车场列表映射）
+const parkingName = (parkingId) => {
+  if (!parkingId) return '-'
+  const pk = state.parkingList.find(item => String(item.id) === String(parkingId))
+  return pk ? pk.name : '-'
 }
 
-const loadData = () => {
+// PkChannel 字段 → 页面字段映射（补 parkingName 用于表格展示）
+const mapRow = (r) => ({
+  ...r,
+  parkingName: parkingName(r.parkingId)
+})
+
+// H5 出场扫码页地址：优先读环境变量 VITE_H5_BASE_URL，留空回退到当前站点 origin
+const H5_BASE_URL = import.meta.env.VITE_H5_BASE_URL || window.location.origin
+
+// 解析通道所属应用ID：优先通道自身 appId，其次取所属停车场的 appId
+const resolveAppId = (channel) => {
+  if (channel.appId) return channel.appId
+  const pk = state.parkingList.find(item => String(item.id) === String(channel.parkingId))
+  return pk ? pk.appId : null
+}
+
+// 构造通道出场扫码 H5 链接（扫码后进入对应通道的出场流程）
+const buildChannelQrUrl = (channel) => {
+  const appId = resolveAppId(channel)
+  const code = channel.code ? encodeURIComponent(channel.code) : ''
+  return `${H5_BASE_URL}/#/app/${appId}/scanExit?channelId=${channel.id}&code=${code}`
+}
+
+// 打开二维码弹窗（appId 缺失时阻断，避免生成无效链接）
+const handleShowQr = (row) => {
+  if (!resolveAppId(row)) {
+    Message.warning('该通道未绑定应用ID(appId)，无法生成完整 H5 出场链接，请先在所属停车场中配置 appId 后重试')
+    return
+  }
+  state.qrChannel = row
+  state.qrUrl = buildChannelQrUrl(row)
+  state.qrModalVisible = true
+  nextTick(() => renderQr())
+}
+
+// 渲染二维码到 canvas
+const renderQr = () => {
+  const canvas = qrCanvasRef.value
+  if (!canvas || !state.qrUrl) return
+  QRCode.toCanvas(canvas, state.qrUrl, {width: 240, margin: 2}, (err) => {
+    if (err) console.error('二维码渲染失败', err)
+  })
+}
+
+// 下载二维码 PNG
+const handleDownloadQr = async () => {
+  if (!state.qrUrl) return
+  try {
+    const dataUrl = await QRCode.toDataURL(state.qrUrl, {width: 480, margin: 2})
+    const a = document.createElement('a')
+    a.href = dataUrl
+    a.download = `通道二维码_${state.qrChannel?.code || state.qrChannel?.id || ''}.png`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+  } catch (e) {
+    console.error('二维码下载失败', e)
+    Message.error('二维码下载失败')
+  }
+}
+
+// 复制链接
+const handleCopyUrl = async () => {
+  if (!state.qrUrl) return
+  try {
+    await navigator.clipboard.writeText(state.qrUrl)
+    Message.success('链接已复制')
+  } catch (e) {
+    Message.info('复制失败，请手动选中链接复制')
+  }
+}
+
+// 弹窗显隐时重渲二维码（兜底，确保 canvas 已挂载）
+watch(() => state.qrModalVisible, (v) => {
+  if (v) nextTick(renderQr)
+})
+
+// 加载停车场列表（供弹窗选择 + 名称映射）
+const loadParkingList = async () => {
+  try {
+    const res = await parkingApi.getParkingList({size: 1000})
+    state.parkingList = res.data || []
+  } catch (e) {
+    console.error('获取停车场列表失败', e)
+  }
+}
+
+// 通道列表（分页，type + status + keyword）
+const loadData = async () => {
   state.loading = true
-  setTimeout(() => {
-    let list = mockData()
-
-    if (state.searchForm.type) {
-      list = list.filter(item => item.type === state.searchForm.type)
+  try {
+    const {type, status, keyword} = state.searchForm
+    const params = {
+      page: state.pagination.current,
+      size: state.pagination.pageSize,
+      type: type || null,
+      keyword: keyword ? keyword.trim() : null
     }
-    if (state.searchForm.status !== null) {
-      list = list.filter(item => item.status === state.searchForm.status)
+    // status 为 0（故障）时也需发送，仅 null/未选时不发
+    if (status !== null && status !== '' && status !== undefined) {
+      params.status = status
     }
-    if (state.searchForm.keyword) {
-      const kw = state.searchForm.keyword.trim().toLowerCase()
-      list = list.filter(item => item.name.toLowerCase().includes(kw) || item.code.toLowerCase().includes(kw))
-    }
-
-    state.tableData = list
-    state.pagination.total = list.length
+    const res = await channelApi.getChannelList(params)
+    state.tableData = (res.data || []).map(mapRow)
+    state.pagination.total = (res.result && res.result.total) || 0
+  } catch (e) {
+    console.error('获取通道列表失败', e)
+  } finally {
     state.loading = false
-  }, 300)
+  }
 }
 
 const handleSearch = () => {
@@ -270,6 +397,7 @@ const handleAdd = () => {
   state.form = {
     name: '',
     code: '',
+    ip: '',
     type: 'in',
     parkingId: null,
     status: 1
@@ -280,32 +408,48 @@ const handleAdd = () => {
 const handleEdit = (row) => {
   state.isEdit = true
   state.form = {
+    id: row.id,
     name: row.name,
     code: row.code,
+    ip: row.ip,
     type: row.type,
-    parkingId: null,
+    parkingId: row.parkingId,
     status: row.status
   }
   state.modalVisible = true
 }
 
-const handleSubmit = () => {
+const handleSubmit = async () => {
   if (!state.form.name) {
     Message.warning('请输入通道名称')
     return
   }
-  Message.success(state.isEdit ? '编辑成功' : '新增成功')
-  state.modalVisible = false
-  loadData()
+  try {
+    if (state.isEdit) {
+      await channelApi.editChannel({...state.form})
+    } else {
+      await channelApi.addChannel({...state.form})
+    }
+    Message.success(state.isEdit ? '编辑成功' : '新增成功')
+    state.modalVisible = false
+    loadData()
+  } catch (e) {
+    console.error('保存通道失败', e)
+  }
 }
 
 const handleDelete = (row) => {
   Modal.confirm({
     title: '确认删除',
     content: `确定要删除通道"${row.name}"吗？`,
-    onOk: () => {
-      Message.success('删除成功')
-      loadData()
+    onOk: async () => {
+      try {
+        await channelApi.deleteChannel(row.id)
+        Message.success('删除成功')
+        loadData()
+      } catch (e) {
+        console.error('删除通道失败', e)
+      }
     }
   })
 }
@@ -316,6 +460,7 @@ const handlePageChange = (page) => {
 }
 
 onMounted(() => {
+  loadParkingList()
   loadData()
 })
 </script>
@@ -380,6 +525,43 @@ onMounted(() => {
       display: flex;
       justify-content: flex-end;
       margin-top: var(--spacing-xl);
+    }
+  }
+}
+
+.qr-modal-body {
+  .qr-info {
+    margin-bottom: var(--spacing-lg);
+    .qr-info-row {
+      display: flex;
+      margin-bottom: var(--spacing-sm);
+      .qr-label {
+        width: 70px;
+        color: var(--text-color-secondary);
+        font-size: var(--font-size-sm);
+      }
+      .qr-value {
+        flex: 1;
+        color: var(--text-color-title);
+        font-weight: 500;
+      }
+    }
+  }
+  .qr-canvas-wrap {
+    display: flex;
+    justify-content: center;
+    padding: var(--spacing-md) 0 var(--spacing-lg);
+    canvas {
+      width: 240px;
+      height: 240px;
+    }
+  }
+  .qr-url-wrap {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+    .qr-url-input {
+      flex: 1;
     }
   }
 }

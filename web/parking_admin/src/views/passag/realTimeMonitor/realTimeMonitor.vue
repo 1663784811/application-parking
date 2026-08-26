@@ -28,10 +28,11 @@
       <div class="video-section">
         <div class="section-header">
           <span class="section-title">视频监控</span>
-          <span class="section-badge">4 个通道在线</span>
+          <span class="section-badge">{{ videoList.length }} 个通道</span>
         </div>
+        <p class="section-tip">视频流需对接摄像头设备，下方为通道占位卡片</p>
         <div class="video-grid">
-          <div v-for="item in state.videoList" :key="item.id" class="video-card">
+          <div v-for="item in videoList" :key="item.id" class="video-card">
             <div class="video-placeholder">
               <Icon type="ios-videocam" class="video-icon"/>
             </div>
@@ -42,6 +43,7 @@
               </span>
             </div>
           </div>
+          <div v-if="!videoList.length" class="video-empty">暂无通道数据</div>
         </div>
       </div>
 
@@ -51,9 +53,11 @@
           <span class="section-title">实时通行记录</span>
           <span class="section-badge">最近 20 条</span>
         </div>
+        <TableColumnSetting :columns="passageColumns" v-model:visible="visibleFields" v-model:open="colSettingVisible" @reset="resetColumns" />
         <Table
-          :columns="passageColumns"
+          :columns="displayColumns"
           :data="state.passageList"
+          :loading="state.loading"
           :height="320"
           size="small"
         >
@@ -73,11 +77,24 @@
         </Table>
       </div>
     </div>
+
+    <!-- 通行详情 -->
+    <Modal v-model="state.detailModal" title="通行详情" width="480">
+      <div class="detail-list" v-if="state.detailData.id">
+        <div class="detail-row"><span class="detail-label">车牌号</span><span>{{ state.detailData.carNumber || '无牌车' }}</span></div>
+        <div class="detail-row"><span class="detail-label">车辆类型</span><span>{{ state.detailData.carType || '—' }}</span></div>
+        <div class="detail-row"><span class="detail-label">入场时间</span><span>{{ state.detailData.entryTime || '—' }}</span></div>
+        <div class="detail-row"><span class="detail-label">出场时间</span><span>{{ state.detailData.outTime || '—' }}</span></div>
+        <div class="detail-row"><span class="detail-label">状态</span><span>{{ state.detailData.status === 1 ? '已出场' : '场内' }}</span></div>
+        <div class="detail-row"><span class="detail-label">停车场ID</span><span>{{ state.detailData.parkingId || '—' }}</span></div>
+      </div>
+      <template #footer><Button @click="state.detailModal = false">关闭</Button></template>
+    </Modal>
   </div>
 </template>
 
 <script setup>
-import {reactive} from 'vue'
+import { reactive, computed, onMounted } from 'vue'
 import {
   Icon,
   Button,
@@ -85,47 +102,41 @@ import {
   Option,
   Table,
   Tag,
+  Modal,
   Message
 } from 'view-ui-plus'
+import { passageApi, channelApi } from '@/api'
+import TableColumnSetting from '@/components/TableColumnSetting.vue'
+import { useTableColumns } from '@/composables/useTableColumns'
 
 const state = reactive({
   channelFilter: null,
-  passageCount: 1654,
+  passageCount: 0,
+  loading: false,
+  channelList: [],
+  passageList: [],
+  detailModal: false,
+  detailData: {}
+})
 
-  channelList: [
-    {id: 1, name: '1号入口'},
-    {id: 2, name: '2号出口'},
-    {id: 3, name: '3号入口'},
-    {id: 4, name: '地下入口'}
-  ],
-
-  videoList: [
-    {id: 1, name: '1号入口', status: 'online'},
-    {id: 2, name: '2号出口', status: 'online'},
-    {id: 3, name: '3号入口', status: 'online'},
-    {id: 4, name: '地下入口', status: 'offline'}
-  ],
-
-  passageList: [
-    {id: 1, plate: '京A12345', type: 'in', channel: '1号入口', time: '2024-01-15 14:32:15', status: 'normal'},
-    {id: 2, plate: '京B67890', type: 'out', channel: '2号出口', time: '2024-01-15 14:30:00', status: 'normal'},
-    {id: 3, plate: '无牌车', type: 'in', channel: '3号入口', time: '2024-01-15 14:28:00', status: 'noPlate'},
-    {id: 4, plate: '浙C11111', type: 'in', channel: '1号入口', time: '2024-01-15 14:25:00', status: 'normal'},
-    {id: 5, plate: '苏D55555', type: 'out', channel: '2号出口', time: '2024-01-15 14:22:00', status: 'unpaid'},
-    {id: 6, plate: '粤E66666', type: 'in', channel: '地下入口', time: '2024-01-15 14:20:00', status: 'normal'},
-    {id: 7, plate: '黑名单', type: 'out', channel: '2号出口', time: '2024-01-15 14:18:00', status: 'blacklist'},
-    {id: 8, plate: '京F77777', type: 'in', channel: '1号入口', time: '2024-01-15 14:15:00', status: 'normal'}
-  ]
+// 视频卡片由通道数据生成（视频流需对接摄像头设备，状态暂以在线占位）
+const videoList = computed(() => {
+  const list = state.channelFilter
+    ? state.channelList.filter(c => c.id === state.channelFilter)
+    : state.channelList
+  return list.map(c => ({ id: c.id, name: c.name, status: 'online' }))
 })
 
 const passageColumns = [
-  {title: '车牌号', key: 'plate', minWidth: 120},
-  {title: '通行类型', slot: 'type', minWidth: 80},
-  {title: '通道', key: 'channel', minWidth: 100},
-  {title: '通行时间', key: 'time', minWidth: 160},
-  {title: '状态', slot: 'status', minWidth: 100},
-  {title: '操作', slot: 'action', minWidth: 80}
+  { field: 'plate', title: '车牌号', key: 'plate', minWidth: 120 },
+  { field: 'type', title: '通行类型', slot: 'type', minWidth: 80 },
+  { field: 'channel', title: '通道', key: 'channel', minWidth: 100 },
+  { field: 'time', title: '通行时间', key: 'time', minWidth: 160 },
+  { field: 'status', title: '状态', slot: 'status', minWidth: 100 },
+  { title: '操作', slot: 'action', minWidth: 80 }
 ]
+
+const { visibleFields, colSettingVisible, displayColumns, resetColumns } = useTableColumns(passageColumns, 'realTimeMonitor:passage:columnVisible')
 
 const getStatusText = (status) => {
   const map = {
@@ -137,17 +148,56 @@ const getStatusText = (status) => {
   return map[status] || status
 }
 
+// PkCarLog → 通行记录行：outTime 有值视为出场，否则进场；无车牌视为无牌
+const mapCarLog = (log) => ({
+  id: log.id,
+  plate: log.carNumber || '无牌车',
+  type: log.outTime ? 'out' : 'in',
+  channel: '—',
+  time: log.outTime || log.entryTime || '',
+  status: log.carNumber ? 'normal' : 'noPlate'
+})
+
+const loadData = async () => {
+  state.loading = true
+  try {
+    const [countRes, channelRes, passageRes] = await Promise.all([
+      passageApi.getTodayCount(),
+      channelApi.getChannelList({ size: 1000 }),
+      passageApi.getRecordList({ size: 20 })
+    ])
+    state.passageCount = countRes.data || 0
+    state.channelList = channelRes.data || []
+    state.passageList = (passageRes.data || []).map(mapCarLog)
+  } catch (e) {
+    console.error('加载实时监控数据失败', e)
+  } finally {
+    state.loading = false
+  }
+}
+
+// 远程开闸需对接道闸设备控制接口
 const handleOpenGate = () => {
-  Message.success('开闸命令已发送')
+  Message.info('远程开闸需对接道闸设备控制接口')
 }
 
 const handleRefresh = () => {
-  Message.success('已刷新')
+  loadData()
 }
 
-const handleViewDetail = (row) => {
-  console.log('查看通行详情', row)
+const handleViewDetail = async (row) => {
+  try {
+    const res = await passageApi.getRecordDetail(row.id)
+    state.detailData = res.data || {}
+    state.detailModal = true
+  } catch (e) {
+    console.error('查询通行详情失败', e)
+  }
 }
+
+onMounted(() => {
+  loadData()
+})
 </script>
 
 <style lang="less" scoped>
@@ -237,6 +287,12 @@ const handleViewDetail = (row) => {
       box-shadow: var(--shadow-base);
       padding: var(--spacing-xl);
 
+      .section-tip {
+        font-size: var(--font-size-xs);
+        color: var(--text-color-secondary);
+        margin-bottom: var(--spacing-lg);
+      }
+
       .video-grid {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
@@ -289,6 +345,14 @@ const handleViewDetail = (row) => {
             }
           }
         }
+
+        .video-empty {
+          grid-column: 1 / -1;
+          text-align: center;
+          padding: var(--spacing-xl);
+          color: var(--text-color-secondary);
+          font-size: var(--font-size-sm);
+        }
       }
     }
 
@@ -319,6 +383,20 @@ const handleViewDetail = (row) => {
           background-color: rgba(245, 63, 63, 0.1);
           color: var(--error-color);
         }
+      }
+    }
+  }
+
+  .detail-list {
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: var(--spacing-sm) 0;
+      border-bottom: 1px solid var(--border-color);
+      font-size: var(--font-size-sm);
+
+      .detail-label {
+        color: var(--text-color-secondary);
       }
     }
   }

@@ -24,7 +24,8 @@
     </div>
     <div class="export-preview">
       <h3 class="preview-title">报表预览</h3>
-      <Table :columns="columns" :data="state.tableData" :loading="state.loading" size="small"></Table>
+      <TableColumnSetting :columns="columns" v-model:visible="visibleFields" v-model:open="colSettingVisible" @reset="resetColumns" />
+      <Table :columns="displayColumns" :data="state.tableData" :loading="state.loading" size="small"></Table>
     </div>
     <div class="export-actions">
       <Button type="primary" size="large" @click="handleExportExcel">
@@ -42,6 +43,8 @@
 <script setup>
 import {reactive} from 'vue'
 import {Button, DatePicker, Icon, Message, Option, Select, Table} from 'view-ui-plus'
+import TableColumnSetting from '@/components/TableColumnSetting.vue'
+import { useTableColumns } from '@/composables/useTableColumns'
 
 const state = reactive({
   reportType: 'revenue',
@@ -52,14 +55,16 @@ const state = reactive({
 })
 
 const columns = [
-  {title: '日期', key: 'date', minWidth: 120},
-  {title: '停车场', key: 'parking', minWidth: 150},
-  {title: '临时收入', key: 'tempIncome', minWidth: 120, align: 'right'},
-  {title: '月卡收入', key: 'memberIncome', minWidth: 120, align: 'right'},
-  {title: '优惠减免', key: 'discount', minWidth: 100, align: 'right'},
-  {title: '实收金额', key: 'actualAmount', minWidth: 120, align: 'right'},
-  {title: '订单数', key: 'orderCount', minWidth: 80, align: 'center'}
+  {field: 'date', title: '日期', key: 'date', minWidth: 120},
+  {field: 'parking', title: '停车场', key: 'parking', minWidth: 150},
+  {field: 'tempIncome', title: '临时收入', key: 'tempIncome', minWidth: 120, align: 'right'},
+  {field: 'memberIncome', title: '月卡收入', key: 'memberIncome', minWidth: 120, align: 'right'},
+  {field: 'discount', title: '优惠减免', key: 'discount', minWidth: 100, align: 'right'},
+  {field: 'actualAmount', title: '实收金额', key: 'actualAmount', minWidth: 120, align: 'right'},
+  {field: 'orderCount', title: '订单数', key: 'orderCount', minWidth: 80, align: 'center'}
 ]
+
+const { visibleFields, colSettingVisible, displayColumns, resetColumns } = useTableColumns(columns, 'exportReport:columnVisible')
 
 const initData = () => {
   state.loading = true
