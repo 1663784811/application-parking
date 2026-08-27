@@ -1,0 +1,8 @@
+
+netty:
+  mqtt:
+    name: Node1
+    tcp-port: 1883
+    web-port: 8083
+    web-path: /mqtt
+
