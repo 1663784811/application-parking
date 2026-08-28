@@ -1,0 +1,33 @@
+server:
+  port: 18080
+
+
+spring:
+  application:
+    name: parking-gate
+
+
+gate:
+  jwt:
+    # HS256 要求密钥 >= 32 字节，生产环境务必修改
+    secret: cyyaw-parking-gate-jwt-secret-key-2026-change-in-production
+    # token 有效期（秒），默认 24 小时
+    expire: 86400
+  # 保安亭登录用户（无数据库，账号密码写在此文件）
+  users:
+    - id: 1
+      username: admin
+      password: "123456"
+      name: 管理员李明
+      role: admin
+      phone: "13800138000"
+      parkingName: 城西停车场
+      parkingId: 1
+    - id: 2
+      username: guard
+      password: "123456"
+      name: 值守员张三
+      role: guard
+      phone: "13800138888"
+      parkingName: 城西停车场
+      parkingId: 1
