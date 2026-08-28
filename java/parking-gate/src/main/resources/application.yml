@@ -31,3 +31,18 @@ gate:
       phone: "13800138888"
       parkingName: 城西停车场
       parkingId: 1
+
+
+# MQTT 客户端（保安亭与设备/云端通信，参考 saas-mqtt）
+# enabled=false 时不连接、不影响应用启动；需要时改为 true 并配置 tcp 服务器地址
+cyaw:
+  mqtt:
+    enabled: true
+    tcp:
+      - tcp://127.0.0.1:1883
+    userName: "admin"
+    password: "123456"
+    clientId: "aaaa"
+    timeOut: 1000
+    defaultQos: 1
+    topics: []
