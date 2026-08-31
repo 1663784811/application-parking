@@ -69,6 +69,6 @@ public class AuAdmin extends BaseEntity {
      * 角色名称（非持久化，多角色逗号拼接，列表展示用）
      */
     @TableField(exist = false)
-    private String roleName;
+    private List<String> roleName;
 
 }

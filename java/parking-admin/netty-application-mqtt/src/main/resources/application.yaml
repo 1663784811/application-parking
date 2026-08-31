@@ -6,3 +6,9 @@ netty:
     web-port: 8083
     web-path: /mqtt
 
+# admin 服务地址：broker 不连库，通过 HTTP 调用 admin 查询/校验设备
+# （single-all 端口 10000，context-path /api）
+admin:
+  api:
+    base-url: http://127.0.0.1:10000/api
+

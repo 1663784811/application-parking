@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @Data
 @Entity
 @Schema(description = "设备故障工单")
-@Table(name = "me_device_fault")
+@Table(name = "iot_device_fault")
 @EqualsAndHashCode(callSuper = true)
 public class IotDeviceFault extends BaseEntity {
 

@@ -1,14 +1,13 @@
-package com.cyyaw.admin.application.device.service.impl;
+package com.cyyaw.admin.application.iot.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.cyyaw.admin.application.device.service.MeDeviceFaultService;
-import com.cyyaw.admin.dao.device.MeDeviceDao;
-import com.cyyaw.admin.dao.device.MeDeviceFaultDao;
+import com.cyyaw.admin.application.iot.service.IotDeviceFaultService;
+import com.cyyaw.admin.dao.iot.IotDeviceDao;
+import com.cyyaw.admin.dao.iot.IotDeviceFaultDao;
 import com.cyyaw.admin.dao.parking.PkParkingDao;
 import com.cyyaw.admin.entity.module.iot.IotDevice;
 import com.cyyaw.admin.entity.module.iot.IotDeviceFault;
-import com.cyyaw.admin.entity.module.parking.PkParking;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,30 +16,30 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
-public class MeDeviceFaultServiceImpl implements MeDeviceFaultService {
+public class IotDeviceFaultServiceImpl implements IotDeviceFaultService {
 
     @Autowired
-    private MeDeviceFaultDao meDeviceFaultDao;
+    private IotDeviceFaultDao iotDeviceFaultDao;
 
     @Autowired
-    private MeDeviceDao meDeviceDao;
+    private IotDeviceDao iotDeviceDao;
 
     @Autowired
     private PkParkingDao pkParkingDao;
 
     @Override
     public IotDeviceFault findById(Long id) {
-        return meDeviceFaultDao.selectById(id);
+        return iotDeviceFaultDao.selectById(id);
     }
 
     @Override
     public Page<IotDeviceFault> findPage(Integer page, Integer size, QueryWrapper<IotDeviceFault> wrapper) {
-        return meDeviceFaultDao.selectPage(new Page<>(page, size), wrapper);
+        return iotDeviceFaultDao.selectPage(new Page<>(page, size), wrapper);
     }
 
     @Override
     public IotDeviceFault create(Long deviceId, String faultType) {
-        IotDevice device = meDeviceDao.selectById(deviceId);
+        IotDevice device = iotDeviceDao.selectById(deviceId);
         if (device == null) {
             throw new RuntimeException("设备不存在");
         }
@@ -56,12 +55,12 @@ public class MeDeviceFaultServiceImpl implements MeDeviceFaultService {
         fault.setFaultType(faultType);
         fault.setReportTime(LocalDateTime.now());
         fault.setStatus("pending");
-        return meDeviceFaultDao.save(fault);
+        return iotDeviceFaultDao.save(fault);
     }
 
     @Override
     public IotDeviceFault handle(Long id, String action, String repairer, LocalDateTime expectCompleteTime) {
-        IotDeviceFault fault = meDeviceFaultDao.selectById(id);
+        IotDeviceFault fault = iotDeviceFaultDao.selectById(id);
         if (fault == null) {
             throw new RuntimeException("故障工单不存在");
         }
@@ -75,15 +74,15 @@ public class MeDeviceFaultServiceImpl implements MeDeviceFaultService {
         } else {
             throw new RuntimeException("不支持的操作: " + action);
         }
-        return meDeviceFaultDao.save(fault);
+        return iotDeviceFaultDao.save(fault);
     }
 
     @Override
     public Map<String, Object> stats() {
         Map<String, Object> s = new HashMap<>();
-        s.put("pending", meDeviceFaultDao.selectCount(new QueryWrapper<IotDeviceFault>().eq("status", "pending")));
-        s.put("processing", meDeviceFaultDao.selectCount(new QueryWrapper<IotDeviceFault>().eq("status", "processing")));
-        s.put("completed", meDeviceFaultDao.selectCount(new QueryWrapper<IotDeviceFault>().eq("status", "completed")));
+        s.put("pending", iotDeviceFaultDao.selectCount(new QueryWrapper<IotDeviceFault>().eq("status", "pending")));
+        s.put("processing", iotDeviceFaultDao.selectCount(new QueryWrapper<IotDeviceFault>().eq("status", "processing")));
+        s.put("completed", iotDeviceFaultDao.selectCount(new QueryWrapper<IotDeviceFault>().eq("status", "completed")));
         return s;
     }
 

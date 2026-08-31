@@ -33,7 +33,7 @@
         <module>../application-order</module>
         <module>../application-parking</module>
         <module>../application-member</module>
-        <module>../application-device</module>
+        <module>../application-iot</module>
 
 
         <!--================       集群      ======================-->

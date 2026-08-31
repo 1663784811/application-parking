@@ -1,8 +1,8 @@
-package com.cyyaw.admin.application.device.controller.admin;
+package com.cyyaw.admin.application.iot.controller.admin;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.cyyaw.admin.application.device.service.MeDeviceFaultService;
+import com.cyyaw.admin.application.iot.service.IotDeviceFaultService;
 import com.cyyaw.admin.common.BaseResult;
 import com.cyyaw.admin.entity.module.iot.IotDeviceFault;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,17 +19,17 @@ import java.util.Map;
 @Tag(name = "设备故障工单")
 @RestController
 @RequestMapping("/admin/device/fault")
-public class MeDeviceFaultController {
+public class IotDeviceFaultController {
 
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Autowired
-    private MeDeviceFaultService meDeviceFaultService;
+    private IotDeviceFaultService iotDeviceFaultService;
 
     @Operation(summary = "查询故障工单", description = "根据ID查询故障工单")
     @GetMapping("/find/{id}")
     public BaseResult<IotDeviceFault> findById(@PathVariable Long id) {
-        return BaseResult.ok(meDeviceFaultService.findById(id));
+        return BaseResult.ok(iotDeviceFaultService.findById(id));
     }
 
     @Operation(summary = "故障工单列表", description = "分页查询故障工单")
@@ -50,7 +50,7 @@ public class MeDeviceFaultController {
             wrapper.le("report_time", endTime + " 23:59:59");
         }
         wrapper.orderByDesc("report_time");
-        Page<IotDeviceFault> pageResult = meDeviceFaultService.findPage(page, size, wrapper);
+        Page<IotDeviceFault> pageResult = iotDeviceFaultService.findPage(page, size, wrapper);
         BaseResult.Result result = new BaseResult.Result(page, size, pageResult.getTotal());
         return BaseResult.ok(pageResult.getRecords(), result);
     }
@@ -64,7 +64,7 @@ public class MeDeviceFaultController {
         }
         Long deviceId = Long.valueOf(deviceIdVal.toString());
         String faultType = body.get("faultType") == null ? null : body.get("faultType").toString();
-        return BaseResult.ok(meDeviceFaultService.create(deviceId, faultType));
+        return BaseResult.ok(iotDeviceFaultService.create(deviceId, faultType));
     }
 
     @Operation(summary = "处理故障工单", description = "指派维修人员或标记完成")
@@ -82,13 +82,13 @@ public class MeDeviceFaultController {
         if (expectVal != null && StringUtils.hasText(expectVal.toString())) {
             expectCompleteTime = LocalDateTime.parse(expectVal.toString(), DATE_TIME_FORMATTER);
         }
-        return BaseResult.ok(meDeviceFaultService.handle(id, action, repairer, expectCompleteTime));
+        return BaseResult.ok(iotDeviceFaultService.handle(id, action, repairer, expectCompleteTime));
     }
 
     @Operation(summary = "故障工单统计", description = "按处理状态统计")
     @GetMapping("/stats")
     public BaseResult<Map<String, Object>> stats() {
-        return BaseResult.ok(meDeviceFaultService.stats());
+        return BaseResult.ok(iotDeviceFaultService.stats());
     }
 
 }

@@ -151,9 +151,7 @@ public class AuAdminServiceImpl implements AuAdminService {
 
     @Override
     public List<String> findRoleIdsByAdminId(Long adminId) {
-        List<AuAdminRole> links = auAdminRoleDao.selectList(
-                new QueryWrapper<AuAdminRole>().eq("admin_id", adminId)
-        );
+        List<AuAdminRole> links = auAdminRoleDao.selectList(new QueryWrapper<AuAdminRole>().eq("admin_id", adminId));
         return links.stream().map(l -> String.valueOf(l.getRoleId())).collect(Collectors.toList());
     }
 
@@ -188,9 +186,7 @@ public class AuAdminServiceImpl implements AuAdminService {
             return;
         }
         List<Long> adminIds = admins.stream().map(AuAdmin::getId).collect(Collectors.toList());
-        List<AuAdminRole> links = auAdminRoleDao.selectList(
-                new QueryWrapper<AuAdminRole>().in("admin_id", adminIds)
-        );
+        List<AuAdminRole> links = auAdminRoleDao.selectList(new QueryWrapper<AuAdminRole>().in("admin_id", adminIds));
         if (links.isEmpty()) {
             for (AuAdmin admin : admins) {
                 admin.setRoleIds(Collections.emptyList());
@@ -199,27 +195,20 @@ public class AuAdminServiceImpl implements AuAdminService {
         }
         List<Long> roleIds = links.stream().map(AuAdminRole::getRoleId).distinct().collect(Collectors.toList());
         List<AuRole> roles = auRoleDao.selectBatchIds(roleIds);
-        Map<Long, String> roleIdToName = roles.stream()
-                .collect(Collectors.toMap(AuRole::getId, AuRole::getName, (a, b) -> a));
+        Map<Long, String> roleIdToName = roles.stream().collect(Collectors.toMap(AuRole::getId, AuRole::getName, (a, b) -> a));
 
         // adminId -> 角色ID集合 + 角色名拼接
-        Map<Long, List<AuAdminRole>> linksByAdmin = links.stream()
-                .collect(Collectors.groupingBy(AuAdminRole::getAdminId));
+        Map<Long, List<AuAdminRole>> linksByAdmin = links.stream().collect(Collectors.groupingBy(AuAdminRole::getAdminId));
         for (AuAdmin admin : admins) {
             List<AuAdminRole> adminLinks = linksByAdmin.get(admin.getId());
             if (CollUtil.isEmpty(adminLinks)) {
                 admin.setRoleIds(Collections.emptyList());
                 continue;
             }
-            List<String> ridStrs = adminLinks.stream()
-                    .map(l -> String.valueOf(l.getRoleId()))
-                    .collect(Collectors.toList());
+            List<String> ridStrs = adminLinks.stream().map(l -> String.valueOf(l.getRoleId())).collect(Collectors.toList());
             admin.setRoleIds(ridStrs);
-            String names = adminLinks.stream()
-                    .map(l -> roleIdToName.get(l.getRoleId()))
-                    .filter(StrUtil::isNotBlank)
-                    .collect(Collectors.joining(","));
-            admin.setRoleName(names);
+            List<String> list = adminLinks.stream().map(l -> roleIdToName.get(l.getRoleId())).filter(StrUtil::isNotBlank).collect(Collectors.toList());
+            admin.setRoleName(list);
         }
     }
 

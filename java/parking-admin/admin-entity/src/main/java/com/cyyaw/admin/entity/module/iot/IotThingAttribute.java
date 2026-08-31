@@ -7,6 +7,7 @@ import jakarta.persistence.Basic;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -21,15 +22,16 @@ public class IotThingAttribute extends BaseEntity {
 
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     @Column(name = "thing_model_id", columnDefinition = "bigint COMMENT '物模型ID'")
-    private Long appId;
+    private Long thingModelId;
 
     @Basic
     @Column(name = "name", columnDefinition = "varchar(64) default '' COMMENT '名称'")
     private String name;
 
     @Basic
-    @Column(name = "key", columnDefinition = "varchar(64) COMMENT '键(key)'")
-    private String key;
+    @Column(name = "prop_key", columnDefinition = "varchar(64) COMMENT '键(key)'")
+    @TableField("prop_key")
+    private String propKey;
 
     @Basic
     @Column(name = "unit", columnDefinition = "varchar(32) COMMENT '单位'")

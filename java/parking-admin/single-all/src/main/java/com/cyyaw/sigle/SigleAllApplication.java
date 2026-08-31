@@ -10,7 +10,7 @@ import org.springframework.core.env.Environment;
 
 
 @Slf4j
-@SpringBootApplication(scanBasePackages = {"com.cyyaw.sigle", "com.cyyaw.admin.application.user", "com.cyyaw.admin.application.order", "com.cyyaw.admin.application.parking", "com.cyyaw.admin.application.member", "com.cyyaw.admin.application.device", "com.cyyaw.admin.entity.redis"})
+@SpringBootApplication(scanBasePackages = {"com.cyyaw.sigle", "com.cyyaw.admin.application.user", "com.cyyaw.admin.application.order", "com.cyyaw.admin.application.parking", "com.cyyaw.admin.application.member", "com.cyyaw.admin.application.iot", "com.cyyaw.admin.entity.redis"})
 @MapperScan(basePackages = {"com.cyyaw.admin.dao.**"})
 public class SigleAllApplication {
 

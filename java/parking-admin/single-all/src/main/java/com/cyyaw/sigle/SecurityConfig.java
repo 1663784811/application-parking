@@ -61,7 +61,9 @@ public class SecurityConfig {
                                     "/root/login/registerEnterprise",
                                     // 扫码点餐
                                     "/app/mqtt/mqttConnectInfo/**",
-                                    "/app/food/h5/**"
+                                    "/app/food/h5/**",
+                                    // MQTT Broker 内部设备校验接口（不连库，转发到 admin）
+                                    "/internal/**"
                             ).permitAll()
                             // 需要ADMIN角色
                             // .requestMatchers("/admin/**").hasRole("ADMIN")

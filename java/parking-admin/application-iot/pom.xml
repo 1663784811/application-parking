@@ -10,7 +10,7 @@
         <version>1.0.1</version>
     </parent>
 
-    <artifactId>application-device</artifactId>
+    <artifactId>application-iot</artifactId>
     <version>1.0.1</version>
     <packaging>jar</packaging>
 

@@ -3,7 +3,7 @@
 -- 审计字段（en_id/create_time/update_time/del_time）均设 DB 级默认值，
 -- 因 MetaObjectHandler 未注册，@TableField(fill=...) 自动填充不生效，
 -- 而 MP 插入时省略 null 字段，故由 DB 默认值兜底
-CREATE TABLE `me_device_fault` (
+CREATE TABLE IF NOT EXISTS `iot_device_fault` (
   `id` bigint NOT NULL COMMENT 'id',
   `en_id` bigint NOT NULL DEFAULT 0 COMMENT '所属企业ID',
   `app_id` bigint DEFAULT NULL COMMENT '所属APPID',
