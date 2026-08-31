@@ -40,10 +40,12 @@
         <module>../cloud-parent</module>
 
 
-
         <!-- ===============      单机        ===================== -->
         <module>../single-all</module>
 
+
+        <!--        -->
+        <module>../netty-application-mqtt</module>
 
         <!--    集群接口抽象层    -->
 
@@ -73,7 +75,6 @@
                 <artifactId>mybatis-plus-jsqlparser</artifactId>
                 <version>3.5.15</version>
             </dependency>
-
 
 
             <dependency>

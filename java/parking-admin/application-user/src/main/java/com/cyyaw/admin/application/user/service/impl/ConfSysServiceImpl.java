@@ -3,7 +3,7 @@ package com.cyyaw.admin.application.user.service.impl;
 import com.cyyaw.admin.application.user.service.ConfSysService;
 import com.cyyaw.admin.dao.service.BaseService;
 import com.cyyaw.admin.dao.user.ConfSysDao;
-import com.cyyaw.admin.entity.module.user.ConfSys;
+import com.cyyaw.admin.entity.module.conf.ConfSys;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

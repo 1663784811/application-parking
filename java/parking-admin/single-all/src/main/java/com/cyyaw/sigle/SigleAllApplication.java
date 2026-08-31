@@ -19,7 +19,7 @@ public class SigleAllApplication {
         Environment env = run.getEnvironment();
         String port = env.getProperty("server.port");
         log.info("接口文档 http://127.0.0.1:" + port + "/api/doc.html");
-        log.info("启动应用写成后");
+        log.info("启动应用完成后");
         log.info("1.注册新企业: 打开前端页面, http://127.0.0.1");
     }
 }

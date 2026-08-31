@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cyyaw.admin.application.device.service.MeDeviceFaultService;
 import com.cyyaw.admin.common.BaseResult;
-import com.cyyaw.admin.entity.module.device.MeDeviceFault;
+import com.cyyaw.admin.entity.module.iot.IotDeviceFault;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,18 +28,18 @@ public class MeDeviceFaultController {
 
     @Operation(summary = "查询故障工单", description = "根据ID查询故障工单")
     @GetMapping("/find/{id}")
-    public BaseResult<MeDeviceFault> findById(@PathVariable Long id) {
+    public BaseResult<IotDeviceFault> findById(@PathVariable Long id) {
         return BaseResult.ok(meDeviceFaultService.findById(id));
     }
 
     @Operation(summary = "故障工单列表", description = "分页查询故障工单")
     @GetMapping("/list")
-    public BaseResult<List<MeDeviceFault>> list(@RequestParam(defaultValue = "1") Integer page,
-                                                @RequestParam(defaultValue = "10") Integer size,
-                                                @RequestParam(required = false) String status,
-                                                @RequestParam(required = false) String startTime,
-                                                @RequestParam(required = false) String endTime) {
-        QueryWrapper<MeDeviceFault> wrapper = new QueryWrapper<>();
+    public BaseResult<List<IotDeviceFault>> list(@RequestParam(defaultValue = "1") Integer page,
+                                                 @RequestParam(defaultValue = "10") Integer size,
+                                                 @RequestParam(required = false) String status,
+                                                 @RequestParam(required = false) String startTime,
+                                                 @RequestParam(required = false) String endTime) {
+        QueryWrapper<IotDeviceFault> wrapper = new QueryWrapper<>();
         if (StringUtils.hasText(status)) {
             wrapper.eq("status", status);
         }
@@ -50,14 +50,14 @@ public class MeDeviceFaultController {
             wrapper.le("report_time", endTime + " 23:59:59");
         }
         wrapper.orderByDesc("report_time");
-        Page<MeDeviceFault> pageResult = meDeviceFaultService.findPage(page, size, wrapper);
+        Page<IotDeviceFault> pageResult = meDeviceFaultService.findPage(page, size, wrapper);
         BaseResult.Result result = new BaseResult.Result(page, size, pageResult.getTotal());
         return BaseResult.ok(pageResult.getRecords(), result);
     }
 
     @Operation(summary = "创建故障工单", description = "根据设备ID报修并生成故障工单")
     @PostMapping("/create")
-    public BaseResult<MeDeviceFault> create(@RequestBody Map<String, Object> body) {
+    public BaseResult<IotDeviceFault> create(@RequestBody Map<String, Object> body) {
         Object deviceIdVal = body.get("deviceId");
         if (deviceIdVal == null) {
             throw new RuntimeException("缺少设备ID");
@@ -69,7 +69,7 @@ public class MeDeviceFaultController {
 
     @Operation(summary = "处理故障工单", description = "指派维修人员或标记完成")
     @PostMapping("/handle")
-    public BaseResult<MeDeviceFault> handle(@RequestBody Map<String, Object> body) {
+    public BaseResult<IotDeviceFault> handle(@RequestBody Map<String, Object> body) {
         Object idVal = body.get("id");
         if (idVal == null) {
             throw new RuntimeException("缺少工单ID");

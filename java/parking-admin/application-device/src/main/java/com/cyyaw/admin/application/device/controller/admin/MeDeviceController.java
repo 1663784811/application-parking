@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cyyaw.admin.application.device.service.MeDeviceService;
 import com.cyyaw.admin.common.BaseResult;
-import com.cyyaw.admin.entity.module.device.MeDevice;
+import com.cyyaw.admin.entity.module.iot.IotDevice;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,19 +24,14 @@ public class MeDeviceController {
 
     @Operation(summary = "查询设备", description = "根据ID查询设备")
     @GetMapping("/find/{id}")
-    public BaseResult<MeDevice> findById(@PathVariable Long id) {
+    public BaseResult<IotDevice> findById(@PathVariable Long id) {
         return BaseResult.ok(meDeviceService.findById(id));
     }
 
     @Operation(summary = "设备列表", description = "分页查询设备")
     @GetMapping("/list")
-    public BaseResult<List<MeDevice>> list(@RequestParam(defaultValue = "1") Integer page,
-                                          @RequestParam(defaultValue = "10") Integer size,
-                                          @RequestParam(required = false) String type,
-                                          @RequestParam(required = false) Long parkingId,
-                                          @RequestParam(required = false) Integer onlineStatus,
-                                          @RequestParam(required = false) String keyword) {
-        QueryWrapper<MeDevice> wrapper = new QueryWrapper<>();
+    public BaseResult<List<IotDevice>> list(@RequestParam(defaultValue = "1") Integer page, @RequestParam(defaultValue = "10") Integer size, @RequestParam(required = false) String type, @RequestParam(required = false) Long parkingId, @RequestParam(required = false) Integer onlineStatus, @RequestParam(required = false) String keyword) {
+        QueryWrapper<IotDevice> wrapper = new QueryWrapper<>();
         if (StringUtils.hasText(type)) {
             wrapper.eq("type", type);
         }
@@ -51,14 +46,14 @@ public class MeDeviceController {
             wrapper.and(w -> w.like("code", keyword).or().like("name", keyword));
         }
         wrapper.orderByDesc("create_time");
-        Page<MeDevice> pageResult = meDeviceService.findPage(page, size, wrapper);
+        Page<IotDevice> pageResult = meDeviceService.findPage(page, size, wrapper);
         BaseResult.Result result = new BaseResult.Result(page, size, pageResult.getTotal());
         return BaseResult.ok(pageResult.getRecords(), result);
     }
 
     @Operation(summary = "保存设备", description = "新增或更新设备")
     @PostMapping("/save")
-    public BaseResult<MeDevice> save(@RequestBody MeDevice device) {
+    public BaseResult<IotDevice> save(@RequestBody IotDevice device) {
         return BaseResult.ok(meDeviceService.save(device));
     }
 

@@ -1,4 +1,4 @@
-package com.cyyaw.admin.entity.module.user;
+package com.cyyaw.admin.entity.module.conf;
 
 import com.cyyaw.admin.entity.utils.BaseEntity;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -22,4 +22,4 @@ public class ConfSys extends BaseEntity {
     @Column(name = "val", columnDefinition = "varchar(255) unique COMMENT '配置值'")
     private String val;
 
-} 
+}

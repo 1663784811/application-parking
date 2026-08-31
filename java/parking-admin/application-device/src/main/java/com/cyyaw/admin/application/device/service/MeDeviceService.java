@@ -2,19 +2,19 @@ package com.cyyaw.admin.application.device.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.cyyaw.admin.entity.module.device.MeDevice;
+import com.cyyaw.admin.entity.module.iot.IotDevice;
 
 import java.util.Map;
 
 public interface MeDeviceService {
 
-    MeDevice findById(Long id);
+    IotDevice findById(Long id);
 
-    MeDevice save(MeDevice device);
+    IotDevice save(IotDevice device);
 
     void delete(Long id);
 
-    Page<MeDevice> findPage(Integer page, Integer size, QueryWrapper<MeDevice> wrapper);
+    Page<IotDevice> findPage(Integer page, Integer size, QueryWrapper<IotDevice> wrapper);
 
     void restart(Long id);
 

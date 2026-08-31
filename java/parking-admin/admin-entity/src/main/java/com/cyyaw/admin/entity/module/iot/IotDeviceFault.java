@@ -1,4 +1,4 @@
-package com.cyyaw.admin.entity.module.device;
+package com.cyyaw.admin.entity.module.iot;
 
 import com.cyyaw.admin.entity.utils.BaseEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @Schema(description = "设备故障工单")
 @Table(name = "me_device_fault")
 @EqualsAndHashCode(callSuper = true)
-public class MeDeviceFault extends BaseEntity {
+public class IotDeviceFault extends BaseEntity {
 
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     @Column(name = "app_id", columnDefinition = "bigint COMMENT '所属APPID'")
