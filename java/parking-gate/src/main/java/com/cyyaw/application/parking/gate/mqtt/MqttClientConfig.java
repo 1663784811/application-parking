@@ -17,6 +17,19 @@ public class MqttClientConfig {
     @Autowired
     private CyawConfig cyawConfig;
 
+    /**
+     * MQTT 状态 ，
+     */
+    private static boolean mqttStatus = false;
+
+    /**
+     * 获取 MQTT 连接状态，供状态接口读取。
+     * 由 MQTT 回调 connect()/connectFail() 实时更新。
+     */
+    public static boolean isMqttStatus() {
+        return mqttStatus;
+    }
+
     @Bean
     public MqttApplicationClient mqttClient() {
         MqttObject mqtt = cyawConfig.getMqtt();
@@ -25,13 +38,15 @@ public class MqttClientConfig {
         mqttClient.setMqttCallBack(new MqttCallBack() {
 
             @Override
-            public void connect() {
+            public void connect(boolean reconnect, String serverURI) {
                 log.info("connect");
+                mqttStatus = true;
             }
 
             @Override
-            public void connectFail() {
+            public void connectFail(Throwable cause) {
                 log.error(" MQTT connectFail   ");
+                mqttStatus = false;
             }
 
             @Override
