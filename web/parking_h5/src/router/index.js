@@ -133,16 +133,6 @@ const routes = [
     },
   },
   {
-    // 扫码出场
-    path: '/app/:appId/scanExit',
-    name: 'scanExit',
-    component: () => import('@/views/scanExit/ScanExit.vue'),
-    props: true,
-    meta: {
-      title: '扫码出场',
-    },
-  },
-  {
     // 错误页面
     path: '/:pathMatch(.*)*',
     name: 'notFound',

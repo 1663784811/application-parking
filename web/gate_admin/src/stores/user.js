@@ -3,6 +3,7 @@
  */
 
 import { defineStore } from 'pinia'
+import { login as loginApi, getUserInfo, logout as logoutApi } from '@/api/user'
 
 export const useUserStore = defineStore('user', {
   state: () => ({
@@ -10,7 +11,7 @@ export const useUserStore = defineStore('user', {
     userInfo: {
       id: null,
       name: '',
-      role: '',
+      role: 'guard',
       phone: '',
       parkingName: '',
       parkingId: null
@@ -39,8 +40,30 @@ export const useUserStore = defineStore('user', {
       this.isLoggedIn = true
     },
 
-    // 退出登录
-    logout() {
+    // 登录：调用后端接口，保存 token 与用户信息
+    async login(payload) {
+      const res = await loginApi(payload)
+      const { token, userInfo } = res.data
+      localStorage.setItem('token', token)
+      this.setUserInfo(userInfo)
+      return res
+    },
+
+    // 拉取当前登录用户信息（页面刷新后恢复会话用）
+    async fetchUserInfo() {
+      const res = await getUserInfo()
+      this.setUserInfo(res.data)
+      return res.data
+    },
+
+    // 退出登录：调用登出接口并清理本地状态
+    async logout() {
+      try {
+        await logoutApi()
+      } catch (e) {
+        // 忽略登出接口错误，确保本地一定清理
+      }
+      localStorage.removeItem('token')
       this.userInfo = {
         id: null,
         name: '',
@@ -51,18 +74,6 @@ export const useUserStore = defineStore('user', {
       }
       this.isLoggedIn = false
       this.permissions = []
-    },
-
-    // 模拟登录
-    login(userData) {
-      this.setUserInfo({
-        id: 1,
-        name: userData.name || '值守员张三',
-        role: userData.role || 'guard',
-        phone: '13800138000',
-        parkingName: '城西停车场',
-        parkingId: 1
-      })
     }
   }
 })

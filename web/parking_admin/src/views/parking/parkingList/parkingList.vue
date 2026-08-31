@@ -117,7 +117,7 @@
     <Modal
       v-model="state.modalVisible"
       :title="state.modalType === 'add' ? '新增停车场' : '编辑停车场'"
-      width="600"
+      width="1000"
       :footer-hide="false"
       @on-cancel="handleModalCancel"
     >
@@ -126,6 +126,7 @@
         :model="state.formData"
         :rules="state.rules"
         :label-width="120"
+        class="modal-form-2col"
       >
         <FormItem label="停车场名称" prop="name">
           <Input v-model="state.formData.name" placeholder="请输入停车场名称" />

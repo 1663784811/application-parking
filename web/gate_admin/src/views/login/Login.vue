@@ -145,20 +145,16 @@ const handleLogin = async () => {
     // 保存记住账号状态
     saveRememberAccount()
 
-    // 模拟登录验证
-    if (state.formData.username === 'admin' && state.formData.password === '123456') {
-      userStore.login({name: '管理员李明', role: 'admin'})
-    } else {
-      userStore.login({
-        name: state.formData.username,
-        role: 'guard'
-      })
-    }
+    // 调用后端登录接口
+    await userStore.login({
+      username: state.formData.username,
+      password: state.formData.password
+    })
 
     Message.success('登录成功')
     router.push({name: 'Home'})
   } catch (e) {
-    console.error('表单验证失败', e)
+    // 表单校验失败或登录失败（错误提示已由 axios 拦截器处理）
   } finally {
     state.loading = false
   }

@@ -26,8 +26,8 @@
         </div>
       </div>
     </div>
-    <Modal v-model="state.modalVisible" :title="state.modalType === 'add' ? '新增套餐' : '编辑套餐'" width="500">
-      <Form :model="state.formData" :rules="state.rules" :label-width="100">
+    <Modal v-model="state.modalVisible" :title="state.modalType === 'add' ? '新增套餐' : '编辑套餐'" width="1000">
+      <Form :model="state.formData" :rules="state.rules" :label-width="100" class="modal-form-2col">
         <FormItem label="套餐名称" prop="name"><Input v-model="state.formData.name" placeholder="如：月卡套餐" /></FormItem>
         <FormItem label="套餐类型" prop="type">
           <Select v-model="state.formData.type">

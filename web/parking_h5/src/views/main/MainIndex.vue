@@ -104,8 +104,12 @@ const handleNavigate = (item) => {
 .home-page {
   display: flex;
   flex-direction: column;
-  flex: 1;
+  // 固定为一屏高度，让 .header 的 sticky 生效（始终固定在顶部）；
+  // 上层 .content/.home-page 均是 overflow:auto 但无确定高度，body 滚动会使 sticky 失效
+  height: 100vh;
   overflow: auto;
+  // 底部留出 TabBar（van-tabbar fixed，50px + 安全区）高度，避免末项被遮挡
+  padding-bottom: calc(50px + env(safe-area-inset-bottom, 0));
 
   .header {
     position: sticky;

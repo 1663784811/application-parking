@@ -13,6 +13,12 @@
     </div>
 
     <div class="header-right">
+      <!-- MQTT 连接状态 -->
+      <div class="mqtt-status" :class="mqttConnected ? 'is-connected' : 'is-disconnected'" :title="mqttStatusTitle">
+        <span class="mqtt-dot"></span>
+        <span class="mqtt-text">{{ mqttConnected ? 'MQTT 已连接' : 'MQTT 未连接' }}</span>
+      </div>
+
       <!-- 实时时钟 -->
       <div class="time-display">
         <i class="far fa-clock"></i>
@@ -61,6 +67,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Message } from 'view-ui-plus'
 import { useUserStore } from '@/stores/user'
+import { getMqttStatus } from '@/api/mqtt'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -68,10 +75,18 @@ const userStore = useUserStore()
 const currentTime = ref('')
 const dropdownOpen = ref(false)
 const dropdownRef = ref(null)
+const mqttConnected = ref(false)
+const mqttLastError = ref('')
 let timeInterval = null
+let mqttInterval = null
 
 const userInfo = computed(() => userStore.userInfo)
 const isAdmin = computed(() => userStore.isAdmin)
+
+// MQTT 状态悬浮提示
+const mqttStatusTitle = computed(() =>
+  mqttConnected.value ? 'MQTT 服务连接正常' : (mqttLastError.value ? `MQTT 未连接：${mqttLastError.value}` : 'MQTT 服务未连接')
+)
 
 const updateTime = () => {
   const now = new Date()
@@ -86,6 +101,18 @@ const updateTime = () => {
   }).replace(/\//g, '-')
 }
 
+// 轮询 MQTT 连接状态
+const fetchMqttStatus = async () => {
+  try {
+    const res = await getMqttStatus()
+    const data = res.data || {}
+    mqttConnected.value = !!data.connected
+    mqttLastError.value = data.lastError || ''
+  } catch (e) {
+    // 接口异常时不改变展示，避免频繁弹错
+  }
+}
+
 const toggleDropdown = () => {
   dropdownOpen.value = !dropdownOpen.value
 }
@@ -96,22 +123,28 @@ const closeDropdown = (e) => {
   }
 }
 
-const handleLogout = () => {
+const handleLogout = async () => {
   dropdownOpen.value = false
+  await userStore.logout()
   router.push('/login')
-  userStore.logout()
   Message.success('已退出登录')
 }
 
 onMounted(() => {
   updateTime()
   timeInterval = setInterval(updateTime, 1000)
+  fetchMqttStatus()
+  // 每 5 秒刷新一次 MQTT 连接状态
+  mqttInterval = setInterval(fetchMqttStatus, 5000)
   document.addEventListener('click', closeDropdown)
 })
 
 onUnmounted(() => {
   if (timeInterval) {
     clearInterval(timeInterval)
+  }
+  if (mqttInterval) {
+    clearInterval(mqttInterval)
   }
   document.removeEventListener('click', closeDropdown)
 })
@@ -192,6 +225,49 @@ onUnmounted(() => {
     align-items: center;
     gap: 16px;
     flex-shrink: 0;
+
+    // ============================================
+    // MQTT 连接状态
+    // ============================================
+    .mqtt-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: var(--font-weight-medium);
+      cursor: default;
+      user-select: none;
+      white-space: nowrap;
+
+      .mqtt-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+
+      &.is-connected {
+        color: var(--color-success);
+        background: rgba(0, 180, 42, 0.12);
+
+        .mqtt-dot {
+          background: var(--color-success);
+          box-shadow: 0 0 0 3px rgba(0, 180, 42, 0.18);
+        }
+      }
+
+      &.is-disconnected {
+        color: var(--color-danger);
+        background: rgba(245, 63, 63, 0.1);
+
+        .mqtt-dot {
+          background: var(--color-danger);
+          box-shadow: 0 0 0 3px rgba(245, 63, 63, 0.15);
+        }
+      }
+    }
 
     .time-display {
       display: flex;

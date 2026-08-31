@@ -25,8 +25,8 @@
       </div>
       <div class="panel-footer"><Button type="primary" @click="handleSavePermission">保存配置</Button></div>
     </div>
-    <Modal v-model="state.modalVisible" :title="state.modalType === 'add' ? '新增角色' : '编辑角色'" width="500">
-      <Form :model="state.formData" :rules="state.rules" :label-width="100">
+    <Modal v-model="state.modalVisible" :title="state.modalType === 'add' ? '新增角色' : '编辑角色'" width="1000">
+      <Form :model="state.formData" :rules="state.rules" :label-width="100" class="modal-form-2col">
         <FormItem label="角色名称" prop="name"><Input v-model="state.formData.name" placeholder="请输入角色名称" /></FormItem>
         <FormItem label="描述" prop="description"><Input v-model="state.formData.description" type="textarea" :rows="3" placeholder="请输入描述" /></FormItem>
       </Form>

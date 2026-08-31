@@ -16,12 +16,12 @@ export default defineConfig({
     host: '0.0.0.0',
     proxy: {
       '/api/admin/workflow': {
-        target: 'http://localhost:18081',
+        target: 'http://localhost:10000',
         changeOrigin: true,
         // rewrite: (path) => path.replace(/^\/api/, '')
       },
       '/api': {
-        target: 'http://localhost:18080',
+        target: 'http://localhost:10000',
         changeOrigin: true,
         // rewrite: (path) => path.replace(/^\/api/, '')
       },

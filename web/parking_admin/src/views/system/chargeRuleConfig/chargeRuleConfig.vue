@@ -80,9 +80,9 @@
     <Modal
       v-model="state.modalVisible"
       :title="state.isEdit ? '编辑规则' : '新增规则'"
-      width="600"
+      width="1000"
     >
-      <Form :model="state.form" :label-width="100">
+      <Form :model="state.form" :label-width="100" class="modal-form-2col">
         <FormItem label="规则名称" prop="name">
           <Input v-model="state.form.name" placeholder="请输入规则名称" />
         </FormItem>
@@ -459,25 +459,26 @@ onMounted(() => {
     }
   }
 
-  .form-number {
-    width: 200px;
-  }
+}
 
-  .time-input {
-    width: 200px;
-  }
+.form-number {
+  width: 200px;
+}
 
-  .week-select {
-    width: 100%;
-  }
+.time-input {
+  width: 200px;
+}
 
-  .date-input {
-    width: 200px;
-  }
+.week-select {
+  width: 100%;
+}
 
-  .unit {
-    margin-left: var(--spacing-sm);
-    color: var(--text-color-secondary);
-  }
+.date-input {
+  width: 200px;
+}
+
+.unit {
+  margin-left: var(--spacing-sm);
+  color: var(--text-color-secondary);
 }
 </style>

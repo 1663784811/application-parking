@@ -119,92 +119,12 @@
 </template>
 
 <script setup>
-import {computed, reactive} from 'vue'
-
-// 生成 100 条车辆通行记录
-function generateRecords() {
-  const provinces = ['粤', '京', '沪', '苏', '浙', '闽', '湘', '鄂', '川', '渝', '鲁', '豫', '皖', '赣', '冀', '津', '辽', '吉', '黑', '陕', '甘', '云', '贵', '桂', '琼']
-  const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
-
-  const gates = [
-    '#G01 主入口', '#G02 主出口', '#G03 地下车库', '#G04 应急通道',
-    '#G05 南入口', '#G06 北出口', '#G07 东入口', '#G08 西出口',
-    '#G09 B1入口', '#G10 B1出口', '#G11 VIP通道', '#G12 货运通道'
-  ]
-
-  const statuses = [
-    {status: '正常', statusClass: 'normal', weight: 60},
-    {status: '正常', statusClass: 'normal', weight: 60},
-    {status: '正常', statusClass: 'normal', weight: 60},
-    {status: '正常', statusClass: 'normal', weight: 60},
-    {status: '正常', statusClass: 'normal', weight: 60},
-    {status: '正常', statusClass: 'normal', weight: 60},
-    {status: '人工放行', statusClass: 'warning', weight: 12},
-    {status: '超时未缴费', statusClass: 'warning', weight: 10},
-    {status: '无牌识别', statusClass: 'warning', weight: 8},
-    {status: '拦截失败', statusClass: 'danger', weight: 5},
-    {status: '黑名单车辆', statusClass: 'danger', weight: 3},
-    {status: '识别异常', statusClass: 'danger', weight: 2}
-  ]
-
-  // 展平权重
-  const statusPool = []
-  statuses.forEach(s => {
-    for (let i = 0; i < s.weight; i++) statusPool.push(s)
-  })
-
-  // 生成随机车牌
-  function randomPlate() {
-    const prov = provinces[Math.floor(Math.random() * provinces.length)]
-    const letter = letters[Math.floor(Math.random() * letters.length)]
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789'
-    let suffix = ''
-    // 50% 字母+数字，50% 纯数字
-    if (Math.random() < 0.5) {
-      suffix = chars[Math.floor(Math.random() * chars.length)] + Math.floor(Math.random() * 10000).toString().padStart(4, '0')
-    } else {
-      suffix = chars[Math.floor(Math.random() * chars.length)] + Math.floor(Math.random() * 1000).toString().padStart(3, '0')
-    }
-    return `${prov}${letter}·${suffix}`
-  }
-
-  // 生成随机时间（今天，从 06:00:00 到 23:59:59）
-  function randomTime() {
-    const h = Math.floor(Math.random() * 18) + 6  // 6~23
-    const m = Math.floor(Math.random() * 60)
-    const s = Math.floor(Math.random() * 60)
-    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
-  }
-
-  const records = []
-  for (let i = 0; i < 100; i++) {
-    const isIn = Math.random() < 0.55
-    const status = statusPool[Math.floor(Math.random() * statusPool.length)]
-    records.push({
-      id: i + 1,
-      plate: randomPlate(),
-      gate: gates[Math.floor(Math.random() * gates.length)],
-      type: isIn ? 'in' : 'out',
-      typeText: isIn ? '入场' : '出场',
-      time: randomTime(),
-      status: status.status,
-      statusClass: status.statusClass
-    })
-  }
-
-  // 按时间降序排序
-  records.sort((a, b) => b.time.localeCompare(a.time))
-  // 重新分配 id
-  records.forEach((r, i) => {
-    r.id = i + 1
-  })
-
-  return records
-}
+import {computed, reactive, onMounted, onUnmounted} from 'vue'
+import {getVehicleRecords} from '@/api/vehicle'
 
 const state = reactive({
-  records: generateRecords(),
-  updateTime: '14:35:42',
+  records: [],
+  updateTime: '',
   searchQuery: '',
   activeFilter: 'all',
   filterTabs: [
@@ -213,6 +133,31 @@ const state = reactive({
     {key: 'out', label: '出场'},
     {key: 'abnormal', label: '异常'}
   ]
+})
+
+// 从后端拉取车辆通行记录（当前为静态数据，后续接 MQTT 实时）
+const fetchRecords = async () => {
+  try {
+    const res = await getVehicleRecords()
+    state.records = res.data || []
+    const now = new Date()
+    state.updateTime = now.toLocaleTimeString('zh-CN', {hour12: false})
+  } catch (e) {
+    // 接口异常时保留原列表，避免清空
+  }
+}
+
+let refreshTimer = null
+onMounted(() => {
+  fetchRecords()
+  // 每 5 秒刷新一次（与 MQTT 状态轮询保持一致）
+  refreshTimer = setInterval(fetchRecords, 5000)
+})
+
+onUnmounted(() => {
+  if (refreshTimer) {
+    clearInterval(refreshTimer)
+  }
 })
 
 // 计算统计

@@ -46,8 +46,8 @@
       <div class="pagination-wrapper"><Page :total="state.pagination.total" :current="state.pagination.current" :page-size="state.pagination.pageSize" show-total show-elevator @on-change="handlePageChange" /></div>
     </div>
 
-    <Modal v-model="state.modalVisible" :title="state.modalType === 'add' ? '添加设备' : '编辑设备'" width="520">
-      <Form :model="state.formData" :rules="state.rules" :label-width="100">
+    <Modal v-model="state.modalVisible" :title="state.modalType === 'add' ? '添加设备' : '编辑设备'" width="1000">
+      <Form :model="state.formData" :rules="state.rules" :label-width="100" class="modal-form-2col">
         <FormItem label="设备编号" prop="code"><Input v-model="state.formData.code" placeholder="如：DVC001" /></FormItem>
         <FormItem label="设备名称" prop="name"><Input v-model="state.formData.name" placeholder="请输入设备名称" /></FormItem>
         <FormItem label="设备类型" prop="type">

@@ -58,8 +58,8 @@
       </div>
     </div>
 
-    <Modal v-model="state.modalVisible" :title="state.modalType === 'add' ? '新增会员' : '编辑会员'" width="500">
-      <Form :model="state.formData" :rules="state.rules" :label-width="100">
+    <Modal v-model="state.modalVisible" :title="state.modalType === 'add' ? '新增会员' : '编辑会员'" width="1000">
+      <Form :model="state.formData" :rules="state.rules" :label-width="100" class="modal-form-2col">
         <FormItem label="车牌号" prop="plate"><Input v-model="state.formData.plate" placeholder="如：京A12345" /></FormItem>
         <FormItem label="车主姓名" prop="name"><Input v-model="state.formData.name" placeholder="请输入车主姓名" /></FormItem>
         <FormItem label="手机号" prop="phone"><Input v-model="state.formData.phone" placeholder="请输入手机号" /></FormItem>

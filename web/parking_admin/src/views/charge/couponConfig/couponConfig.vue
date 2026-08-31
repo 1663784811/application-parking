@@ -28,8 +28,8 @@
     </div>
 
     <!-- 新增/编辑弹窗 -->
-    <Modal v-model="state.modalVisible" :title="state.modalType === 'add' ? '新增优惠券' : '编辑优惠券'" width="500">
-      <Form :model="state.formData" :rules="state.rules" :label-width="100">
+    <Modal v-model="state.modalVisible" :title="state.modalType === 'add' ? '新增优惠券' : '编辑优惠券'" width="1000">
+      <Form :model="state.formData" :rules="state.rules" :label-width="100" class="modal-form-2col">
         <FormItem label="优惠券名称" prop="name">
           <Input v-model="state.formData.name" placeholder="请输入优惠券名称" />
         </FormItem>
@@ -226,11 +226,12 @@ onMounted(() => {
     .text-danger { color: var(--error-color); }
   }
 
-  .form-tip {
-    display: block;
-    font-size: var(--font-size-xs);
-    color: var(--text-color-secondary);
-    margin-top: 4px;
-  }
+}
+
+.form-tip {
+  display: block;
+  font-size: var(--font-size-xs);
+  color: var(--text-color-secondary);
+  margin-top: 4px;
 }
 </style>

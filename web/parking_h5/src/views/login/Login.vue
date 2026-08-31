@@ -8,7 +8,14 @@
       <div class="hero-inner">
         <div class="logo">
           <div class="logo-ring"></div>
-          <svg viewBox="0 0 64 64" width="60" height="60" role="img" aria-label="智慧停车">
+          <img
+            v-if="showLogo"
+            class="logo-img"
+            :src="appStore.appLogo"
+            alt="logo"
+            @error="logoFailed = true"
+          />
+          <svg v-else viewBox="0 0 64 64" width="60" height="60" role="img" :aria-label="appName">
             <rect x="3" y="3" width="58" height="58" rx="18" fill="#ffffff" />
             <rect
               x="3"
@@ -32,7 +39,7 @@
             >P</text>
           </svg>
         </div>
-        <h1 class="app-name">智慧停车</h1>
+        <h1 class="app-name">{{ appName }}</h1>
         <p class="slogan">让停车更简单 · 扫码即出场</p>
       </div>
     </header>
@@ -40,89 +47,60 @@
     <!-- ===== 表单卡片 ===== -->
     <div class="login-card">
       <div class="card-head">
-        <h2 class="card-title">账号登录</h2>
-        <p class="card-sub">欢迎回来，请输入账号信息</p>
+        <h2 class="card-title">手机号登录</h2>
+        <p class="card-sub">未注册的手机号将自动创建账号</p>
       </div>
 
       <van-form @submit="onSubmit">
         <van-cell-group class="field-group" :border="false">
-          <!-- 账号 -->
+          <!-- 手机号 -->
           <van-field
-            v-model="state.username"
-            name="username"
-            left-icon="manager-o"
-            placeholder="请输入账号"
+            v-model="state.phone"
+            type="tel"
+            name="phone"
+            left-icon="phone-o"
+            placeholder="请输入手机号"
             clearable
+            maxlength="11"
             :border="false"
-            :rules="[{ required: true, message: '请输入账号' }]"
+            :rules="[
+              { required: true, message: '请输入手机号' },
+              { pattern: phoneRegex, message: '请输入正确的手机号' },
+            ]"
           />
-
-          <!-- 密码 -->
-          <van-field
-            v-model="state.password"
-            :type="showPassword ? 'text' : 'password'"
-            name="password"
-            left-icon="lock"
-            placeholder="请输入密码"
-            :border="false"
-            :rules="[{ required: true, message: '请输入密码' }]"
-          >
-            <template #right-icon>
-              <van-icon
-                :name="showPassword ? 'eye-o' : 'closed-eye'"
-                class="pwd-toggle"
-                @click="togglePassword"
-              />
-            </template>
-          </van-field>
 
           <!-- 验证码 -->
           <van-field
             v-model="state.code"
+            type="digit"
             name="code"
             left-icon="shield-o"
             placeholder="请输入验证码"
             clearable
+            maxlength="6"
             :border="false"
             :rules="[{ required: true, message: '请输入验证码' }]"
           >
             <template #button>
-              <div class="verify-slot">
-                <template v-if="state.verifyImg">
-                  <img
-                    class="verify-img"
-                    :src="state.verifyImg"
-                    alt="验证码"
-                    @click="loadVerifyCode"
-                  />
-                  <van-icon
-                    name="replay"
-                    class="verify-refresh"
-                    @click="loadVerifyCode"
-                  />
-                </template>
-                <van-button
-                  v-else
-                  class="verify-btn"
-                  size="small"
-                  @click="loadVerifyCode"
-                >
-                  <span class="verify-btn-inner">
-                    <van-icon name="replay" />
-                    <span>获取验证码</span>
-                  </span>
-                </van-button>
-              </div>
+              <van-button
+                class="code-btn"
+                size="small"
+                native-type="button"
+                :disabled="!canSendCode"
+                :loading="sendingCode"
+                @click="onSendCode"
+              >
+                {{ countdown > 0 ? `${countdown}s 后重获` : '获取验证码' }}
+              </van-button>
             </template>
           </van-field>
         </van-cell-group>
 
-        <!-- 记住账号 / 忘记密码 -->
+        <!-- 记住手机号 -->
         <div class="form-options">
           <van-checkbox v-model="remember" shape="square" icon-size="16px">
-            记住账号
+            记住手机号
           </van-checkbox>
-          <span class="forgot" @click="onForgot">忘记密码？</span>
         </div>
 
         <!-- 登录按钮 -->
@@ -147,84 +125,114 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { showToast } from 'vant'
 import { getBrowserFingerprint } from '@/api/browser'
-import { getVerifyCode, storeAdminLogin } from '@/api/app'
+import { getVerifyPhoneCode, phoneLogin } from '@/api/app'
 import { useLoginInfoStore } from '@/stores/loginInfo'
+import { useAppStore } from '@/stores/app'
 
 const route = useRoute()
 const router = useRouter()
 const loginInfoStore = useLoginInfoStore()
+const appStore = useAppStore()
 
-// 模拟登录开关：true 时使用默认账号密码本地登录，不请求接口（联调后置为 false）
-const MOCK_LOGIN = true
-const MOCK_ACCOUNT = 'admin'
-const MOCK_PASSWORD = '123456'
+// 应用类型：对接 /app/login/findApp 的 appType（可在 .env 用 VITE_APP_TYPE 覆盖）
+const appType = import.meta.env.VITE_APP_TYPE || 'parking'
+
+// 模拟登录开关：true 时本地写入假 token 跳转，不请求接口（联调后置为 false）
+const MOCK_LOGIN = false
+const MOCK_PHONE = '13800138000'
 const MOCK_CODE = '1234'
 
-// 记住账号的本地存储键
-const REMEMBER_KEY = 'parking_remember_account'
+// 记住手机号的本地存储键
+const REMEMBER_KEY = 'parking_remember_phone'
+
+// 中国大陆手机号校验
+const phoneRegex = /^1[3-9]\d{9}$/
 
 const state = reactive({
-  username: MOCK_LOGIN ? MOCK_ACCOUNT : '',
-  password: MOCK_LOGIN ? MOCK_PASSWORD : '',
+  phone: MOCK_LOGIN ? MOCK_PHONE : '',
   code: MOCK_LOGIN ? MOCK_CODE : '',
-  // 浏览器指纹
+  // 浏览器指纹（发送验证码时获取，登录时回传）
   fingerprint: '',
-  // 验证码编码 Key
-  verifyKey: '',
-  // 验证码图片地址
-  verifyImg: '',
   // 提交中
   loading: false,
 })
 
-// 密码可见性
-const showPassword = ref(false)
-// 记住账号
+// 记住手机号
 const remember = ref(false)
+// logo 加载失败时回退到内置 SVG
+const logoFailed = ref(false)
+const showLogo = computed(() => !!appStore.appLogo && !logoFailed.value)
+// 应用名称：未取到时回退到默认名
+const appName = computed(() => appStore.appName || '智慧停车')
+
+// ===== 验证码倒计时 =====
+const countdown = ref(0)
+const sendingCode = ref(false)
+const codeSent = ref(false)
+let codeTimer = null
+const startCountdown = () => {
+  countdown.value = 60
+  codeTimer = setInterval(() => {
+    countdown.value -= 1
+    if (countdown.value <= 0) {
+      clearInterval(codeTimer)
+      codeTimer = null
+      countdown.value = 0
+    }
+  }, 1000)
+}
+// 发送验证码按钮是否可用
+const canSendCode = computed(
+  () => phoneRegex.test(state.phone) && countdown.value === 0 && !sendingCode.value
+)
 
 onMounted(() => {
-  // 恢复记住的账号（非模拟登录时生效）
+  // 恢复记住的手机号（非模拟登录时生效）
   const saved = localStorage.getItem(REMEMBER_KEY)
   if (saved && !MOCK_LOGIN) {
-    state.username = saved
+    state.phone = saved
     remember.value = true
   }
-  // 非模拟登录：进入即自动拉取验证码
+  // 非模拟登录：确保 app 信息已加载（直达登录页时回填 logo / 名称）
   if (!MOCK_LOGIN) {
-    loadVerifyCode()
+    if (!appStore.appInfo) appStore.fetchApp(appType)
   }
 })
 
-// 切换密码可见性
-const togglePassword = () => {
-  showPassword.value = !showPassword.value
-}
+onUnmounted(() => {
+  if (codeTimer) {
+    clearInterval(codeTimer)
+    codeTimer = null
+  }
+})
 
-// 忘记密码（暂无独立页，提示联系管理员）
-const onForgot = () => {
-  showToast('请联系管理员重置密码')
-}
-
-// 获取验证码：先取指纹，再换 key，再拼图片地址
-const loadVerifyCode = () => {
-  // 模拟登录：不请求验证码接口
-  if (MOCK_LOGIN) return
-  getBrowserFingerprint().then((fp) => {
-    state.fingerprint = fp
-    return getVerifyCode({ fingerprint: fp })
-  }).then((res) => {
-    // 返回业务数据为验证码编码 Key 字符串
-    state.verifyKey = res.data
-    const baseUrl = import.meta.env.VITE_BASE_URL
-    // 加随机参数防止缓存
-    state.verifyImg = `${baseUrl}/api/common/verify/getVerifyImg/${state.verifyKey}?t=${Date.now()}`
-  }).catch((err) => {
-    showToast(err?.msg || '获取验证码失败')
-  })
+// 发送手机验证码：先取指纹，再调 getVerifyPhoneCode，成功后开启倒计时
+const onSendCode = () => {
+  if (!phoneRegex.test(state.phone)) {
+    showToast('请输入正确的手机号')
+    return
+  }
+  sendingCode.value = true
+  getBrowserFingerprint()
+    .then((fp) => {
+      state.fingerprint = fp
+      return getVerifyPhoneCode({ phone: state.phone, fingerprint: fp })
+    })
+    .then(() => {
+      codeSent.value = true
+      showToast('验证码已发送')
+      startCountdown()
+    })
+    .catch((err) => {
+      showToast(err?.msg || '验证码发送失败')
+    })
+    .finally(() => {
+      sendingCode.value = false
+    })
 }
 
 // 提交登录
@@ -233,43 +241,38 @@ const onSubmit = () => {
   if (MOCK_LOGIN) {
     handleRemember()
     loginInfoStore.setToken('mock-token', 'mock-refresh-token')
-    router.replace({
-      name: 'mainIndex',
-      params: { appId: route.params.appId },
-    })
+    router.replace({ name: 'mainIndex', params: { appId: route.params.appId } })
     return
   }
-  if (!state.verifyKey) {
+  if (!codeSent.value) {
     showToast('请先获取验证码')
     return
   }
   state.loading = true
-  storeAdminLogin({
-    username: state.username,
-    password: state.password,
+  phoneLogin({
+    phone: state.phone,
     code: state.code,
-    fingerprint: state.verifyKey,
-  }).then((res) => {
-    // 业务数据: { jwtToken, refreshToken }
-    handleRemember()
-    loginInfoStore.setToken(res.data.jwtToken, res.data.refreshToken)
-    router.replace({
-      name: 'mainIndex',
-      params: { appId: route.params.appId },
-    })
-  }).catch((err) => {
-    showToast(err?.msg || '登录失败')
-    // 登录失败刷新验证码
-    loadVerifyCode()
-  }).finally(() => {
-    state.loading = false
+    fingerprint: state.fingerprint,
+    appId: route.params.appId,
   })
+    .then((res) => {
+      // 业务数据: { jwtToken, refreshToken }
+      handleRemember()
+      loginInfoStore.setToken(res.data.jwtToken, res.data.refreshToken)
+      router.replace({ name: 'mainIndex', params: { appId: route.params.appId } })
+    })
+    .catch((err) => {
+      showToast(err?.msg || '登录失败')
+    })
+    .finally(() => {
+      state.loading = false
+    })
 }
 
-// 记住 / 清除账号
+// 记住 / 清除手机号
 const handleRemember = () => {
   if (remember.value) {
-    localStorage.setItem(REMEMBER_KEY, state.username)
+    localStorage.setItem(REMEMBER_KEY, state.phone)
   } else {
     localStorage.removeItem(REMEMBER_KEY)
   }
@@ -344,6 +347,17 @@ const handleRemember = () => {
           filter: drop-shadow(0 8px 18px var(--shadow-brand-strong));
           animation: pop 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
+
+        .logo-img {
+          position: relative;
+          z-index: 1;
+          width: 60px;
+          height: 60px;
+          border-radius: 14px;
+          object-fit: cover;
+          filter: drop-shadow(0 8px 18px var(--shadow-brand-strong));
+          animation: pop 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
       }
 
       .app-name {
@@ -415,28 +429,10 @@ const handleRemember = () => {
       :deep(.van-field__value) {
         font-size: 15px;
       }
-
-      :deep(.van-field__right-icon) {
-        display: flex;
-        align-items: center;
-        padding: 0 4px;
-      }
     }
 
-    .pwd-toggle {
-      font-size: 20px;
-      color: var(--text-tertiary);
-      cursor: pointer;
-    }
-
-    // 验证码槽位：按钮态 / 图片态
-    .verify-slot {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .verify-btn {
+    // 获取验证码按钮
+    .code-btn {
       --van-button-default-height: 32px;
       --van-button-default-background: var(--brand-primary-5);
       --van-button-default-color: var(--brand-primary-1);
@@ -446,27 +442,6 @@ const handleRemember = () => {
       font-size: 12px;
       font-weight: 500;
       white-space: nowrap;
-
-      :deep(.verify-btn-inner) {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-      }
-    }
-
-    .verify-img {
-      display: block;
-      height: 30px;
-      border: 1px solid var(--border-secondary);
-      border-radius: 6px;
-      background: var(--bg-primary);
-      cursor: pointer;
-    }
-
-    .verify-refresh {
-      font-size: 16px;
-      color: var(--brand-primary);
-      cursor: pointer;
     }
 
     .form-options {
@@ -479,12 +454,6 @@ const handleRemember = () => {
       :deep(.van-checkbox__label) {
         font-size: 13px;
         color: var(--text-secondary);
-      }
-
-      .forgot {
-        font-size: 13px;
-        color: var(--text-secondary);
-        cursor: pointer;
       }
     }
 

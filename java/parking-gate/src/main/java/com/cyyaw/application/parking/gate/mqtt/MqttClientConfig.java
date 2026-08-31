@@ -17,6 +17,7 @@ public class MqttClientConfig {
     @Autowired
     private CyawConfig cyawConfig;
 
+
     /**
      * MQTT 状态 ，
      */

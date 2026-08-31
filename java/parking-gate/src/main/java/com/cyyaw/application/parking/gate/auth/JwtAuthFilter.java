@@ -18,7 +18,9 @@ import java.util.Set;
 
 /**
  * JWT 鉴权过滤器：拦截 /api/**，校验 Authorization: Bearer <token>。
- * <p>白名单路径（/api/login、/api/logout）直接放行；
+ * <p>白名单路径（/api/login、/api/logout、/api/plate/recognize）直接放行；
+ * 其中 /api/plate/recognize 供无 token 的摄像头/设备回调车牌识别事件，
+ * 后续应加设备级共享密钥校验。
  * 校验通过则把当前用户写入 request 属性 currentUser，供 Controller 使用；
  * 未通过则返回 HTTP 401 + {code:401, message:"未登录或登录已过期", data:null}。</p>
  */
@@ -26,7 +28,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class JwtAuthFilter implements Filter {
 
-    private static final Set<String> WHITELIST = Set.of("/api/login", "/api/logout");
+    private static final Set<String> WHITELIST = Set.of("/api/login", "/api/logout", "/api/plate/recognize");
 
     private final JwtUtil jwtUtil;
     private final GateUserStore userStore;

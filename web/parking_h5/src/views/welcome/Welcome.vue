@@ -10,7 +10,14 @@
       <header class="hero">
         <div class="logo">
           <div class="logo-ring"></div>
-          <svg viewBox="0 0 64 64" width="76" height="76" role="img" aria-label="智慧停车">
+          <img
+            v-if="showLogo"
+            class="logo-img"
+            :src="appStore.appLogo"
+            alt="logo"
+            @error="logoFailed = true"
+          />
+          <svg v-else viewBox="0 0 64 64" width="76" height="76" role="img" aria-label="智慧停车">
             <defs>
               <linearGradient id="welcome-p" x1="0" y1="0" x2="1" y2="1">
                 <stop offset="0" stop-color="#10b981" />
@@ -48,7 +55,7 @@
             </g>
           </svg>
         </div>
-        <h1 class="app-name">智慧停车</h1>
+        <h1 class="app-name">{{ appName }}</h1>
         <p class="slogan">让停车更简单 · 扫码即出场</p>
       </header>
 
@@ -70,9 +77,16 @@
 
       <!-- 操作 -->
       <footer class="cta">
-        <van-button class="enter-btn" block round @click="onEnter">
-          <span>进入应用</span>
-          <van-icon name="arrow" />
+        <van-button
+          class="enter-btn"
+          block
+          round
+          :loading="appStore.loading"
+          :disabled="appStore.loading"
+          @click="onEnter"
+        >
+          <span>{{ btnText }}</span>
+          <van-icon v-if="appStore.appId" name="arrow" />
         </van-button>
         <p class="agreement">
           登录即表示同意
@@ -85,22 +99,56 @@
 </template>
 
 <script setup>
-import { reactive } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { showToast } from 'vant'
+import { useAppStore } from '@/stores/app'
 
 const router = useRouter()
+const appStore = useAppStore()
 
-const state = reactive({
-  // 演示 appId，实际应从服务端或扫码获取
-  appId: 'demo',
+// 应用类型：对接 /app/login/findApp 的 appType（可在 .env 用 VITE_APP_TYPE 覆盖）
+const appType = import.meta.env.VITE_APP_TYPE || 'parking'
+
+// logo 加载失败时回退到内置 SVG
+const logoFailed = ref(false)
+const showLogo = computed(() => !!appStore.appLogo && !logoFailed.value)
+
+// 应用名称：未取到时回退到默认名
+const appName = computed(() => appStore.appName || '智慧停车')
+
+// 按钮文案：加载中 / 失败重试 / 进入应用
+const btnText = computed(() => {
+  if (appStore.loading) return '加载中'
+  if (!appStore.appId) return '重新加载'
+  return '进入应用'
 })
 
-const onEnter = () => {
-  router.push({
-    name: 'login',
-    params: { appId: state.appId },
+// 查询 app 信息
+const loadApp = () => {
+  appStore.fetchApp(appType).then((info) => {
+    if (!info) {
+      showToast('应用信息获取失败，请重试')
+    }
   })
 }
+
+const onEnter = () => {
+  if (appStore.loading) return
+  // 未取到 app 信息时，点击按钮重新查询
+  if (!appStore.appId) {
+    loadApp()
+    return
+  }
+  router.push({
+    name: 'login',
+    params: { appId: appStore.appId },
+  })
+}
+
+onMounted(() => {
+  loadApp()
+})
 </script>
 
 <style scoped lang="less">
@@ -180,6 +228,17 @@ const onEnter = () => {
         border-radius: 50%;
         background: var(--brand-primary-4);
         animation: pulse 2.4s ease-in-out infinite;
+      }
+
+      .logo-img {
+        position: relative;
+        z-index: 1;
+        width: 76px;
+        height: 76px;
+        border-radius: 18px;
+        object-fit: cover;
+        filter: drop-shadow(0 10px 20px var(--shadow-brand-strong));
+        animation: pop 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
       }
 
       svg {

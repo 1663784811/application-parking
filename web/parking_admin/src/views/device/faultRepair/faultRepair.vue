@@ -31,8 +31,8 @@
       </Table>
       <div class="pagination-wrapper"><Page :total="state.pagination.total" :current="state.pagination.current" :page-size="state.pagination.pageSize" show-total show-elevator @on-change="handlePageChange" /></div>
     </div>
-    <Modal v-model="state.assignModalVisible" title="指派维修人员" width="400">
-      <Form :label-width="100">
+    <Modal v-model="state.assignModalVisible" title="指派维修人员" width="1000">
+      <Form :label-width="100" class="modal-form-2col">
         <FormItem label="设备名称">{{ state.currentFault?.deviceName }}</FormItem>
         <FormItem label="故障类型">{{ state.currentFault?.faultType }}</FormItem>
         <FormItem label="指派给"><Select v-model="state.assignForm.repairer"><Option value="张师傅">张师傅</Option><Option value="李师傅">李师傅</Option><Option value="王师傅">王师傅</Option></Select></FormItem>

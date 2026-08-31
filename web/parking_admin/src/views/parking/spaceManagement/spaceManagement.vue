@@ -127,8 +127,8 @@
     </div>
 
     <!-- 分配弹窗 -->
-    <Modal v-model="state.assignModalVisible" title="分配车位" width="400">
-      <Form :model="state.assignForm" :label-width="100">
+    <Modal v-model="state.assignModalVisible" title="分配车位" width="1000">
+      <Form :model="state.assignForm" :label-width="100" class="modal-form-2col">
         <FormItem label="车位编号">
           <Input :value="state.currentSpace?.spaceNo" disabled/>
         </FormItem>
@@ -139,7 +139,7 @@
             </Option>
           </Select>
         </FormItem>
-        <FormItem label="有效期至">
+        <FormItem label="有效期至" class="modal-form-full">
           <DatePicker
               v-model="state.assignForm.expireDate"
               type="date"

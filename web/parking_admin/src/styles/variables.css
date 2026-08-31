@@ -216,3 +216,23 @@ body {
   background-color: rgba(134, 144, 156, 0.1);
   color: var(--text-color-secondary);
 }
+
+/* 新增/编辑弹窗表单：大屏两列、小屏单列
+   Modal 内容会 teleport 到 body，故放在全局样式里，各页面只需给 <Form> 加 class 即可 */
+.modal-form-2col {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  column-gap: 16px;
+  row-gap: 0;
+}
+.modal-form-2col .modal-form-full {
+  grid-column: span 2;
+}
+@media (max-width: 768px) {
+  .modal-form-2col {
+    grid-template-columns: 1fr;
+  }
+  .modal-form-2col .modal-form-full {
+    grid-column: span 1;
+  }
+}

@@ -21,8 +21,8 @@
       </Table>
     </div>
     <Modal v-model="state.modalVisible" :title="state.modalType === 'add' ? '新增短信模板' : '编辑短信模板'"
-           width="600">
-      <Form :model="state.formData" :label-width="100">
+           width="1000">
+      <Form :model="state.formData" :label-width="100" class="modal-form-2col">
         <FormItem label="模板名称"><Input v-model="state.formData.name" placeholder="如：到期提醒"/></FormItem>
         <FormItem label="模板类型">
           <Select v-model="state.formData.type">
@@ -32,7 +32,7 @@
             <Option :value="4">出场通知</Option>
           </Select>
         </FormItem>
-        <FormItem label="短信内容"><Input v-model="state.formData.content" type="textarea" :rows="4"
+        <FormItem label="短信内容" class="modal-form-full"><Input v-model="state.formData.content" type="textarea" :rows="4"
                                           placeholder="使用 {plate} {parking} {time} 等变量"/></FormItem>
         <FormItem label="启用状态">
           <i-switch v-model="state.formData.statusShow"/>

@@ -61,8 +61,8 @@
       </div>
     </div>
 
-    <Modal v-model="state.modalVisible" :title="state.modalType === 'add' ? '新增管理员' : '编辑管理员'" width="500">
-      <Form ref="formRef" :model="state.formData" :rules="state.rules" :label-width="100">
+    <Modal v-model="state.modalVisible" :title="state.modalType === 'add' ? '新增管理员' : '编辑管理员'" width="1000">
+      <Form ref="formRef" :model="state.formData" :rules="state.rules" :label-width="100" class="modal-form-2col">
         <FormItem label="账号" prop="account"><Input v-model="state.formData.account" placeholder="请输入账号" /></FormItem>
         <FormItem label="真实姓名" prop="realName"><Input v-model="state.formData.realName" placeholder="请输入真实姓名" /></FormItem>
         <FormItem label="手机号" prop="phone"><Input v-model="state.formData.phone" placeholder="请输入手机号" /></FormItem>

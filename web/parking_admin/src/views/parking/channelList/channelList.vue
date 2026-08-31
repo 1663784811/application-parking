@@ -80,9 +80,9 @@
     <Modal
       v-model="state.modalVisible"
       :title="state.isEdit ? '编辑通道' : '新增通道'"
-      width="500"
+      width="1000"
     >
-      <Form :model="state.form" :label-width="100">
+      <Form :model="state.form" :label-width="100" class="modal-form-2col">
         <FormItem label="通道名称" prop="name">
           <Input v-model="state.form.name" placeholder="请输入通道名称"/>
         </FormItem>
