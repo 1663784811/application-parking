@@ -31,4 +31,11 @@
         <item name="colorSwitchThumbNormal">#CCCCCC</item>
         <item name="android:colorForeground">#FFFFFF</item>
     </style>
+
+    <!-- Switch theme for light (white) dialogs -->
+    <style name="SwitchThemeLight" parent="Theme.AppCompat.Light">
+        <item name="colorControlActivated">#FF2E7D32</item>
+        <item name="colorSwitchThumbNormal">#FFFFFFFF</item>
+        <item name="android:colorForeground">#FF424242</item>
+    </style>
 </resources>

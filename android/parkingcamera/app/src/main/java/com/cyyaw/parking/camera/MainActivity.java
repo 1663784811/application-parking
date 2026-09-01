@@ -3,9 +3,12 @@ package com.cyyaw.parking.camera;
 import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.app.Dialog;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
@@ -21,8 +24,6 @@ import android.net.NetworkRequest;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.Size;
 import android.view.Surface;
 import android.view.SurfaceHolder;
@@ -80,10 +81,35 @@ public class MainActivity extends BaseActivity {
     private View settingsOverlay;
     private View settingsPanel;
     private ImageView closePanel;
-    private EditText deviceIdInput;
     private TextView bottomCameraId;
-    private EditText barrierIdInput;
     private TextView bottomBarrierId;
+
+    // MQTT settings
+    private View mqttSettingsRow;
+    private TextView mqttSummary;
+
+    // License-plate recognition callback URL
+    private View lprCallbackRow;
+    private TextView lprCallbackSummary;
+
+    // Basic info: timestamp toggle / camera ID / barrier ID
+    private View basicInfoRow;
+    private TextView basicInfoSummary;
+
+    // Signaling server address
+    private View signalingServerRow;
+    private TextView signalingServerSummary;
+
+    private static final String PREFS_NAME = "parking_settings";
+    private static final String KEY_MQTT_ADDRESS = "mqtt_address";
+    private static final String KEY_MQTT_USERNAME = "mqtt_username";
+    private static final String KEY_MQTT_PASSWORD = "mqtt_password";
+    private static final String KEY_MQTT_CLIENT_ID = "mqtt_client_id";
+    private static final String KEY_LPR_CALLBACK = "lpr_callback";
+    private static final String KEY_TIMESTAMP_VISIBLE = "timestamp_visible";
+    private static final String KEY_CAMERA_ID = "camera_id";
+    private static final String KEY_BARRIER_ID = "barrier_id";
+    private static final String KEY_SIGNALING_SERVER = "signaling_server";
 
     // Camera IDs for the spinner
     private List<String> allCameraIds = new ArrayList<>();
@@ -93,7 +119,6 @@ public class MainActivity extends BaseActivity {
 
     // Time display
     private TextView timeDisplay;
-    private androidx.appcompat.widget.SwitchCompat timestampSwitch;
     private final Handler timeHandler = new Handler(Looper.getMainLooper());
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("MM-dd HH:mm:ss", Locale.getDefault());
     private boolean timeVisible = true;
@@ -160,12 +185,26 @@ public class MainActivity extends BaseActivity {
         settingsOverlay = findViewById(R.id.settingsOverlay);
         settingsPanel = findViewById(R.id.settingsPanel);
         closePanel = findViewById(R.id.closePanel);
-        deviceIdInput = findViewById(R.id.deviceIdInput);
         bottomCameraId = findViewById(R.id.bottomCameraId);
+        bottomBarrierId = findViewById(R.id.bottomBarrierId);
+        mqttSettingsRow = findViewById(R.id.mqttSettingsRow);
+        mqttSummary = findViewById(R.id.mqttSummary);
+        lprCallbackRow = findViewById(R.id.lprCallbackRow);
+        lprCallbackSummary = findViewById(R.id.lprCallbackSummary);
+        basicInfoRow = findViewById(R.id.basicInfoRow);
+        basicInfoSummary = findViewById(R.id.basicInfoSummary);
+        signalingServerRow = findViewById(R.id.signalingServerRow);
+        signalingServerSummary = findViewById(R.id.signalingServerSummary);
 
         // Initialize time display
         timeDisplay = findViewById(R.id.timeDisplay);
-        timestampSwitch = findViewById(R.id.timestampSwitch);
+
+        // Restore persisted basic-info state into the bottom bar + overlay
+        SharedPreferences bootPrefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        bottomCameraId.setText(bootPrefs.getString(KEY_CAMERA_ID, "CAM-001"));
+        bottomBarrierId.setText(bootPrefs.getString(KEY_BARRIER_ID, "B-001"));
+        timeVisible = bootPrefs.getBoolean(KEY_TIMESTAMP_VISIBLE, true);
+        timeDisplay.setVisibility(timeVisible ? View.VISIBLE : View.GONE);
 
         // Setup camera switch
         setupCameraSwitch();
@@ -277,25 +316,162 @@ public class MainActivity extends BaseActivity {
         // Tapping the dimming overlay also closes the panel
         settingsOverlay.setOnClickListener(v -> closeSettingsPanel());
 
-        // Timestamp switch controls time display visibility
-        timestampSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            timeVisible = isChecked;
-            timeDisplay.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+        // MQTT settings row opens the config dialog
+        mqttSettingsRow.setOnClickListener(v -> showMqttSettingsDialog());
+        updateMqttSummary();
+
+        // License-plate callback row opens the config dialog
+        lprCallbackRow.setOnClickListener(v -> showLprCallbackDialog());
+        updateLprCallbackSummary();
+
+        // Basic info row opens the config dialog
+        basicInfoRow.setOnClickListener(v -> showBasicInfoDialog());
+        updateBasicInfoSummary();
+
+        // Signaling server row opens the config dialog
+        signalingServerRow.setOnClickListener(v -> showSignalingServerDialog());
+        updateSignalingServerSummary();
+    }
+
+    // ───── MQTT settings ─────
+
+    private void updateMqttSummary() {
+        String address = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+                .getString(KEY_MQTT_ADDRESS, "");
+        mqttSummary.setText(address.isEmpty() ? "未配置" : address);
+    }
+
+    private void showMqttSettingsDialog() {
+        Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.dialog_mqtt_settings);
+        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(0x00000000));
+        dialog.setCanceledOnTouchOutside(true);
+
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        EditText addressInput = dialog.findViewById(R.id.dlgMqttAddressInput);
+        EditText usernameInput = dialog.findViewById(R.id.dlgMqttUsernameInput);
+        EditText passwordInput = dialog.findViewById(R.id.dlgMqttPasswordInput);
+        EditText clientIdInput = dialog.findViewById(R.id.dlgMqttClientIdInput);
+
+        addressInput.setText(prefs.getString(KEY_MQTT_ADDRESS, "tcp://192.168.1.100:1883"));
+        usernameInput.setText(prefs.getString(KEY_MQTT_USERNAME, ""));
+        passwordInput.setText(prefs.getString(KEY_MQTT_PASSWORD, ""));
+        clientIdInput.setText(prefs.getString(KEY_MQTT_CLIENT_ID, ""));
+
+        dialog.findViewById(R.id.dlgMqttSave).setOnClickListener(b -> {
+            prefs.edit()
+                    .putString(KEY_MQTT_ADDRESS, addressInput.getText().toString().trim())
+                    .putString(KEY_MQTT_USERNAME, usernameInput.getText().toString().trim())
+                    .putString(KEY_MQTT_PASSWORD, passwordInput.getText().toString().trim())
+                    .putString(KEY_MQTT_CLIENT_ID, clientIdInput.getText().toString().trim())
+                    .apply();
+            updateMqttSummary();
+            toast("已保存");
+            dialog.dismiss();
         });
 
-        // Sync camera ID input to bottom bar display
-        deviceIdInput.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+        dialog.show();
+    }
 
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+    // ───── License-plate recognition callback ─────
 
-            @Override
-            public void afterTextChanged(Editable s) {
-                bottomCameraId.setText(s.length() > 0 ? s.toString() : "CAM-001");
-            }
+    private void updateLprCallbackSummary() {
+        String url = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+                .getString(KEY_LPR_CALLBACK, "");
+        lprCallbackSummary.setText(url.isEmpty() ? "未配置" : url);
+    }
+
+    private void showLprCallbackDialog() {
+        Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.dialog_lpr_callback);
+        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(0x00000000));
+        dialog.setCanceledOnTouchOutside(true);
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        EditText callbackInput = dialog.findViewById(R.id.dlgLprCallbackInput);
+        callbackInput.setText(prefs.getString(KEY_LPR_CALLBACK, "http://192.168.1.200:8080/api/plate"));
+        dialog.findViewById(R.id.dlgLprSave).setOnClickListener(b -> {
+            prefs.edit()
+                    .putString(KEY_LPR_CALLBACK, callbackInput.getText().toString().trim())
+                    .apply();
+            updateLprCallbackSummary();
+            toast("已保存");
+            dialog.dismiss();
         });
+        dialog.show();
+    }
+
+    // ───── Basic info: timestamp / camera ID / barrier ID ─────
+
+    private void updateBasicInfoSummary() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        String cameraIdVal = prefs.getString(KEY_CAMERA_ID, "CAM-001");
+        String barrierIdVal = prefs.getString(KEY_BARRIER_ID, "B-001");
+        basicInfoSummary.setText(cameraIdVal + " · " + barrierIdVal);
+    }
+
+    private void showBasicInfoDialog() {
+        Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.dialog_basic_info);
+        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(0x00000000));
+        dialog.setCanceledOnTouchOutside(true);
+
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        androidx.appcompat.widget.SwitchCompat timestampSw =
+                dialog.findViewById(R.id.dlgTimestampSwitch);
+        EditText cameraIdInput = dialog.findViewById(R.id.dlgCameraIdInput);
+        EditText barrierIdDlg = dialog.findViewById(R.id.dlgBarrierIdInput);
+
+        timestampSw.setChecked(prefs.getBoolean(KEY_TIMESTAMP_VISIBLE, true));
+        cameraIdInput.setText(prefs.getString(KEY_CAMERA_ID, "CAM-001"));
+        barrierIdDlg.setText(prefs.getString(KEY_BARRIER_ID, "B-001"));
+
+        dialog.findViewById(R.id.dlgBasicSave).setOnClickListener(b -> {
+            boolean checked = timestampSw.isChecked();
+            String camId = cameraIdInput.getText().toString().trim();
+            String barId = barrierIdDlg.getText().toString().trim();
+            if (camId.isEmpty()) camId = "CAM-001";
+            if (barId.isEmpty()) barId = "B-001";
+            prefs.edit()
+                    .putBoolean(KEY_TIMESTAMP_VISIBLE, checked)
+                    .putString(KEY_CAMERA_ID, camId)
+                    .putString(KEY_BARRIER_ID, barId)
+                    .apply();
+            timeVisible = checked;
+            timeDisplay.setVisibility(checked ? View.VISIBLE : View.GONE);
+            bottomCameraId.setText(camId);
+            bottomBarrierId.setText(barId);
+            updateBasicInfoSummary();
+            toast("已保存");
+            dialog.dismiss();
+        });
+        dialog.show();
+    }
+
+    // ───── Signaling server ─────
+
+    private void updateSignalingServerSummary() {
+        String server = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+                .getString(KEY_SIGNALING_SERVER, "");
+        signalingServerSummary.setText(server.isEmpty() ? "未配置" : server);
+    }
+
+    private void showSignalingServerDialog() {
+        Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.dialog_signaling_server);
+        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(0x00000000));
+        dialog.setCanceledOnTouchOutside(true);
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        EditText serverInput = dialog.findViewById(R.id.dlgSignalingServerInput);
+        serverInput.setText(prefs.getString(KEY_SIGNALING_SERVER, "ws://192.168.1.100:8080"));
+        dialog.findViewById(R.id.dlgSignalingSave).setOnClickListener(b -> {
+            prefs.edit()
+                    .putString(KEY_SIGNALING_SERVER, serverInput.getText().toString().trim())
+                    .apply();
+            updateSignalingServerSummary();
+            toast("已保存");
+            dialog.dismiss();
+        });
+        dialog.show();
     }
 
     private void openSettingsPanel() {
