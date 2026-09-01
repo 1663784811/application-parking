@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.app.Dialog;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
@@ -17,13 +18,17 @@ import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.StreamConfigurationMap;
+import android.media.Image;
+import android.media.ImageReader;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.Looper;
+import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
 import android.view.SurfaceHolder;
@@ -41,6 +46,7 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -71,6 +77,17 @@ public class MainActivity extends BaseActivity {
     private CameraCaptureSession captureSession;
     private boolean surfaceReady = false;
     private boolean opening = false;
+
+    // License-plate recognition (HyperLPR3, onnxruntime)
+    private static final int LPR_MAX_FPS = 3;              // 识别节流
+    private ImageReader lprReader;                         // YUV_420_888 帧
+    private LprRecognizer lpr;
+    private HandlerThread lprThread;
+    private Handler lprHandler;
+    private boolean lprBusy = false;
+    private long lastLprAt = 0;
+    private TextView plateResult;
+    private PlateOverlayView plateOverlay;
 
     // Bottom bar views
     private ImageView cameraSwitchIcon;
@@ -198,6 +215,11 @@ public class MainActivity extends BaseActivity {
 
         // Initialize time display
         timeDisplay = findViewById(R.id.timeDisplay);
+
+        // Initialize LPR UI + background engine
+        plateResult = findViewById(R.id.plateResult);
+        plateOverlay = findViewById(R.id.plateOverlay);
+        startLprEngine();
 
         // Restore persisted basic-info state into the bottom bar + overlay
         SharedPreferences bootPrefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
@@ -561,6 +583,14 @@ public class MainActivity extends BaseActivity {
         super.onDestroy();
         cameraSurface.getHolder().removeCallback(surfaceCallback);
         closeCamera();
+        if (lpr != null) {
+            lpr.close();
+            lpr = null;
+        }
+        if (lprThread != null) {
+            lprThread.quitSafely();
+            lprThread = null;
+        }
     }
 
     @Override
@@ -697,13 +727,25 @@ public class MainActivity extends BaseActivity {
         }
         try {
             closePreviewSession();
+            List<Surface> targets = new ArrayList<>();
+            targets.add(surface);
+            if (lprReader == null && previewSize != null) {
+                lprReader = ImageReader.newInstance(previewSize.getWidth(),
+                        previewSize.getHeight(), ImageFormat.YUV_420_888, 2);
+                lprReader.setOnImageAvailableListener(lprFrameListener, lprHandler);
+            }
+            if (lprReader != null) {
+                targets.add(lprReader.getSurface());
+            }
             CaptureRequest.Builder builder =
                     cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-            builder.addTarget(surface);
+            for (Surface t : targets) {
+                builder.addTarget(t);
+            }
             builder.set(CaptureRequest.CONTROL_AF_MODE,
                     CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO);
             cameraDevice.createCaptureSession(
-                    Collections.singletonList(surface),
+                    targets,
                     new CameraCaptureSession.StateCallback() {
                         @Override
                         public void onConfigured(@NonNull CameraCaptureSession session) {
@@ -740,9 +782,146 @@ public class MainActivity extends BaseActivity {
     private void closeCamera() {
         closePreviewSession();
         opening = false;
+        if (lprReader != null) {
+            lprReader.close();
+            lprReader = null;
+        }
         if (cameraDevice != null) {
             cameraDevice.close();
             cameraDevice = null;
+        }
+    }
+
+    // ───── License-plate recognition ─────
+
+    private void startLprEngine() {
+        lprThread = new HandlerThread("lpr-recognizer");
+        lprThread.start();
+        lprHandler = new Handler(lprThread.getLooper());
+        lprHandler.post(() -> {
+            try {
+                lpr = new LprRecognizer(MainActivity.this);
+                Log.i("Lpr", "HyperLPR3 engine ready");
+            } catch (Exception e) {
+                Log.e("Lpr", "init failed", e);
+                runOnUiThread(() -> toast("车牌识别引擎初始化失败"));
+            }
+        });
+    }
+
+    private final ImageReader.OnImageAvailableListener lprFrameListener = reader -> {
+        if (lprBusy || lpr == null) {
+            return; // 上一帧还在推理，直接丢帧
+        }
+        long now = System.currentTimeMillis();
+        if (now - lastLprAt < 1000 / LPR_MAX_FPS) {
+            return;
+        }
+        lastLprAt = now;
+        Image image = reader.acquireLatestImage();
+        if (image == null) {
+            return;
+        }
+        lprBusy = true;
+        try {
+            Bitmap bmp = yuvToBitmap(image);
+            if (bmp == null) {
+                return;
+            }
+            java.util.List<LprRecognizer.PlateResult> results = lpr.recognize(bmp);
+            showLprResults(results);
+            bmp.recycle();
+        } catch (Exception e) {
+            Log.e("Lpr", "recognize failed", e);
+        } finally {
+            image.close();
+            lprBusy = false;
+        }
+    };
+
+    /** YUV_420_888 -> ARGB_8888。 */
+    private Bitmap yuvToBitmap(Image image) {
+        int w = image.getWidth();
+        int h = image.getHeight();
+        Image.Plane[] planes = image.getPlanes();
+        ByteBuffer yPlane = planes[0].getBuffer();
+        ByteBuffer uPlane = planes[1].getBuffer();
+        ByteBuffer vPlane = planes[2].getBuffer();
+        int yRowStride = planes[0].getRowStride();
+        int uvRowStride = planes[1].getRowStride();
+        int uvPixelStride = planes[1].getPixelStride();
+
+        int[] argb = new int[w * h];
+        for (int j = 0; j < h; j++) {
+            for (int i = 0; i < w; i++) {
+                int y = (yPlane.get(j * yRowStride + i) & 0xFF) - 16;
+                if (y < 0) y = 0;
+                int uv = (j >> 1) * uvRowStride + (i >> 1) * uvPixelStride;
+                int u = (uPlane.get(uv) & 0xFF) - 128;
+                int v = (vPlane.get(uv) & 0xFF) - 128;
+
+                int r = (int) (1.164f * y + 1.596f * v);
+                int g = (int) (1.164f * y - 0.392f * u - 0.813f * v);
+                int b = (int) (1.164f * y + 2.017f * u);
+                r = clamp255(r);
+                g = clamp255(g);
+                b = clamp255(b);
+                argb[j * w + i] = 0xFF000000 | (r << 16) | (g << 8) | b;
+            }
+        }
+        return Bitmap.createBitmap(argb, w, h, Bitmap.Config.ARGB_8888);
+    }
+
+    private static int clamp255(int v) {
+        return v < 0 ? 0 : Math.min(v, 255);
+    }
+
+    /** 在 UI 线程展示识别结果（取置信度最高者），并画框。 */
+    private void showLprResults(java.util.List<LprRecognizer.PlateResult> results) {
+        runOnUiThread(() -> {
+            if (results == null || results.isEmpty()) {
+                plateResult.setText("未识别到车牌");
+                plateOverlay.clear();
+                return;
+            }
+            LprRecognizer.PlateResult best = null;
+            for (LprRecognizer.PlateResult r : results) {
+                if (best == null || r.confidence > best.confidence) {
+                    best = r;
+                }
+            }
+            if (best == null) {
+                return;
+            }
+            String typeName = plateTypeName(best.plateType);
+            plateResult.setText(String.format(Locale.getDefault(),
+                    "%s  %.2f  %s", best.plate, best.confidence, typeName));
+
+            // 帧坐标 -> 屏幕坐标：SurfaceView 按预览比例居中，换算偏移+缩放
+            int vw = cameraSurface.getWidth();
+            int vh = cameraSurface.getHeight();
+            int fw = previewSize != null ? previewSize.getWidth() : vw;
+            int fh = previewSize != null ? previewSize.getHeight() : vh;
+            float sx = (float) vw / fw;
+            float sy = (float) vh / fh;
+            plateOverlay.setResults(results,
+                    cameraSurface.getLeft(), cameraSurface.getTop(), sx, sy);
+        });
+    }
+
+    private static String plateTypeName(int t) {
+        switch (t) {
+            case LprRecognizer.PLATE_BLUE: return "蓝牌";
+            case LprRecognizer.PLATE_YELLOW_SINGLE: return "黄牌单层";
+            case LprRecognizer.PLATE_YELLOW_DOUBLE: return "黄牌双层";
+            case LprRecognizer.PLATE_WHITE_SINGLE: return "白牌";
+            case LprRecognizer.PLATE_GREEN: return "绿牌";
+            case LprRecognizer.PLATE_BLACK_HK_MACAO: return "港澳黑牌";
+            case LprRecognizer.PLATE_HK_SINGLE: return "香港单层";
+            case LprRecognizer.PLATE_HK_DOUBLE: return "香港双层";
+            case LprRecognizer.PLATE_MACAO_SINGLE: return "澳门单层";
+            case LprRecognizer.PLATE_MACAO_DOUBLE: return "澳门双层";
+            default: return "未知";
         }
     }
 
