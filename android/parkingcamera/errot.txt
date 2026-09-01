@@ -1,0 +1,89 @@
+
+2026-08-17 13:45:13.704 24983-25052 libMEOW                 com.cyyaw.parking.camera             D  meow delete tls: 0xb400007db04d4900
+2026-08-17 13:45:13.749 24983-24983 AppCompatDelegate       com.cyyaw.parking.camera             D  Checking for metadata for AppLocalesMetadataHolderService : Service not found
+2026-08-17 13:45:13.797 24983-24983 libc                    com.cyyaw.parking.camera             W  Access denied finding property "ro.vendor.df.effect.conflict"
+2026-08-17 13:45:13.798 24983-24983 .parking.camera         com.cyyaw.parking.camera             E  checking suspend fail; inst: b9400020 checkinst: f94002b5
+2026-08-17 13:45:13.799 24983-24983 AndroidRuntime          com.cyyaw.parking.camera             D  Shutting down VM
+2026-08-17 13:45:13.802 24983-24983 AndroidRuntime          com.cyyaw.parking.camera             E  FATAL EXCEPTION: main
+                                                                                                    Process: com.cyyaw.parking.camera, PID: 24983
+                                                                                                    java.lang.RuntimeException: Unable to start activity ComponentInfo{com.cyyaw.parking.camera/com.cyyaw.parking.camera.MainActivity}: java.lang.NullPointerException: Attempt to invoke virtual method 'android.view.WindowInsetsController com.android.internal.policy.DecorView.getWindowInsetsController()' on a null object reference
+                                                                                                    	at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:4057)
+                                                                                                    	at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:4217)
+                                                                                                    	at android.app.servertransaction.LaunchActivityItem.execute(LaunchActivityItem.java:103)
+                                                                                                    	at android.app.servertransaction.TransactionExecutor.executeCallbacks(TransactionExecutor.java:149)
+                                                                                                    	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:99)
+                                                                                                    	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2630)
+                                                                                                    	at android.os.Handler.dispatchMessage(Handler.java:106)
+                                                                                                    	at android.os.Looper.loopOnce(Looper.java:222)
+                                                                                                    	at android.os.Looper.loop(Looper.java:314)
+                                                                                                    	at android.app.ActivityThread.main(ActivityThread.java:8788)
+                                                                                                    	at java.lang.reflect.Method.invoke(Native Method)
+                                                                                                    	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:569)
+                                                                                                    	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1090)
+                                                                                                    Caused by: java.lang.NullPointerException: Attempt to invoke virtual method 'android.view.WindowInsetsController com.android.internal.policy.DecorView.getWindowInsetsController()' on a null object reference
+                                                                                                    	at com.android.internal.policy.PhoneWindow.getInsetsController(PhoneWindow.java:3981)
+                                                                                                    	at com.cyyaw.parking.camera.BaseActivity.hideStatusBar(BaseActivity.java:46)
+                                                                                                    	at com.cyyaw.parking.camera.BaseActivity.onCreate(BaseActivity.java:33)
+                                                                                                    	at com.cyyaw.parking.camera.MainActivity.onCreate(MainActivity.java:98)
+                                                                                                    	at android.app.Activity.performCreate(Activity.java:8897)
+                                                                                                    	at android.app.Activity.performCreate(Activity.java:8859)
+                                                                                                    	at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1470)
+                                                                                                    	at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:4039)
+                                                                                                    	at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:4217) 
+                                                                                                    	at android.app.servertransaction.LaunchActivityItem.execute(LaunchActivityItem.java:103) 
+                                                                                                    	at android.app.servertransaction.TransactionExecutor.executeCallbacks(TransactionExecutor.java:149) 
+                                                                                                    	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:99) 
+                                                                                                    	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2630) 
+                                                                                                    	at android.os.Handler.dispatchMessage(Handler.java:106) 
+                                                                                                    	at android.os.Looper.loopOnce(Looper.java:222) 
+                                                                                                    	at android.os.Looper.loop(Looper.java:314) 
+                                                                                                    	at android.app.ActivityThread.main(ActivityThread.java:8788) 
+                                                                                                    	at java.lang.reflect.Method.invoke(Native Method) 
+                                                                                                    	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:569) 
+                                                                                                    	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1090) 
+2026-08-17 13:45:13.811  3796-4147  JavaExceptionHandler    com.miui.daemon                      E  Process: com.cyyaw.parking.camera, PID: 24983
+                                                                                                    java.lang.RuntimeException: Unable to start activity ComponentInfo{com.cyyaw.parking.camera/com.cyyaw.parking.camera.MainActivity}: java.lang.NullPointerException: Attempt to invoke virtual method 'android.view.WindowInsetsController com.android.internal.policy.DecorView.getWindowInsetsController()' on a null object reference
+                                                                                                    	at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:4057)
+                                                                                                    	at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:4217)
+                                                                                                    	at android.app.servertransaction.LaunchActivityItem.execute(LaunchActivityItem.java:103)
+                                                                                                    	at android.app.servertransaction.TransactionExecutor.executeCallbacks(TransactionExecutor.java:149)
+                                                                                                    	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:99)
+                                                                                                    	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2630)
+                                                                                                    	at android.os.Handler.dispatchMessage(Handler.java:106)
+                                                                                                    	at android.os.Looper.loopOnce(Looper.java:222)
+                                                                                                    	at android.os.Looper.loop(Looper.java:314)
+                                                                                                    	at android.app.ActivityThread.main(ActivityThread.java:8788)
+                                                                                                    	at java.lang.reflect.Method.invoke(Native Method)
+                                                                                                    	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:569)
+                                                                                                    	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1090)
+                                                                                                    Caused by: java.lang.NullPointerException: Attempt to invoke virtual method 'android.view.WindowInsetsController com.android.internal.policy.DecorView.getWindowInsetsController()' on a null object reference
+                                                                                                    	at com.android.internal.policy.PhoneWindow.getInsetsController(PhoneWindow.java:3981)
+                                                                                                    	at com.cyyaw.parking.camera.BaseActivity.hideStatusBar(BaseActivity.java:46)
+                                                                                                    	at com.cyyaw.parking.camera.BaseActivity.onCreate(BaseActivity.java:33)
+                                                                                                    	at com.cyyaw.parking.camera.MainActivity.onCreate(MainActivity.java:98)
+                                                                                                    	at android.app.Activity.performCreate(Activity.java:8897)
+                                                                                                    	at android.app.Activity.performCreate(Activity.java:8859)
+                                                                                                    	at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1470)
+                                                                                                    	at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:4039)
+                                                                                                    	at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:4217) 
+                                                                                                    	at android.app.servertransaction.LaunchActivityItem.execute(LaunchActivityItem.java:103) 
+                                                                                                    	at android.app.servertransaction.TransactionExecutor.executeCallbacks(TransactionExecutor.java:149) 
+                                                                                                    	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:99) 
+                                                                                                    	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2630) 
+                                                                                                    	at android.os.Handler.dispatchMessage(Handler.java:106) 
+                                                                                                    	at android.os.Looper.loopOnce(Looper.java:222) 
+                                                                                                    	at android.os.Looper.loop(Looper.java:314) 
+                                                                                                    	at android.app.ActivityThread.main(ActivityThread.java:8788) 
+                                                                                                    	at java.lang.reflect.Method.invoke(Native Method) 
+                                                                                                    	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:569) 
+                                                                                                    	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1090) 
+2026-08-17 13:45:13.834 24983-24983 Process                 com.cyyaw.parking.camera             I  Process is going to kill itself!
+                                                                                                    java.lang.Exception
+                                                                                                    	at android.os.Process.killProcess(Process.java:1346)
+                                                                                                    	at com.android.internal.os.RuntimeInit$KillApplicationHandler.uncaughtException(RuntimeInit.java:187)
+                                                                                                    	at java.lang.ThreadGroup.uncaughtException(ThreadGroup.java:1071)
+                                                                                                    	at java.lang.ThreadGroup.uncaughtException(ThreadGroup.java:1066)
+                                                                                                    	at java.lang.Thread.dispatchUncaughtException(Thread.java:2306)
+2026-08-17 13:45:13.834 24983-24983 Process                 com.cyyaw.parking.camera             I  Sending signal. PID: 24983 SIG: 9
+2026-08-17 13:45:14.781  2428-2806  ActivityManagerWrapper  com.miui.home                        E  getRecentTasksForceIncludingTaskIdIfValid: getRecentTasks: size=1
+                                                                                                     mainTaskId=967   userId=0   windowMode=1   baseIntent=Intent { act=android.intent.action.MAIN flag=268435456 cmp=ComponentInfo{com.cyyaw.parking.camera/com.cyyaw.parking.camera.MainActivity} }
