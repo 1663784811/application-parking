@@ -156,7 +156,7 @@ public class MainActivity extends BaseActivity {
     private static final String DEFAULT_MQTT_USERNAME = "admin";
     private static final String DEFAULT_MQTT_PASSWORD = "123456";
     private static final String DEFAULT_MQTT_CLIENT_ID = "aaa";
-    private static final String DEFAULT_LPR_CALLBACK = "http://192.168.222.38:8080/api/plate";
+    private static final String DEFAULT_LPR_CALLBACK = "http://192.168.222.38:18080/api/plate/recognize";
     private static final String DEFAULT_SIGNALING_SERVER = "ws://192.168.222.38:8080";
     private static final boolean DEFAULT_TIMESTAMP_VISIBLE = true;
     private static final String DEFAULT_CAMERA_ID = "CAM-001";
