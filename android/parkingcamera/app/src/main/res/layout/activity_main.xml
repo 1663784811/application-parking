@@ -152,6 +152,39 @@
                 android:textColor="#CCFFFFFF"
                 android:textSize="13sp" />
 
+            <TextView
+                android:id="@+id/mqttStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:drawablePadding="4dp"
+                android:gravity="center"
+                android:text="MQTT未配置"
+                android:textColor="#CCFFFFFF"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/signalingStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:drawablePadding="4dp"
+                android:gravity="center"
+                android:text="信令未配置"
+                android:textColor="#CCFFFFFF"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/callbackStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:drawablePadding="4dp"
+                android:gravity="center"
+                android:text="回调未配置"
+                android:textColor="#CCFFFFFF"
+                android:textSize="13sp" />
+
             <ImageView
                 android:id="@+id/settingsIcon"
                 android:layout_width="36dp"

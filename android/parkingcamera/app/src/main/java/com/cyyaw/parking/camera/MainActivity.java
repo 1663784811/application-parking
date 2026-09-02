@@ -102,6 +102,9 @@ public class MainActivity extends BaseActivity {
     // Bottom bar views
     private ImageView cameraSwitchIcon;
     private TextView networkStatus;
+    private TextView mqttStatus;
+    private TextView signalingStatus;
+    private TextView callbackStatus;
     private ImageView settingsIcon;
 
     // Settings panel views
@@ -114,6 +117,13 @@ public class MainActivity extends BaseActivity {
     // MQTT settings
     private View mqttSettingsRow;
     private TextView mqttSummary;
+
+    // MQTT client (Eclipse Paho)
+    private MqttClient mqtt;
+    private static final String TOPIC_PLATE_PREFIX = "/server/parking/";
+    private static final String TOPIC_PLATE_SUFFIX = "/plate";
+    private static final String TOPIC_CMD_PREFIX = "/client/parking/";
+    private static final String TOPIC_CMD_SUFFIX = "/cmd";
 
     // License-plate recognition callback URL
     private View lprCallbackRow;
@@ -206,6 +216,9 @@ public class MainActivity extends BaseActivity {
         // Initialize bottom bar views
         cameraSwitchIcon = findViewById(R.id.cameraSwitchIcon);
         networkStatus = findViewById(R.id.networkStatus);
+        mqttStatus = findViewById(R.id.mqttStatus);
+        signalingStatus = findViewById(R.id.signalingStatus);
+        callbackStatus = findViewById(R.id.callbackStatus);
         settingsIcon = findViewById(R.id.settingsIcon);
 
         // Initialize settings panel views
@@ -246,6 +259,9 @@ public class MainActivity extends BaseActivity {
 
         // Setup settings panel
         setupSettingsPanel();
+
+        // Build MQTT client (connects in onStart, reconnects on settings save)
+        setupMqttClient();
 
         // Start time updater
         startTimeUpdater();
@@ -336,6 +352,52 @@ public class MainActivity extends BaseActivity {
         networkStatus.setText(connected ? "网络已连接" : "网络未连接");
     }
 
+    /** 底部状态药丸：左侧彩色圆点 + 文字。文字保持中性白，状态用圆点颜色表达（与网络指示器一致）。 */
+    private void setStatusPill(TextView view, String text, int dotColor) {
+        Drawable dot = ContextCompat.getDrawable(this, R.drawable.ic_network_dot);
+        if (dot != null) {
+            dot = dot.mutate();
+            dot.setTint(dotColor);
+            view.setCompoundDrawablesRelativeWithIntrinsicBounds(dot, null, null, null);
+        }
+        view.setText(text);
+    }
+
+    private void updateMqttStatusBar() {
+        String address = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+                .getString(KEY_MQTT_ADDRESS, "");
+        if (address.isEmpty()) {
+            setStatusPill(mqttStatus, "MQTT未配置", 0x80FFFFFF);
+            return;
+        }
+        MqttClient.Status st = mqtt != null ? mqtt.getStatus() : MqttClient.Status.IDLE;
+        switch (st) {
+            case CONNECTED:
+                setStatusPill(mqttStatus, "MQTT已连接", 0xFF66FF66);   // 绿
+                break;
+            case CONNECTING:
+                setStatusPill(mqttStatus, "MQTT连接中", 0xFFFFC107);  // 琥珀
+                break;
+            default:                                                  // IDLE / DISCONNECTED
+                setStatusPill(mqttStatus, "MQTT未连接", 0xFFFF4444);  // 红
+                break;
+        }
+    }
+
+    private void updateSignalingStatusBar() {
+        String server = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+                .getString(KEY_SIGNALING_SERVER, "");
+        setStatusPill(signalingStatus, server.isEmpty() ? "信令未配置" : "信令已配置",
+                server.isEmpty() ? 0x80FFFFFF : 0xFF66FF66);
+    }
+
+    private void updateCallbackStatusBar() {
+        String url = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+                .getString(KEY_LPR_CALLBACK, "");
+        setStatusPill(callbackStatus, url.isEmpty() ? "回调未配置" : "回调已配置",
+                url.isEmpty() ? 0x80FFFFFF : 0xFF66FF66);
+    }
+
     // ───── Settings sliding panel ─────
 
     private void setupSettingsPanel() {
@@ -368,9 +430,33 @@ public class MainActivity extends BaseActivity {
     // ───── MQTT settings ─────
 
     private void updateMqttSummary() {
+        updateMqttStatusBar();
         String address = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
                 .getString(KEY_MQTT_ADDRESS, "");
-        mqttSummary.setText(address.isEmpty() ? "未配置" : address);
+        if (address.isEmpty()) {
+            mqttSummary.setText("未配置");
+            mqttSummary.setTextColor(0x80FFFFFF);
+            return;
+        }
+        MqttClient.Status st = mqtt != null ? mqtt.getStatus() : MqttClient.Status.IDLE;
+        String label;
+        int color;
+        switch (st) {
+            case CONNECTED:
+                label = "已连接";
+                color = 0xFF66FF66;  // 绿
+                break;
+            case CONNECTING:
+                label = "连接中";
+                color = 0xFFFFC107;  // 琥珀
+                break;
+            default:                  // IDLE / DISCONNECTED
+                label = "未连接";
+                color = 0xFFFF4444;  // 红
+                break;
+        }
+        mqttSummary.setText(address + " · " + label);
+        mqttSummary.setTextColor(color);
     }
 
     private void showMqttSettingsDialog() {
@@ -391,13 +477,23 @@ public class MainActivity extends BaseActivity {
         clientIdInput.setText(prefs.getString(KEY_MQTT_CLIENT_ID, ""));
 
         dialog.findViewById(R.id.dlgMqttSave).setOnClickListener(b -> {
+            String addr = addressInput.getText().toString().trim();
+            String user = usernameInput.getText().toString().trim();
+            String pass = passwordInput.getText().toString().trim();
+            String cid = clientIdInput.getText().toString().trim();
             prefs.edit()
-                    .putString(KEY_MQTT_ADDRESS, addressInput.getText().toString().trim())
-                    .putString(KEY_MQTT_USERNAME, usernameInput.getText().toString().trim())
-                    .putString(KEY_MQTT_PASSWORD, passwordInput.getText().toString().trim())
-                    .putString(KEY_MQTT_CLIENT_ID, clientIdInput.getText().toString().trim())
+                    .putString(KEY_MQTT_ADDRESS, addr)
+                    .putString(KEY_MQTT_USERNAME, user)
+                    .putString(KEY_MQTT_PASSWORD, pass)
+                    .putString(KEY_MQTT_CLIENT_ID, cid)
                     .apply();
             updateMqttSummary();
+            // 用新配置重连；clientId 可能变化，按新 clientId 重新登记下行指令主题
+            if (mqtt != null) {
+                mqtt.reconnect(addr, user, pass, cid);
+                mqtt.clearSubscriptions();
+                mqtt.subscribe(TOPIC_CMD_PREFIX + mqtt.getClientId() + TOPIC_CMD_SUFFIX, 1);
+            }
             toast("已保存");
             dialog.dismiss();
         });
@@ -405,9 +501,28 @@ public class MainActivity extends BaseActivity {
         dialog.show();
     }
 
+    private void setupMqttClient() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        String addr = prefs.getString(KEY_MQTT_ADDRESS, "");
+        String user = prefs.getString(KEY_MQTT_USERNAME, "");
+        String pass = prefs.getString(KEY_MQTT_PASSWORD, "");
+        String cid = prefs.getString(KEY_MQTT_CLIENT_ID, "");
+        mqtt = new MqttClient(addr, user, pass, cid,
+                (status, address) -> updateMqttSummary(),
+                new Handler(Looper.getMainLooper()));
+        mqtt.setMessageListener((topic, payload) -> {
+            String msg = payload == null ? "" : new String(payload, StandardCharsets.UTF_8);
+            toast("收到指令: " + msg);
+            Log.i("Mqtt", "cmd received: " + topic + " = " + msg);
+        });
+        // 预登记下行指令主题；连接建立后由 resubscribeAll 自动订阅
+        mqtt.subscribe(TOPIC_CMD_PREFIX + mqtt.getClientId() + TOPIC_CMD_SUFFIX, 1);
+    }
+
     // ───── License-plate recognition callback ─────
 
     private void updateLprCallbackSummary() {
+        updateCallbackStatusBar();
         String url = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
                 .getString(KEY_LPR_CALLBACK, "");
         lprCallbackSummary.setText(url.isEmpty() ? "未配置" : url);
@@ -482,6 +597,7 @@ public class MainActivity extends BaseActivity {
     // ───── Signaling server ─────
 
     private void updateSignalingServerSummary() {
+        updateSignalingStatusBar();
         String server = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
                 .getString(KEY_SIGNALING_SERVER, "");
         signalingServerSummary.setText(server.isEmpty() ? "未配置" : server);
@@ -577,6 +693,18 @@ public class MainActivity extends BaseActivity {
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        if (mqtt != null) mqtt.connect();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (mqtt != null) mqtt.disconnect();
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
         openCamera();
@@ -593,6 +721,10 @@ public class MainActivity extends BaseActivity {
         super.onDestroy();
         cameraSurface.getHolder().removeCallback(surfaceCallback);
         closeCamera();
+        if (mqtt != null) {
+            mqtt.disconnect();
+            mqtt = null;
+        }
         if (lpr != null) {
             lpr.close();
             lpr = null;
@@ -922,18 +1054,22 @@ public class MainActivity extends BaseActivity {
     }
 
     /**
-     * 把识别到的最高置信度车牌 POST 到配置的回调地址（已在 LPR 后台线程调用）。
-     * 未配置地址 / 置信度不足 / 同一车牌冷却期内 都直接跳过。
+     * 把识别到的最高置信度车牌上报（已在 LPR 后台线程调用）。
+     * HTTP 回调与 MQTT 发布为两条独立通道，任一可用即上报；置信度不足 / 同一车牌
+     * 冷却期内都直接跳过。去重以「至少一条通道成功」为准。
      */
     private void reportPlateIfNeeded(java.util.List<LprRecognizer.PlateResult> results) {
         if (results == null || results.isEmpty()) {
             return;
         }
-        String callback = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
-                .getString(KEY_LPR_CALLBACK, "");
-        if (callback.trim().isEmpty()) {
-            return;
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        String callback = prefs.getString(KEY_LPR_CALLBACK, "");
+        boolean hasHttp = !callback.trim().isEmpty();
+        boolean hasMqtt = (mqtt != null && mqtt.isConnected());
+        if (!hasHttp && !hasMqtt) {
+            return; // 两条通道都不可用
         }
+
         LprRecognizer.PlateResult best = null;
         for (LprRecognizer.PlateResult r : results) {
             if (best == null || r.confidence > best.confidence) {
@@ -950,7 +1086,6 @@ public class MainActivity extends BaseActivity {
         }
 
         final String plate = best.plate;
-        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         final String cameraId = prefs.getString(KEY_CAMERA_ID, "CAM-001");
         final String barrierId = prefs.getString(KEY_BARRIER_ID, "B-001");
 
@@ -969,14 +1104,29 @@ public class MainActivity extends BaseActivity {
             return;
         }
 
+        final String httpUrl = callback.trim();
+        final String plateTopic = (mqtt != null)
+                ? TOPIC_PLATE_PREFIX + mqtt.getClientId() + TOPIC_PLATE_SUFFIX
+                : null;
+        final boolean doHttp = hasHttp;
+        final boolean doMqtt = hasMqtt;
+
         lprHandler.post(() -> {
-            boolean ok = postJson(callback, payload);
-            if (ok) {
+            boolean httpOk = false;
+            if (doHttp) {
+                httpOk = postJson(httpUrl, payload);
+            }
+            boolean mqttOk = false;
+            if (doMqtt) {
+                mqttOk = mqtt.publish(plateTopic,
+                        payload.getBytes(StandardCharsets.UTF_8), 1);
+            }
+            if (httpOk || mqttOk) {
                 lastReportedPlate = plate;
                 lastReportAt = System.currentTimeMillis();
-                Log.i("Lpr", "reported plate " + plate);
+                Log.i("Lpr", "reported plate " + plate + " http=" + httpOk + " mqtt=" + mqttOk);
             } else {
-                Log.w("Lpr", "report plate failed: " + callback);
+                Log.w("Lpr", "report plate failed: http=" + httpOk + " mqtt=" + mqttOk);
             }
         });
     }

@@ -19,3 +19,8 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Eclipse Paho MQTT client (used for broker connection; minify is off for now,
+# kept here so R8 doesn't strip reflection-used internals when enabled later).
+-keep class org.eclipse.paho.** { *; }
+-dontwarn org.eclipse.paho.**
