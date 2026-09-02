@@ -32,7 +32,7 @@ public class ConnectFilterImpl implements ConnectFilter {
 //        }
 
         ValidateRest validateRest = new ValidateRest();
-        validateRest.setRole("");
+        validateRest.setRole("admin");
         validateRest.setAllowConnect(true);
         return validateRest;
     }
