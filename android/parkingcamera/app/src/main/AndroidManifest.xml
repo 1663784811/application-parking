@@ -17,7 +17,6 @@
         android:screenOrientation="landscape"
         android:configChanges="orientation|screenSize"
         android:usesCleartextTraffic="true"
-        tools:targetApi="28"
         android:supportsRtl="true"
         android:theme="@style/Theme.Parkingcamera">
 

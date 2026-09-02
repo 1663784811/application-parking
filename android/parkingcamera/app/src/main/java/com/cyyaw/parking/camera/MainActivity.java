@@ -1,9 +1,8 @@
 package com.cyyaw.parking.camera;
 
 import android.Manifest;
-import android.content.Context;
-import android.content.Intent;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -34,11 +33,8 @@ import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.View;
 import android.view.WindowMetrics;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -53,7 +49,6 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -148,6 +143,14 @@ public class MainActivity extends BaseActivity {
     private static final String KEY_BARRIER_ID = "barrier_id";
     private static final String KEY_SIGNALING_SERVER = "signaling_server";
 
+    // 默认值：首次启动写入 SharedPreferences，使设置面板的信息持久化保存
+    private static final String DEFAULT_MQTT_USERNAME = "admin";
+    private static final String DEFAULT_MQTT_PASSWORD = "123456";
+    private static final String DEFAULT_MQTT_CLIENT_ID = "aaa";
+    private static final boolean DEFAULT_TIMESTAMP_VISIBLE = true;
+    private static final String DEFAULT_CAMERA_ID = "CAM-001";
+    private static final String DEFAULT_BARRIER_ID = "B-001";
+
     // Camera IDs for the spinner
     private List<String> allCameraIds = new ArrayList<>();
 
@@ -210,6 +213,9 @@ public class MainActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // 首次启动写入默认值，使设置面板信息持久化保存
+        ensureDefaultSettings();
+
         cameraSurface = findViewById(R.id.cameraSurface);
         cameraManager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
 
@@ -246,9 +252,9 @@ public class MainActivity extends BaseActivity {
 
         // Restore persisted basic-info state into the bottom bar + overlay
         SharedPreferences bootPrefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        bottomCameraId.setText(bootPrefs.getString(KEY_CAMERA_ID, "CAM-001"));
-        bottomBarrierId.setText(bootPrefs.getString(KEY_BARRIER_ID, "B-001"));
-        timeVisible = bootPrefs.getBoolean(KEY_TIMESTAMP_VISIBLE, true);
+        bottomCameraId.setText(bootPrefs.getString(KEY_CAMERA_ID, DEFAULT_CAMERA_ID));
+        bottomBarrierId.setText(bootPrefs.getString(KEY_BARRIER_ID, DEFAULT_BARRIER_ID));
+        timeVisible = bootPrefs.getBoolean(KEY_TIMESTAMP_VISIBLE, DEFAULT_TIMESTAMP_VISIBLE);
         timeDisplay.setVisibility(timeVisible ? View.VISIBLE : View.GONE);
 
         // Setup camera switch
@@ -315,9 +321,7 @@ public class MainActivity extends BaseActivity {
         updateNetworkStatus(cm);
 
         // Listen for changes
-        NetworkRequest request = new NetworkRequest.Builder()
-                .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-                .build();
+        NetworkRequest request = new NetworkRequest.Builder().addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET).build();
         cm.registerNetworkCallback(request, new ConnectivityManager.NetworkCallback() {
             @Override
             public void onAvailable(@NonNull Network network) {
@@ -330,8 +334,7 @@ public class MainActivity extends BaseActivity {
             }
 
             @Override
-            public void onCapabilitiesChanged(@NonNull Network network,
-                                              @NonNull NetworkCapabilities capabilities) {
+            public void onCapabilitiesChanged(@NonNull Network network, @NonNull NetworkCapabilities capabilities) {
                 runOnUiThread(() -> updateNetworkStatus(cm));
             }
         });
@@ -340,8 +343,7 @@ public class MainActivity extends BaseActivity {
     private void updateNetworkStatus(ConnectivityManager cm) {
         Network activeNetwork = cm.getActiveNetwork();
         NetworkCapabilities caps = cm.getNetworkCapabilities(activeNetwork);
-        boolean connected = caps != null
-                && caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
+        boolean connected = caps != null && caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
 
         Drawable dot = ContextCompat.getDrawable(this, R.drawable.ic_network_dot);
         if (dot != null) {
@@ -352,7 +354,9 @@ public class MainActivity extends BaseActivity {
         networkStatus.setText(connected ? "网络已连接" : "网络未连接");
     }
 
-    /** 底部状态药丸：左侧彩色圆点 + 文字。文字保持中性白，状态用圆点颜色表达（与网络指示器一致）。 */
+    /**
+     * 底部状态药丸：左侧彩色圆点 + 文字。文字保持中性白，状态用圆点颜色表达（与网络指示器一致）。
+     */
     private void setStatusPill(TextView view, String text, int dotColor) {
         Drawable dot = ContextCompat.getDrawable(this, R.drawable.ic_network_dot);
         if (dot != null) {
@@ -364,8 +368,7 @@ public class MainActivity extends BaseActivity {
     }
 
     private void updateMqttStatusBar() {
-        String address = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
-                .getString(KEY_MQTT_ADDRESS, "");
+        String address = getSharedPreferences(PREFS_NAME, MODE_PRIVATE).getString(KEY_MQTT_ADDRESS, "");
         if (address.isEmpty()) {
             setStatusPill(mqttStatus, "MQTT未配置", 0x80FFFFFF);
             return;
@@ -385,17 +388,13 @@ public class MainActivity extends BaseActivity {
     }
 
     private void updateSignalingStatusBar() {
-        String server = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
-                .getString(KEY_SIGNALING_SERVER, "");
-        setStatusPill(signalingStatus, server.isEmpty() ? "信令未配置" : "信令已配置",
-                server.isEmpty() ? 0x80FFFFFF : 0xFF66FF66);
+        String server = getSharedPreferences(PREFS_NAME, MODE_PRIVATE).getString(KEY_SIGNALING_SERVER, "");
+        setStatusPill(signalingStatus, server.isEmpty() ? "信令未配置" : "信令已配置", server.isEmpty() ? 0x80FFFFFF : 0xFF66FF66);
     }
 
     private void updateCallbackStatusBar() {
-        String url = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
-                .getString(KEY_LPR_CALLBACK, "");
-        setStatusPill(callbackStatus, url.isEmpty() ? "回调未配置" : "回调已配置",
-                url.isEmpty() ? 0x80FFFFFF : 0xFF66FF66);
+        String url = getSharedPreferences(PREFS_NAME, MODE_PRIVATE).getString(KEY_LPR_CALLBACK, "");
+        setStatusPill(callbackStatus, url.isEmpty() ? "回调未配置" : "回调已配置", url.isEmpty() ? 0x80FFFFFF : 0xFF66FF66);
     }
 
     // ───── Settings sliding panel ─────
@@ -431,8 +430,7 @@ public class MainActivity extends BaseActivity {
 
     private void updateMqttSummary() {
         updateMqttStatusBar();
-        String address = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
-                .getString(KEY_MQTT_ADDRESS, "");
+        String address = getSharedPreferences(PREFS_NAME, MODE_PRIVATE).getString(KEY_MQTT_ADDRESS, "");
         if (address.isEmpty()) {
             mqttSummary.setText("未配置");
             mqttSummary.setTextColor(0x80FFFFFF);
@@ -472,21 +470,16 @@ public class MainActivity extends BaseActivity {
         EditText clientIdInput = dialog.findViewById(R.id.dlgMqttClientIdInput);
 
         addressInput.setText(prefs.getString(KEY_MQTT_ADDRESS, "tcp://192.168.1.100:1883"));
-        usernameInput.setText(prefs.getString(KEY_MQTT_USERNAME, ""));
-        passwordInput.setText(prefs.getString(KEY_MQTT_PASSWORD, ""));
-        clientIdInput.setText(prefs.getString(KEY_MQTT_CLIENT_ID, ""));
+        usernameInput.setText(prefs.getString(KEY_MQTT_USERNAME, DEFAULT_MQTT_USERNAME));
+        passwordInput.setText(prefs.getString(KEY_MQTT_PASSWORD, DEFAULT_MQTT_PASSWORD));
+        clientIdInput.setText(prefs.getString(KEY_MQTT_CLIENT_ID, DEFAULT_MQTT_CLIENT_ID));
 
         dialog.findViewById(R.id.dlgMqttSave).setOnClickListener(b -> {
             String addr = addressInput.getText().toString().trim();
             String user = usernameInput.getText().toString().trim();
             String pass = passwordInput.getText().toString().trim();
             String cid = clientIdInput.getText().toString().trim();
-            prefs.edit()
-                    .putString(KEY_MQTT_ADDRESS, addr)
-                    .putString(KEY_MQTT_USERNAME, user)
-                    .putString(KEY_MQTT_PASSWORD, pass)
-                    .putString(KEY_MQTT_CLIENT_ID, cid)
-                    .apply();
+            prefs.edit().putString(KEY_MQTT_ADDRESS, addr).putString(KEY_MQTT_USERNAME, user).putString(KEY_MQTT_PASSWORD, pass).putString(KEY_MQTT_CLIENT_ID, cid).apply();
             updateMqttSummary();
             // 用新配置重连；clientId 可能变化，按新 clientId 重新登记下行指令主题
             if (mqtt != null) {
@@ -501,15 +494,31 @@ public class MainActivity extends BaseActivity {
         dialog.show();
     }
 
+    /**
+     * 首次启动时把默认值写入 SharedPreferences，使设置面板的信息持久化保存
+     *（而非仅作为 {@code getString} 的回退默认值）。仅写入尚未存在的键，用户在
+     * 弹窗里改过的配置不受影响。服务器地址（MQTT broker / 回调 / 信令）不预置
+     * 默认值，保持"未配置"状态，由用户在设置弹窗里填写后再持久化。
+     */
+    private void ensureDefaultSettings() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        SharedPreferences.Editor e = prefs.edit();
+        if (!prefs.contains(KEY_MQTT_USERNAME)) e.putString(KEY_MQTT_USERNAME, DEFAULT_MQTT_USERNAME);
+        if (!prefs.contains(KEY_MQTT_PASSWORD)) e.putString(KEY_MQTT_PASSWORD, DEFAULT_MQTT_PASSWORD);
+        if (!prefs.contains(KEY_MQTT_CLIENT_ID)) e.putString(KEY_MQTT_CLIENT_ID, DEFAULT_MQTT_CLIENT_ID);
+        if (!prefs.contains(KEY_TIMESTAMP_VISIBLE)) e.putBoolean(KEY_TIMESTAMP_VISIBLE, DEFAULT_TIMESTAMP_VISIBLE);
+        if (!prefs.contains(KEY_CAMERA_ID)) e.putString(KEY_CAMERA_ID, DEFAULT_CAMERA_ID);
+        if (!prefs.contains(KEY_BARRIER_ID)) e.putString(KEY_BARRIER_ID, DEFAULT_BARRIER_ID);
+        e.apply();
+    }
+
     private void setupMqttClient() {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         String addr = prefs.getString(KEY_MQTT_ADDRESS, "");
-        String user = prefs.getString(KEY_MQTT_USERNAME, "");
-        String pass = prefs.getString(KEY_MQTT_PASSWORD, "");
-        String cid = prefs.getString(KEY_MQTT_CLIENT_ID, "");
-        mqtt = new MqttClient(addr, user, pass, cid,
-                (status, address) -> updateMqttSummary(),
-                new Handler(Looper.getMainLooper()));
+        String user = prefs.getString(KEY_MQTT_USERNAME, DEFAULT_MQTT_USERNAME);
+        String pass = prefs.getString(KEY_MQTT_PASSWORD, DEFAULT_MQTT_PASSWORD);
+        String cid = prefs.getString(KEY_MQTT_CLIENT_ID, DEFAULT_MQTT_CLIENT_ID);
+        mqtt = new MqttClient(addr, user, pass, cid, (status, address) -> updateMqttSummary(), new Handler(Looper.getMainLooper()));
         mqtt.setMessageListener((topic, payload) -> {
             String msg = payload == null ? "" : new String(payload, StandardCharsets.UTF_8);
             toast("收到指令: " + msg);
@@ -523,8 +532,7 @@ public class MainActivity extends BaseActivity {
 
     private void updateLprCallbackSummary() {
         updateCallbackStatusBar();
-        String url = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
-                .getString(KEY_LPR_CALLBACK, "");
+        String url = getSharedPreferences(PREFS_NAME, MODE_PRIVATE).getString(KEY_LPR_CALLBACK, "");
         lprCallbackSummary.setText(url.isEmpty() ? "未配置" : url);
     }
 
@@ -537,9 +545,7 @@ public class MainActivity extends BaseActivity {
         EditText callbackInput = dialog.findViewById(R.id.dlgLprCallbackInput);
         callbackInput.setText(prefs.getString(KEY_LPR_CALLBACK, "http://192.168.1.200:8080/api/plate"));
         dialog.findViewById(R.id.dlgLprSave).setOnClickListener(b -> {
-            prefs.edit()
-                    .putString(KEY_LPR_CALLBACK, callbackInput.getText().toString().trim())
-                    .apply();
+            prefs.edit().putString(KEY_LPR_CALLBACK, callbackInput.getText().toString().trim()).apply();
             updateLprCallbackSummary();
             toast("已保存");
             dialog.dismiss();
@@ -551,8 +557,8 @@ public class MainActivity extends BaseActivity {
 
     private void updateBasicInfoSummary() {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        String cameraIdVal = prefs.getString(KEY_CAMERA_ID, "CAM-001");
-        String barrierIdVal = prefs.getString(KEY_BARRIER_ID, "B-001");
+        String cameraIdVal = prefs.getString(KEY_CAMERA_ID, DEFAULT_CAMERA_ID);
+        String barrierIdVal = prefs.getString(KEY_BARRIER_ID, DEFAULT_BARRIER_ID);
         basicInfoSummary.setText(cameraIdVal + " · " + barrierIdVal);
     }
 
@@ -563,26 +569,21 @@ public class MainActivity extends BaseActivity {
         dialog.setCanceledOnTouchOutside(true);
 
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        androidx.appcompat.widget.SwitchCompat timestampSw =
-                dialog.findViewById(R.id.dlgTimestampSwitch);
+        androidx.appcompat.widget.SwitchCompat timestampSw = dialog.findViewById(R.id.dlgTimestampSwitch);
         EditText cameraIdInput = dialog.findViewById(R.id.dlgCameraIdInput);
         EditText barrierIdDlg = dialog.findViewById(R.id.dlgBarrierIdInput);
 
-        timestampSw.setChecked(prefs.getBoolean(KEY_TIMESTAMP_VISIBLE, true));
-        cameraIdInput.setText(prefs.getString(KEY_CAMERA_ID, "CAM-001"));
-        barrierIdDlg.setText(prefs.getString(KEY_BARRIER_ID, "B-001"));
+        timestampSw.setChecked(prefs.getBoolean(KEY_TIMESTAMP_VISIBLE, DEFAULT_TIMESTAMP_VISIBLE));
+        cameraIdInput.setText(prefs.getString(KEY_CAMERA_ID, DEFAULT_CAMERA_ID));
+        barrierIdDlg.setText(prefs.getString(KEY_BARRIER_ID, DEFAULT_BARRIER_ID));
 
         dialog.findViewById(R.id.dlgBasicSave).setOnClickListener(b -> {
             boolean checked = timestampSw.isChecked();
             String camId = cameraIdInput.getText().toString().trim();
             String barId = barrierIdDlg.getText().toString().trim();
-            if (camId.isEmpty()) camId = "CAM-001";
-            if (barId.isEmpty()) barId = "B-001";
-            prefs.edit()
-                    .putBoolean(KEY_TIMESTAMP_VISIBLE, checked)
-                    .putString(KEY_CAMERA_ID, camId)
-                    .putString(KEY_BARRIER_ID, barId)
-                    .apply();
+            if (camId.isEmpty()) camId = DEFAULT_CAMERA_ID;
+            if (barId.isEmpty()) barId = DEFAULT_BARRIER_ID;
+            prefs.edit().putBoolean(KEY_TIMESTAMP_VISIBLE, checked).putString(KEY_CAMERA_ID, camId).putString(KEY_BARRIER_ID, barId).apply();
             timeVisible = checked;
             timeDisplay.setVisibility(checked ? View.VISIBLE : View.GONE);
             bottomCameraId.setText(camId);
@@ -598,8 +599,7 @@ public class MainActivity extends BaseActivity {
 
     private void updateSignalingServerSummary() {
         updateSignalingStatusBar();
-        String server = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
-                .getString(KEY_SIGNALING_SERVER, "");
+        String server = getSharedPreferences(PREFS_NAME, MODE_PRIVATE).getString(KEY_SIGNALING_SERVER, "");
         signalingServerSummary.setText(server.isEmpty() ? "未配置" : server);
     }
 
@@ -612,9 +612,7 @@ public class MainActivity extends BaseActivity {
         EditText serverInput = dialog.findViewById(R.id.dlgSignalingServerInput);
         serverInput.setText(prefs.getString(KEY_SIGNALING_SERVER, "ws://192.168.1.100:8080"));
         dialog.findViewById(R.id.dlgSignalingSave).setOnClickListener(b -> {
-            prefs.edit()
-                    .putString(KEY_SIGNALING_SERVER, serverInput.getText().toString().trim())
-                    .apply();
+            prefs.edit().putString(KEY_SIGNALING_SERVER, serverInput.getText().toString().trim()).apply();
             updateSignalingServerSummary();
             toast("已保存");
             dialog.dismiss();
@@ -632,17 +630,11 @@ public class MainActivity extends BaseActivity {
 
         // Animate overlay fade-in
         settingsOverlay.setAlpha(0f);
-        settingsOverlay.animate()
-                .alpha(1f)
-                .setDuration(250)
-                .start();
+        settingsOverlay.animate().alpha(1f).setDuration(250).start();
 
         // Animate panel slide-in from right
         settingsPanel.setTranslationX(settingsPanel.getWidth());
-        settingsPanel.animate()
-                .translationX(0f)
-                .setDuration(300)
-                .start();
+        settingsPanel.animate().translationX(0f).setDuration(300).start();
     }
 
     private void closeSettingsPanel() {
@@ -650,21 +642,13 @@ public class MainActivity extends BaseActivity {
         isPanelOpen = false;
 
         // Animate overlay fade-out
-        settingsOverlay.animate()
-                .alpha(0f)
-                .setDuration(200)
-                .withEndAction(() -> settingsOverlay.setVisibility(View.GONE))
-                .start();
+        settingsOverlay.animate().alpha(0f).setDuration(200).withEndAction(() -> settingsOverlay.setVisibility(View.GONE)).start();
 
         // Animate panel slide-out to right
-        settingsPanel.animate()
-                .translationX(settingsPanel.getWidth())
-                .setDuration(250)
-                .withEndAction(() -> {
-                    settingsPanel.setVisibility(View.GONE);
-                    settingsPanel.setTranslationX(settingsPanel.getWidth());
-                })
-                .start();
+        settingsPanel.animate().translationX(settingsPanel.getWidth()).setDuration(250).withEndAction(() -> {
+            settingsPanel.setVisibility(View.GONE);
+            settingsPanel.setTranslationX(settingsPanel.getWidth());
+        }).start();
     }
 
     /**
@@ -736,8 +720,7 @@ public class MainActivity extends BaseActivity {
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == REQUEST_CAMERA_PERMISSION) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -764,15 +747,16 @@ public class MainActivity extends BaseActivity {
         }
     }
 
-    /** Pick the supported preview size whose aspect ratio best matches the (landscape) screen. */
+    /**
+     * Pick the supported preview size whose aspect ratio best matches the (landscape) screen.
+     */
     private Size choosePreviewSize() {
         if (cameraId == null) {
             return null;
         }
         try {
             CameraCharacteristics cs = cameraManager.getCameraCharacteristics(cameraId);
-            StreamConfigurationMap map =
-                    cs.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+            StreamConfigurationMap map = cs.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
             if (map == null) {
                 return null;
             }
@@ -807,9 +791,7 @@ public class MainActivity extends BaseActivity {
                 double ratio = (double) cw / ch;
                 double diff = Math.abs(ratio - targetRatio);
                 long area = (long) cw * ch;
-                if (best == null
-                        || diff < bestDiff - 1e-9
-                        || (Math.abs(diff - bestDiff) < 1e-9 && area > bestArea)) {
+                if (best == null || diff < bestDiff - 1e-9 || (Math.abs(diff - bestDiff) < 1e-9 && area > bestArea)) {
                     bestDiff = diff;
                     bestArea = area;
                     best = s; // original, guaranteed-supported size
@@ -821,7 +803,9 @@ public class MainActivity extends BaseActivity {
         }
     }
 
-    /** Apply the chosen preview size to the surface (once). Letterboxes the view to match. */
+    /**
+     * Apply the chosen preview size to the surface (once). Letterboxes the view to match.
+     */
     private void configureSurface(@NonNull SurfaceHolder holder) {
         if (surfaceConfigured) {
             return;
@@ -844,10 +828,8 @@ public class MainActivity extends BaseActivity {
         if (!surfaceReady || cameraDevice != null || opening) {
             return;
         }
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA_PERMISSION);
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA_PERMISSION);
             return;
         }
         try {
@@ -872,39 +854,33 @@ public class MainActivity extends BaseActivity {
             List<Surface> targets = new ArrayList<>();
             targets.add(surface);
             if (lprReader == null && previewSize != null) {
-                lprReader = ImageReader.newInstance(previewSize.getWidth(),
-                        previewSize.getHeight(), ImageFormat.YUV_420_888, 2);
+                lprReader = ImageReader.newInstance(previewSize.getWidth(), previewSize.getHeight(), ImageFormat.YUV_420_888, 2);
                 lprReader.setOnImageAvailableListener(lprFrameListener, lprHandler);
             }
             if (lprReader != null) {
                 targets.add(lprReader.getSurface());
             }
-            CaptureRequest.Builder builder =
-                    cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+            CaptureRequest.Builder builder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
             for (Surface t : targets) {
                 builder.addTarget(t);
             }
-            builder.set(CaptureRequest.CONTROL_AF_MODE,
-                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO);
-            cameraDevice.createCaptureSession(
-                    targets,
-                    new CameraCaptureSession.StateCallback() {
-                        @Override
-                        public void onConfigured(@NonNull CameraCaptureSession session) {
-                            captureSession = session;
-                            try {
-                                session.setRepeatingRequest(builder.build(), null, null);
-                            } catch (CameraAccessException e) {
-                                toast("Preview start failed");
-                            }
-                        }
+            builder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO);
+            cameraDevice.createCaptureSession(targets, new CameraCaptureSession.StateCallback() {
+                @Override
+                public void onConfigured(@NonNull CameraCaptureSession session) {
+                    captureSession = session;
+                    try {
+                        session.setRepeatingRequest(builder.build(), null, null);
+                    } catch (CameraAccessException e) {
+                        toast("Preview start failed");
+                    }
+                }
 
-                        @Override
-                        public void onConfigureFailed(@NonNull CameraCaptureSession session) {
-                            toast("Camera preview setup failed");
-                        }
-                    },
-                    null);
+                @Override
+                public void onConfigureFailed(@NonNull CameraCaptureSession session) {
+                    toast("Camera preview setup failed");
+                }
+            }, null);
         } catch (CameraAccessException e) {
             toast("Camera session error");
         }
@@ -982,7 +958,9 @@ public class MainActivity extends BaseActivity {
         }
     };
 
-    /** YUV_420_888 -> ARGB_8888。 */
+    /**
+     * YUV_420_888 -> ARGB_8888。
+     */
     private Bitmap yuvToBitmap(Image image) {
         int w = image.getWidth();
         int h = image.getHeight();
@@ -1019,7 +997,9 @@ public class MainActivity extends BaseActivity {
         return v < 0 ? 0 : Math.min(v, 255);
     }
 
-    /** 在 UI 线程展示识别结果（取置信度最高者），并画框。 */
+    /**
+     * 在 UI 线程展示识别结果（取置信度最高者），并画框。
+     */
     private void showLprResults(java.util.List<LprRecognizer.PlateResult> results) {
         runOnUiThread(() -> {
             if (results == null || results.isEmpty()) {
@@ -1037,8 +1017,7 @@ public class MainActivity extends BaseActivity {
                 return;
             }
             String typeName = plateTypeName(best.plateType);
-            plateResult.setText(String.format(Locale.getDefault(),
-                    "%s  %.2f  %s", best.plate, best.confidence, typeName));
+            plateResult.setText(String.format(Locale.getDefault(), "%s  %.2f  %s", best.plate, best.confidence, typeName));
 
             // 帧坐标 -> 屏幕坐标：SurfaceView 按预览比例居中，换算偏移+缩放。
             // 识别帧与 SurfaceView 显示的是同一路 buffer（同为 previewSize），方向一致，无需旋转。
@@ -1048,8 +1027,7 @@ public class MainActivity extends BaseActivity {
             int fh = previewSize != null ? previewSize.getHeight() : vh;
             float sx = (float) vw / fw;
             float sy = (float) vh / fh;
-            plateOverlay.setResults(results,
-                    cameraSurface.getLeft(), cameraSurface.getTop(), sx, sy);
+            plateOverlay.setResults(results, cameraSurface.getLeft(), cameraSurface.getTop(), sx, sy);
         });
     }
 
@@ -1080,8 +1058,7 @@ public class MainActivity extends BaseActivity {
             return;
         }
         long now = System.currentTimeMillis();
-        if (best.plate.equals(lastReportedPlate)
-                && now - lastReportAt < LPR_REPORT_COOLDOWN_MS) {
+        if (best.plate.equals(lastReportedPlate) && now - lastReportAt < LPR_REPORT_COOLDOWN_MS) {
             return; // 同一车牌冷却期内
         }
 
@@ -1105,9 +1082,7 @@ public class MainActivity extends BaseActivity {
         }
 
         final String httpUrl = callback.trim();
-        final String plateTopic = (mqtt != null)
-                ? TOPIC_PLATE_PREFIX + mqtt.getClientId() + TOPIC_PLATE_SUFFIX
-                : null;
+        final String plateTopic = (mqtt != null) ? TOPIC_PLATE_PREFIX + mqtt.getClientId() + TOPIC_PLATE_SUFFIX : null;
         final boolean doHttp = hasHttp;
         final boolean doMqtt = hasMqtt;
 
@@ -1118,8 +1093,7 @@ public class MainActivity extends BaseActivity {
             }
             boolean mqttOk = false;
             if (doMqtt) {
-                mqttOk = mqtt.publish(plateTopic,
-                        payload.getBytes(StandardCharsets.UTF_8), 1);
+                mqttOk = mqtt.publish(plateTopic, payload.getBytes(StandardCharsets.UTF_8), 1);
             }
             if (httpOk || mqttOk) {
                 lastReportedPlate = plate;
@@ -1131,7 +1105,9 @@ public class MainActivity extends BaseActivity {
         });
     }
 
-    /** 发送 JSON 到回调地址，返回是否成功。 */
+    /**
+     * 发送 JSON 到回调地址，返回是否成功。
+     */
     private boolean postJson(String urlStr, String json) {
         HttpURLConnection conn = null;
         try {
@@ -1161,17 +1137,28 @@ public class MainActivity extends BaseActivity {
 
     private static String plateTypeName(int t) {
         switch (t) {
-            case LprRecognizer.PLATE_BLUE: return "蓝牌";
-            case LprRecognizer.PLATE_YELLOW_SINGLE: return "黄牌单层";
-            case LprRecognizer.PLATE_YELLOW_DOUBLE: return "黄牌双层";
-            case LprRecognizer.PLATE_WHITE_SINGLE: return "白牌";
-            case LprRecognizer.PLATE_GREEN: return "绿牌";
-            case LprRecognizer.PLATE_BLACK_HK_MACAO: return "港澳黑牌";
-            case LprRecognizer.PLATE_HK_SINGLE: return "香港单层";
-            case LprRecognizer.PLATE_HK_DOUBLE: return "香港双层";
-            case LprRecognizer.PLATE_MACAO_SINGLE: return "澳门单层";
-            case LprRecognizer.PLATE_MACAO_DOUBLE: return "澳门双层";
-            default: return "未知";
+            case LprRecognizer.PLATE_BLUE:
+                return "蓝牌";
+            case LprRecognizer.PLATE_YELLOW_SINGLE:
+                return "黄牌单层";
+            case LprRecognizer.PLATE_YELLOW_DOUBLE:
+                return "黄牌双层";
+            case LprRecognizer.PLATE_WHITE_SINGLE:
+                return "白牌";
+            case LprRecognizer.PLATE_GREEN:
+                return "绿牌";
+            case LprRecognizer.PLATE_BLACK_HK_MACAO:
+                return "港澳黑牌";
+            case LprRecognizer.PLATE_HK_SINGLE:
+                return "香港单层";
+            case LprRecognizer.PLATE_HK_DOUBLE:
+                return "香港双层";
+            case LprRecognizer.PLATE_MACAO_SINGLE:
+                return "澳门单层";
+            case LprRecognizer.PLATE_MACAO_DOUBLE:
+                return "澳门双层";
+            default:
+                return "未知";
         }
     }
 
