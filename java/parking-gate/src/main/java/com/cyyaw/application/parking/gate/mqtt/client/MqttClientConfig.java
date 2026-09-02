@@ -1,4 +1,4 @@
-package com.cyyaw.application.parking.gate.mqtt;
+package com.cyyaw.application.parking.gate.mqtt.client;
 
 import com.cyyaw.mqtt.client.MqttApplicationClient;
 import com.cyyaw.mqtt.client.MqttCallBack;

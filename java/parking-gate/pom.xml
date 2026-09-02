@@ -81,6 +81,14 @@
             <version>1.0.1</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.cyyaw</groupId>
+            <artifactId>netty-mqtt-spring-boot-start</artifactId>
+            <version>1.0.1</version>
+        </dependency>
+
+
+
     </dependencies>
 
 

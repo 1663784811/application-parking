@@ -41,9 +41,6 @@ gate:
 # enabled=false 时不连接、不影响应用启动；需要时改为 true 并配置 tcp 服务器地址
 cyyaw:
   mqtt:
-    enabled: true
-    timeOut: 1000
-    defaultQos: 1
     topics:
       - aaaaaaa
       - cxccccc
@@ -53,3 +50,10 @@ cyyaw:
         password: 123456
         clientId: sssddd
 
+
+netty:
+  mqtt:
+    name: Node1
+    tcp-port: 11883
+    web-port: 38083
+    web-path: /mqtt

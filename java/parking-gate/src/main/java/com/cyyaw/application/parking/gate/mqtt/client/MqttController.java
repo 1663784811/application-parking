@@ -1,4 +1,4 @@
-package com.cyyaw.application.parking.gate.mqtt;
+package com.cyyaw.application.parking.gate.mqtt.client;
 
 import com.cyyaw.application.parking.gate.common.R;
 import io.swagger.v3.oas.annotations.Operation;
