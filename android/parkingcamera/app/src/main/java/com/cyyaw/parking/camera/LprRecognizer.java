@@ -50,6 +50,34 @@ public class LprRecognizer {
     public static final int PLATE_MACAO_DOUBLE = 8;
     public static final int PLATE_YELLOW_DOUBLE = 9;
 
+    /** 把车牌类型常量映射成中文名称（PLATE_UNKNOWN 及未知值返回"未知"）。 */
+    public static String plateTypeName(int t) {
+        switch (t) {
+            case PLATE_BLUE:
+                return "蓝牌";
+            case PLATE_YELLOW_SINGLE:
+                return "黄牌单层";
+            case PLATE_YELLOW_DOUBLE:
+                return "黄牌双层";
+            case PLATE_WHITE_SINGLE:
+                return "白牌";
+            case PLATE_GREEN:
+                return "绿牌";
+            case PLATE_BLACK_HK_MACAO:
+                return "港澳黑牌";
+            case PLATE_HK_SINGLE:
+                return "香港单层";
+            case PLATE_HK_DOUBLE:
+                return "香港双层";
+            case PLATE_MACAO_SINGLE:
+                return "澳门单层";
+            case PLATE_MACAO_DOUBLE:
+                return "澳门双层";
+            default:
+                return "未知";
+        }
+    }
+
     private static final int MONO = 0;    // 单层车牌
     private static final int DOUBLE = 1;  // 双层车牌
 
