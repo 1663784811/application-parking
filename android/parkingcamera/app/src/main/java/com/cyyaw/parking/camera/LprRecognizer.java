@@ -147,6 +147,7 @@ public class LprRecognizer {
         // ── 1. 检测 ──
         LetterBox lb = letterBox(frame, DET_SIZE);
         float[] detInput = detPreprocess(lb);
+        lb.padded.recycle(); // detPreprocess 已同步读完像素
         float[] detOut = run(detSession, "input", detInput,
                 new long[]{1, 3, DET_SIZE, DET_SIZE}, DET_ANCHORS * 15);
         List<float[]> dets = detPostprocess(detOut, lb);
@@ -165,56 +166,66 @@ public class LprRecognizer {
             if (pad == null || pad.getWidth() < 2 || pad.getHeight() < 2) {
                 continue;
             }
+            try {
+                String plate;
+                float conf;
+                if (layer == DOUBLE) {
+                    int h = pad.getHeight();
+                    int line = (int) (h * 0.4f);
+                    Bitmap top = Bitmap.createBitmap(pad, 0, 0, pad.getWidth(), line);
+                    Bitmap bottom = Bitmap.createBitmap(pad, 0, line, pad.getWidth(), h - line);
+                    RecResult r1;
+                    RecResult r2;
+                    try {
+                        r1 = rec(top);
+                        r2 = rec(bottom);
+                    } finally {
+                        top.recycle();
+                        bottom.recycle();
+                    }
+                    if (r1.text == null || r1.text.isEmpty()
+                            || r2.text == null || r2.text.isEmpty()) {
+                        continue;
+                    }
+                    plate = r1.text + r2.text;
+                    conf = (r1.conf + r2.conf) / 2f;
+                } else {
+                    RecResult r1 = rec(pad);
+                    if (r1.text == null || r1.text.isEmpty()) {
+                        continue;
+                    }
+                    plate = r1.text;
+                    conf = r1.conf;
+                }
 
-            String plate;
-            float conf;
-            if (layer == DOUBLE) {
-                int h = pad.getHeight();
-                int line = (int) (h * 0.4f);
-                Bitmap top = Bitmap.createBitmap(pad, 0, 0, pad.getWidth(), line);
-                Bitmap bottom = Bitmap.createBitmap(pad, 0, line, pad.getWidth(), h - line);
-                RecResult r1 = rec(top);
-                RecResult r2 = rec(bottom);
-                if (r1.text == null || r1.text.isEmpty()
-                        || r2.text == null || r2.text.isEmpty()) {
+                if (plate.length() < 7) {
                     continue;
                 }
-                plate = r1.text + r2.text;
-                conf = (r1.conf + r2.conf) / 2f;
-            } else {
-                RecResult r1 = rec(pad);
-                if (r1.text == null || r1.text.isEmpty()) {
-                    continue;
+
+                int plateType = codeFilter(plate);
+                if (plateType == PLATE_UNKNOWN) {
+                    int idx = argmax(run(clsSession, "data", clsPreprocess(pad),
+                            new long[]{1, 3, CLS_SIZE, CLS_SIZE}, 3));
+                    // 分类模型输出顺序：蓝 / 绿 / 黄
+                    if (idx == 2) {
+                        plateType = (layer == DOUBLE) ? PLATE_YELLOW_DOUBLE : PLATE_YELLOW_SINGLE;
+                    } else if (idx == 0) {
+                        plateType = PLATE_BLUE;
+                    } else if (idx == 1) {
+                        plateType = PLATE_GREEN;
+                    }
                 }
-                plate = r1.text;
-                conf = r1.conf;
-            }
 
-            if (plate.length() < 7) {
-                continue;
+                PlateResult r = new PlateResult();
+                r.plate = plate;
+                r.confidence = conf;
+                r.plateType = plateType;
+                r.box = new float[]{d[0], d[1], d[2], d[3]};
+                r.vertex = lm;
+                results.add(r);
+            } finally {
+                pad.recycle();
             }
-
-            int plateType = codeFilter(plate);
-            if (plateType == PLATE_UNKNOWN) {
-                int idx = argmax(run(clsSession, "data", clsPreprocess(pad),
-                        new long[]{1, 3, CLS_SIZE, CLS_SIZE}, 3));
-                // 分类模型输出顺序：蓝 / 绿 / 黄
-                if (idx == 2) {
-                    plateType = (layer == DOUBLE) ? PLATE_YELLOW_DOUBLE : PLATE_YELLOW_SINGLE;
-                } else if (idx == 0) {
-                    plateType = PLATE_BLUE;
-                } else if (idx == 1) {
-                    plateType = PLATE_GREEN;
-                }
-            }
-
-            PlateResult r = new PlateResult();
-            r.plate = plate;
-            r.confidence = conf;
-            r.plateType = plateType;
-            r.box = new float[]{d[0], d[1], d[2], d[3]};
-            r.vertex = lm;
-            results.add(r);
         }
         return results;
     }
@@ -515,7 +526,7 @@ public class LprRecognizer {
 
     // ────────────────────── ONNX 推理 ──────────────────────
 
-    /** 单次 ONNX 推理，返回展平的 float 输出。 */
+    /** 单次 ONNX 推理，返回展平的 float 输出。输入 tensor 用完即关。 */
     private float[] run(OrtSession session, String inputName, float[] data,
                         long[] shape, int outLen) throws OrtException {
         OnnxTensor tensor = OnnxTensor.createTensor(env, FloatBuffer.wrap(data), shape);
@@ -531,6 +542,8 @@ public class LprRecognizer {
                 out = tmp;
             }
             return out;
+        } finally {
+            tensor.close(); // OnnxTensor.close() 无受检异常
         }
     }
 

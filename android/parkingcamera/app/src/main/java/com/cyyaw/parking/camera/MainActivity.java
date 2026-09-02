@@ -46,7 +46,11 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -88,6 +92,12 @@ public class MainActivity extends BaseActivity {
     private long lastLprAt = 0;
     private TextView plateResult;
     private PlateOverlayView plateOverlay;
+
+    // 车牌回调上报：去重 + 冷却
+    private static final float LPR_REPORT_MIN_CONF = 0.85f;   // 置信度低于此不上报
+    private static final long LPR_REPORT_COOLDOWN_MS = 5000;  // 同一车牌 5 秒内只报一次
+    private String lastReportedPlate = null;
+    private long lastReportAt = 0;
 
     // Bottom bar views
     private ImageView cameraSwitchIcon;
@@ -830,6 +840,7 @@ public class MainActivity extends BaseActivity {
             }
             java.util.List<LprRecognizer.PlateResult> results = lpr.recognize(bmp);
             showLprResults(results);
+            reportPlateIfNeeded(results);
             bmp.recycle();
         } catch (Exception e) {
             Log.e("Lpr", "recognize failed", e);
@@ -897,7 +908,8 @@ public class MainActivity extends BaseActivity {
             plateResult.setText(String.format(Locale.getDefault(),
                     "%s  %.2f  %s", best.plate, best.confidence, typeName));
 
-            // 帧坐标 -> 屏幕坐标：SurfaceView 按预览比例居中，换算偏移+缩放
+            // 帧坐标 -> 屏幕坐标：SurfaceView 按预览比例居中，换算偏移+缩放。
+            // 识别帧与 SurfaceView 显示的是同一路 buffer（同为 previewSize），方向一致，无需旋转。
             int vw = cameraSurface.getWidth();
             int vh = cameraSurface.getHeight();
             int fw = previewSize != null ? previewSize.getWidth() : vw;
@@ -907,6 +919,94 @@ public class MainActivity extends BaseActivity {
             plateOverlay.setResults(results,
                     cameraSurface.getLeft(), cameraSurface.getTop(), sx, sy);
         });
+    }
+
+    /**
+     * 把识别到的最高置信度车牌 POST 到配置的回调地址（已在 LPR 后台线程调用）。
+     * 未配置地址 / 置信度不足 / 同一车牌冷却期内 都直接跳过。
+     */
+    private void reportPlateIfNeeded(java.util.List<LprRecognizer.PlateResult> results) {
+        if (results == null || results.isEmpty()) {
+            return;
+        }
+        String callback = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+                .getString(KEY_LPR_CALLBACK, "");
+        if (callback.trim().isEmpty()) {
+            return;
+        }
+        LprRecognizer.PlateResult best = null;
+        for (LprRecognizer.PlateResult r : results) {
+            if (best == null || r.confidence > best.confidence) {
+                best = r;
+            }
+        }
+        if (best == null || best.confidence < LPR_REPORT_MIN_CONF) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        if (best.plate.equals(lastReportedPlate)
+                && now - lastReportAt < LPR_REPORT_COOLDOWN_MS) {
+            return; // 同一车牌冷却期内
+        }
+
+        final String plate = best.plate;
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        final String cameraId = prefs.getString(KEY_CAMERA_ID, "CAM-001");
+        final String barrierId = prefs.getString(KEY_BARRIER_ID, "B-001");
+
+        final String payload;
+        try {
+            org.json.JSONObject json = new org.json.JSONObject();
+            json.put("plate", plate);
+            json.put("confidence", (double) best.confidence);
+            json.put("plateType", best.plateType);
+            json.put("cameraId", cameraId);
+            json.put("barrierId", barrierId);
+            json.put("timestamp", System.currentTimeMillis());
+            payload = json.toString();
+        } catch (Exception e) {
+            Log.e("Lpr", "build payload failed", e);
+            return;
+        }
+
+        lprHandler.post(() -> {
+            boolean ok = postJson(callback, payload);
+            if (ok) {
+                lastReportedPlate = plate;
+                lastReportAt = System.currentTimeMillis();
+                Log.i("Lpr", "reported plate " + plate);
+            } else {
+                Log.w("Lpr", "report plate failed: " + callback);
+            }
+        });
+    }
+
+    /** 发送 JSON 到回调地址，返回是否成功。 */
+    private boolean postJson(String urlStr, String json) {
+        HttpURLConnection conn = null;
+        try {
+            URL url = new URL(urlStr);
+            conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setConnectTimeout(3000);
+            conn.setReadTimeout(3000);
+            conn.setDoOutput(true);
+            conn.setRequestProperty("Content-Type", "application/json");
+            byte[] body = json.getBytes(StandardCharsets.UTF_8);
+            conn.setFixedLengthStreamingMode(body.length);
+            try (OutputStream os = conn.getOutputStream()) {
+                os.write(body);
+            }
+            int code = conn.getResponseCode();
+            return code >= 200 && code < 300;
+        } catch (Exception e) {
+            Log.w("Lpr", "postJson error", e);
+            return false;
+        } finally {
+            if (conn != null) {
+                conn.disconnect();
+            }
+        }
     }
 
     private static String plateTypeName(int t) {

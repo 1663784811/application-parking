@@ -67,6 +67,7 @@ public class PlateOverlayView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+        // 帧坐标系与 SurfaceView 显示的原始 buffer 同向，无需旋转；只做偏移+缩放
         for (LprRecognizer.PlateResult r : results) {
             if (r.vertex == null || r.vertex.length < 4) {
                 continue;
