@@ -38,6 +38,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -144,9 +145,12 @@ public class MainActivity extends BaseActivity {
     private static final String KEY_SIGNALING_SERVER = "signaling_server";
 
     // 默认值：首次启动写入 SharedPreferences，使设置面板的信息持久化保存
+    private static final String DEFAULT_MQTT_ADDRESS = "tcp://192.168.222.38:1883";
     private static final String DEFAULT_MQTT_USERNAME = "admin";
     private static final String DEFAULT_MQTT_PASSWORD = "123456";
     private static final String DEFAULT_MQTT_CLIENT_ID = "aaa";
+    private static final String DEFAULT_LPR_CALLBACK = "http://192.168.222.38:8080/api/plate";
+    private static final String DEFAULT_SIGNALING_SERVER = "ws://192.168.222.38:8080";
     private static final boolean DEFAULT_TIMESTAMP_VISIBLE = true;
     private static final String DEFAULT_CAMERA_ID = "CAM-001";
     private static final String DEFAULT_BARRIER_ID = "B-001";
@@ -156,6 +160,9 @@ public class MainActivity extends BaseActivity {
 
     // Panel animation state
     private boolean isPanelOpen = false;
+
+    /** 拦截返回键：面板打开时先收起面板，否则交由系统退出。 */
+    private OnBackPressedCallback backPressedCallback;
 
     // Time display
     private TextView timeDisplay;
@@ -265,6 +272,15 @@ public class MainActivity extends BaseActivity {
 
         // Setup settings panel
         setupSettingsPanel();
+
+        // 返回键拦截：面板打开时收起面板，关闭时才允许系统退出
+        backPressedCallback = new OnBackPressedCallback(false) {
+            @Override
+            public void handleOnBackPressed() {
+                closeSettingsPanel();
+            }
+        };
+        getOnBackPressedDispatcher().addCallback(this, backPressedCallback);
 
         // Build MQTT client (connects in onStart, reconnects on settings save)
         setupMqttClient();
@@ -469,7 +485,7 @@ public class MainActivity extends BaseActivity {
         EditText passwordInput = dialog.findViewById(R.id.dlgMqttPasswordInput);
         EditText clientIdInput = dialog.findViewById(R.id.dlgMqttClientIdInput);
 
-        addressInput.setText(prefs.getString(KEY_MQTT_ADDRESS, "tcp://192.168.1.100:1883"));
+        addressInput.setText(prefs.getString(KEY_MQTT_ADDRESS, DEFAULT_MQTT_ADDRESS));
         usernameInput.setText(prefs.getString(KEY_MQTT_USERNAME, DEFAULT_MQTT_USERNAME));
         passwordInput.setText(prefs.getString(KEY_MQTT_PASSWORD, DEFAULT_MQTT_PASSWORD));
         clientIdInput.setText(prefs.getString(KEY_MQTT_CLIENT_ID, DEFAULT_MQTT_CLIENT_ID));
@@ -497,15 +513,19 @@ public class MainActivity extends BaseActivity {
     /**
      * 首次启动时把默认值写入 SharedPreferences，使设置面板的信息持久化保存
      *（而非仅作为 {@code getString} 的回退默认值）。仅写入尚未存在的键，用户在
-     * 弹窗里改过的配置不受影响。服务器地址（MQTT broker / 回调 / 信令）不预置
-     * 默认值，保持"未配置"状态，由用户在设置弹窗里填写后再持久化。
+     * 弹窗里改过的配置不受影响。基础信息 / 信令 / MQTT / 车牌回调 四组设置全部
+     * 预置默认值并持久化；其中 MQTT 地址等服务器地址为占位值，用户应在设置弹窗
+     * 里改成真实地址后保存。
      */
     private void ensureDefaultSettings() {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         SharedPreferences.Editor e = prefs.edit();
+        if (!prefs.contains(KEY_MQTT_ADDRESS)) e.putString(KEY_MQTT_ADDRESS, DEFAULT_MQTT_ADDRESS);
         if (!prefs.contains(KEY_MQTT_USERNAME)) e.putString(KEY_MQTT_USERNAME, DEFAULT_MQTT_USERNAME);
         if (!prefs.contains(KEY_MQTT_PASSWORD)) e.putString(KEY_MQTT_PASSWORD, DEFAULT_MQTT_PASSWORD);
         if (!prefs.contains(KEY_MQTT_CLIENT_ID)) e.putString(KEY_MQTT_CLIENT_ID, DEFAULT_MQTT_CLIENT_ID);
+        if (!prefs.contains(KEY_LPR_CALLBACK)) e.putString(KEY_LPR_CALLBACK, DEFAULT_LPR_CALLBACK);
+        if (!prefs.contains(KEY_SIGNALING_SERVER)) e.putString(KEY_SIGNALING_SERVER, DEFAULT_SIGNALING_SERVER);
         if (!prefs.contains(KEY_TIMESTAMP_VISIBLE)) e.putBoolean(KEY_TIMESTAMP_VISIBLE, DEFAULT_TIMESTAMP_VISIBLE);
         if (!prefs.contains(KEY_CAMERA_ID)) e.putString(KEY_CAMERA_ID, DEFAULT_CAMERA_ID);
         if (!prefs.contains(KEY_BARRIER_ID)) e.putString(KEY_BARRIER_ID, DEFAULT_BARRIER_ID);
@@ -514,7 +534,7 @@ public class MainActivity extends BaseActivity {
 
     private void setupMqttClient() {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        String addr = prefs.getString(KEY_MQTT_ADDRESS, "");
+        String addr = prefs.getString(KEY_MQTT_ADDRESS, DEFAULT_MQTT_ADDRESS);
         String user = prefs.getString(KEY_MQTT_USERNAME, DEFAULT_MQTT_USERNAME);
         String pass = prefs.getString(KEY_MQTT_PASSWORD, DEFAULT_MQTT_PASSWORD);
         String cid = prefs.getString(KEY_MQTT_CLIENT_ID, DEFAULT_MQTT_CLIENT_ID);
@@ -543,7 +563,7 @@ public class MainActivity extends BaseActivity {
         dialog.setCanceledOnTouchOutside(true);
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         EditText callbackInput = dialog.findViewById(R.id.dlgLprCallbackInput);
-        callbackInput.setText(prefs.getString(KEY_LPR_CALLBACK, "http://192.168.1.200:8080/api/plate"));
+        callbackInput.setText(prefs.getString(KEY_LPR_CALLBACK, DEFAULT_LPR_CALLBACK));
         dialog.findViewById(R.id.dlgLprSave).setOnClickListener(b -> {
             prefs.edit().putString(KEY_LPR_CALLBACK, callbackInput.getText().toString().trim()).apply();
             updateLprCallbackSummary();
@@ -610,7 +630,7 @@ public class MainActivity extends BaseActivity {
         dialog.setCanceledOnTouchOutside(true);
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         EditText serverInput = dialog.findViewById(R.id.dlgSignalingServerInput);
-        serverInput.setText(prefs.getString(KEY_SIGNALING_SERVER, "ws://192.168.1.100:8080"));
+        serverInput.setText(prefs.getString(KEY_SIGNALING_SERVER, DEFAULT_SIGNALING_SERVER));
         dialog.findViewById(R.id.dlgSignalingSave).setOnClickListener(b -> {
             prefs.edit().putString(KEY_SIGNALING_SERVER, serverInput.getText().toString().trim()).apply();
             updateSignalingServerSummary();
@@ -623,6 +643,7 @@ public class MainActivity extends BaseActivity {
     private void openSettingsPanel() {
         if (isPanelOpen) return;
         isPanelOpen = true;
+        backPressedCallback.setEnabled(true);
 
         // Make overlay and panel visible (panel starts off-screen via translationX in XML)
         settingsOverlay.setVisibility(View.VISIBLE);
@@ -640,6 +661,7 @@ public class MainActivity extends BaseActivity {
     private void closeSettingsPanel() {
         if (!isPanelOpen) return;
         isPanelOpen = false;
+        backPressedCallback.setEnabled(false);
 
         // Animate overlay fade-out
         settingsOverlay.animate().alpha(0f).setDuration(200).withEndAction(() -> settingsOverlay.setVisibility(View.GONE)).start();
@@ -649,18 +671,6 @@ public class MainActivity extends BaseActivity {
             settingsPanel.setVisibility(View.GONE);
             settingsPanel.setTranslationX(settingsPanel.getWidth());
         }).start();
-    }
-
-    /**
-     * Called from the back button press to close the panel if it's open.
-     */
-    @Override
-    public void onBackPressed() {
-        if (isPanelOpen) {
-            closeSettingsPanel();
-        } else {
-            super.onBackPressed();
-        }
     }
 
     private void startTimeUpdater() {
