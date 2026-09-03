@@ -2,6 +2,7 @@ package com.cyyaw.admin.application.iot.controller.admin;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.cyyaw.admin.entity.dto.iot.IotDeviceQueryDTO;
 import com.cyyaw.admin.application.iot.service.IotDeviceService;
 import com.cyyaw.admin.common.BaseResult;
 import com.cyyaw.admin.entity.module.iot.IotDevice;
@@ -28,9 +29,15 @@ public class IotDeviceController {
         return BaseResult.ok(iotDeviceService.findById(id));
     }
 
-    @Operation(summary = "设备列表", description = "分页查询设备")
+    @Operation(summary = "设备列表", description = "分页查询设备；查询参数 page/size/type/onlineStatus/keyword，以 IotDeviceQueryDTO 实体类接收（Spring 隐式 @ModelAttribute 按名绑定查询串到字段）")
     @GetMapping("/list")
-    public BaseResult<List<IotDevice>> list(@RequestParam(defaultValue = "1") Integer page, @RequestParam(defaultValue = "10") Integer size, @RequestParam(required = false) String type, @RequestParam(required = false) Integer onlineStatus, @RequestParam(required = false) String keyword) {
+    public BaseResult<List<IotDevice>> list(IotDeviceQueryDTO query) {
+        int page = query.getPage();
+        int size = query.getSize();
+        String type = query.getType();
+        String keyword = query.getKeyword();
+        Integer onlineStatus = query.getOnlineStatus();
+
         QueryWrapper<IotDevice> wrapper = new QueryWrapper<>();
         if (StringUtils.hasText(type)) {
             wrapper.eq("type", type);
