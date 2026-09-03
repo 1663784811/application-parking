@@ -43,6 +43,8 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import org.json.JSONObject;
+
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -1094,26 +1096,17 @@ public class MainActivity extends BaseActivity {
         if (best.plate.equals(lastReportedPlate) && now - lastReportAt < LPR_REPORT_COOLDOWN_MS) {
             return; // 同一车牌冷却期内
         }
-
-        // frame 即将被回收，先同步把原图与车牌图编码成 base64（仅在实际上报时执行）
-        final String originalImage = ImageUtils.bitmapToJpegBase64(frame);
-        final String plateImage = ImageUtils.cropPlateJpegBase64(frame, best.box);
-
         final String plate = best.plate;
         final String cameraId = prefs.getString(KEY_CAMERA_ID, "CAM-001");
-        final String barrierId = prefs.getString(KEY_BARRIER_ID, "B-001");
-
         final String payload;
         try {
-            org.json.JSONObject json = new org.json.JSONObject();
-            json.put("plate", plate);
-            json.put("confidence", (double) best.confidence);
-            json.put("plateType", best.plateType);
-            json.put("cameraId", cameraId);
-            json.put("barrierId", barrierId);
-            json.put("timestamp", System.currentTimeMillis());
-            json.put("originalImage", originalImage);  // 原图 JPEG base64
-            json.put("plateImage", plateImage);        // 车牌图 JPEG base64
+            JSONObject json = new JSONObject();
+            // 字段对齐 parking-gate PlateRecognitionRequest：deviceCode/carNumber/carType/img/numberImg
+            json.put("deviceCode", cameraId);
+            json.put("carNumber", plate);
+            json.put("carType", LprRecognizer.plateTypeName(best.plateType));
+            json.put("img", ImageUtils.bitmapToJpegBase64(frame));        // 原图 JPEG base64
+            json.put("numberImg", ImageUtils.cropPlateJpegBase64(frame, best.box));     // 车牌图 JPEG base64
             payload = json.toString();
         } catch (Exception e) {
             Log.e("Lpr", "build payload failed", e);
@@ -1132,7 +1125,7 @@ public class MainActivity extends BaseActivity {
             }
             boolean mqttOk = false;
             if (doMqtt) {
-                mqttOk = mqtt.publish(plateTopic, payload.getBytes(StandardCharsets.UTF_8), 1);
+                // mqttOk = mqtt.publish(plateTopic, payload.getBytes(StandardCharsets.UTF_8), 1);
             }
             if (httpOk || mqttOk) {
                 lastReportedPlate = plate;
