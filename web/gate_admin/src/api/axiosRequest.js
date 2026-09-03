@@ -30,12 +30,12 @@ service.interceptors.request.use(
 service.interceptors.response.use(
   response => {
     const res = response.data
-    if (res.code !== 200) {
+    if (res.code !== 2000) {
       Message.error({
-        content: res.message || '请求失败',
+        content: res.msg || '请求失败',
         duration: 3
       })
-      return Promise.reject(new Error(res.message || '请求失败'))
+      return Promise.reject(new Error(res.msg || '请求失败'))
     }
     return res
   },

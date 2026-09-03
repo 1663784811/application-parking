@@ -121,6 +121,20 @@ export const channelApi = {
   deleteChannel: (id) => authRequest.delete(`/admin/parking/channel/delete/${id}`)
 }
 
+// ========== 通道设备绑定 ==========
+export const parkingDeviceApi = {
+  // 通道已绑设备（含设备明细，按绑定顺序返回）
+  getBoundDevices: (channelId) => authRequest.get(`/admin/parking/parkingDevice/byChannel/${channelId}`),
+  // 未绑定通道的设备（候选）；parkingId 为空时查全部未绑设备
+  getUnboundDevices: (parkingId) => authRequest.get('/admin/parking/parkingDevice/unbound', { params: { parkingId } }),
+  // 按通道批量统计已绑设备数：传 channelIds 逗号分隔，返回 { [channelId]: count }
+  countByChannel: (channelIds) => authRequest.get('/admin/parking/parkingDevice/countByChannel', { params: { channelIds: channelIds.join(',') } }),
+  // 绑定设备到通道（设备全局唯一绑定）
+  bind: (deviceId, channelId) => authRequest.post(`/admin/parking/parkingDevice/bind/${deviceId}/${channelId}`),
+  // 解绑设备
+  unbind: (deviceId, channelId) => authRequest.post(`/admin/parking/parkingDevice/unbind/${deviceId}/${channelId}`)
+}
+
 // ========== 会员管理 ==========
 export const memberApi = {
   // 会员列表（分页）
@@ -177,6 +191,34 @@ export const deviceApi = {
   handleFault: (data) => authRequest.post('/admin/device/fault/handle', data),
   // 故障工单统计
   getFaultStats: () => authRequest.get('/admin/device/fault/stats')
+}
+
+// ========== 物模型 ==========
+export const thingModelApi = {
+  // 物模型列表（分页）
+  getModelList: (params) => authRequest.get('/admin/device/thingModel/list', { params }),
+  // 物模型详情
+  getModelDetail: (id) => authRequest.get(`/admin/device/thingModel/find/${id}`),
+  // 保存物模型（新增+更新合并 upsert）
+  saveModel: (data) => authRequest.post('/admin/device/thingModel/save', data),
+  // 删除物模型（级联删除属性/事件/指令）
+  deleteModel: (id) => authRequest.delete(`/admin/device/thingModel/delete/${id}`),
+  // 物模型统计：{ total, attribute, event, command }
+  getModelStats: () => authRequest.get('/admin/device/thingModel/stats'),
+  // 子实体计数（批量）：传 modelIds 逗号分隔，返回 { [modelId]: { attribute, event, command } }
+  getSubCounts: (modelIds) => authRequest.get('/admin/device/thingModel/subCounts', { params: { modelIds: modelIds.join(',') } }),
+  // 属性
+  getAttributeList: (thingModelId) => authRequest.get('/admin/device/thingModel/attribute/list', { params: { thingModelId } }),
+  saveAttribute: (data) => authRequest.post('/admin/device/thingModel/attribute/save', data),
+  deleteAttribute: (id) => authRequest.delete(`/admin/device/thingModel/attribute/delete/${id}`),
+  // 事件
+  getEventList: (thingModelId) => authRequest.get('/admin/device/thingModel/event/list', { params: { thingModelId } }),
+  saveEvent: (data) => authRequest.post('/admin/device/thingModel/event/save', data),
+  deleteEvent: (id) => authRequest.delete(`/admin/device/thingModel/event/delete/${id}`),
+  // 指令
+  getCommandList: (thingModelId) => authRequest.get('/admin/device/thingModel/command/list', { params: { thingModelId } }),
+  saveCommand: (data) => authRequest.post('/admin/device/thingModel/command/save', data),
+  deleteCommand: (id) => authRequest.delete(`/admin/device/thingModel/command/delete/${id}`)
 }
 
 // ========== 数据报表 ==========

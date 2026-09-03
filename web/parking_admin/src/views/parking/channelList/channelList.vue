@@ -58,6 +58,7 @@
           </span>
         </template>
         <template #action="{ row }">
+          <Button type="text" size="small" @click="handleDevice(row)">设备</Button>
           <Button type="text" size="small" @click="handleShowQr(row)">二维码</Button>
           <Button type="text" size="small" @click="handleEdit(row)">编辑</Button>
           <Button type="text" size="small" @click="handleDelete(row)">删除</Button>
@@ -137,6 +138,97 @@
         <Button type="primary" @click="handleDownloadQr">下载二维码</Button>
       </template>
     </Modal>
+
+    <!-- 通道设备绑定 Drawer -->
+    <Drawer
+      v-model="state.deviceDrawerVisible"
+      :width="900"
+      :title="`通道设备 · ${state.currentChannel?.name || ''}`"
+    >
+      <div class="device-drawer-body">
+        <div class="sub-toolbar">
+          <span class="bound-count">已绑设备（{{ state.boundDevices.length }}）</span>
+          <Button type="primary" size="small" @click="openDevicePicker">添加设备</Button>
+        </div>
+        <Table
+          :columns="deviceColumns"
+          :data="state.boundDevices"
+          :loading="state.deviceLoading"
+          size="small"
+        >
+          <template #onlineStatus="{ row }">
+            <Badge
+              :status="row.onlineStatus === 1 ? 'success' : 'error'"
+              :text="row.onlineStatus === 1 ? '在线' : '离线'"
+            />
+          </template>
+          <template #devAction="{ row }">
+            <Button type="text" size="small" class="text-danger" @click="handleUnbindDevice(row)">解绑</Button>
+          </template>
+        </Table>
+        <div v-if="!state.boundDevices.length && !state.deviceLoading" class="empty-tip">
+          该通道暂未绑定设备
+        </div>
+      </div>
+    </Drawer>
+
+    <!-- 添加设备：设备列表 Modal（数据源 /admin/device/list，分页+筛选） -->
+    <Modal v-model="state.devicePickerVisible" title="添加设备" width="860" :footer-hide="true">
+      <div class="picker-filter-bar">
+        <Select v-model="state.pickerSearch.type" placeholder="设备类型" class="picker-filter-select" clearable>
+          <Option value="camera">摄像头</Option>
+          <Option value="gate">道闸</Option>
+          <Option value="screen">显示屏</Option>
+          <Option value="sensor">地感</Option>
+        </Select>
+        <Select v-model="state.pickerSearch.onlineStatus" placeholder="在线状态" class="picker-filter-select" clearable>
+          <Option :value="1">在线</Option>
+          <Option :value="0">离线</Option>
+        </Select>
+        <Input
+          v-model="state.pickerSearch.keyword"
+          placeholder="设备名称 / 编号"
+          class="picker-filter-input"
+          clearable
+          @on-enter="handlePickerSearch"
+        />
+        <Button type="primary" size="small" @click="handlePickerSearch">查询</Button>
+        <Button size="small" @click="handlePickerReset">重置</Button>
+      </div>
+      <Table
+        :columns="pickerColumns"
+        :data="state.pickerTableData"
+        :loading="state.pickerLoading"
+        size="small"
+      >
+        <template #type="{ row }">{{ deviceTypeText(row.type) }}</template>
+        <template #onlineStatus="{ row }">
+          <Badge
+            :status="row.onlineStatus === 1 ? 'success' : 'error'"
+            :text="row.onlineStatus === 1 ? '在线' : '离线'"
+          />
+        </template>
+        <template #pickAction="{ row }">
+          <span v-if="isChannelBound(row)" class="bound-mark">已绑定</span>
+          <Button
+            v-else
+            type="primary"
+            size="small"
+            :loading="state.pickingDeviceId === row.id"
+            @click="handlePickDevice(row)"
+          >绑定</Button>
+        </template>
+      </Table>
+      <div class="picker-pagination">
+        <Page
+          :total="state.pickerPagination.total"
+          :current="state.pickerPagination.current"
+          :page-size="state.pickerPagination.pageSize"
+          show-total
+          @on-change="handlePickerPageChange"
+        />
+      </div>
+    </Modal>
   </div>
 </template>
 
@@ -144,7 +236,9 @@
 import {reactive, ref, nextTick, watch, onMounted} from 'vue'
 import QRCode from 'qrcode'
 import {
+  Badge,
   Button,
+  Drawer,
   Form,
   FormItem,
   Icon,
@@ -159,7 +253,7 @@ import {
   Tag
 } from 'view-ui-plus'
 import {useCommonStore} from '@/stores/common.js'
-import {parkingApi, channelApi} from '@/api'
+import {parkingApi, channelApi, parkingDeviceApi, deviceApi} from '@/api'
 import TableColumnSetting from '@/components/TableColumnSetting.vue'
 import { useTableColumns } from '@/composables/useTableColumns'
 
@@ -200,7 +294,21 @@ const state = reactive({
   // 通道二维码弹窗
   qrModalVisible: false,
   qrChannel: null,
-  qrUrl: ''
+  qrUrl: '',
+
+  // 通道设备绑定 Drawer
+  deviceDrawerVisible: false,
+  currentChannel: null,
+  boundDevices: [],
+  deviceLoading: false,
+
+  // 添加设备 Modal（数据源：/admin/device/list，分页+筛选）
+  devicePickerVisible: false,
+  pickerSearch: { type: null, onlineStatus: null, keyword: '' },
+  pickerPagination: { total: 0, current: 1, pageSize: 10 },
+  pickerTableData: [],
+  pickerLoading: false,
+  pickingDeviceId: null
 })
 
 const columns = [
@@ -241,9 +349,16 @@ const columns = [
     minWidth: 100
   },
   {
+    field: 'deviceCount',
+    title: '设备数',
+    key: 'deviceCount',
+    minWidth: 90,
+    align: 'center'
+  },
+  {
     title: '操作',
     slot: 'action',
-    minWidth: 200
+    minWidth: 230
   }
 ]
 
@@ -369,8 +484,20 @@ const loadData = async () => {
       params.status = status
     }
     const res = await channelApi.getChannelList(params)
-    state.tableData = (res.data || []).map(mapRow)
+    const rows = (res.data || []).map(mapRow)
     state.pagination.total = (res.result && res.result.total) || 0
+    // 批量取每通道已绑设备数（避免逐行请求）
+    if (rows.length) {
+      try {
+        const countsRes = await parkingDeviceApi.countByChannel(rows.map(r => r.id))
+        const cm = countsRes.data || {}
+        rows.forEach(r => { r.deviceCount = cm[String(r.id)] || 0 })
+      } catch (e) {
+        console.error('获取通道设备数失败', e)
+        rows.forEach(r => { r.deviceCount = 0 })
+      }
+    }
+    state.tableData = rows
   } catch (e) {
     console.error('获取通道列表失败', e)
   } finally {
@@ -457,6 +584,147 @@ const handleDelete = (row) => {
 const handlePageChange = (page) => {
   state.pagination.current = page
   loadData()
+}
+
+// ===== 通道设备绑定 =====
+// Drawer 内已绑设备表格列
+const deviceColumns = [
+  { title: '设备名称', key: 'name', minWidth: 150 },
+  { title: '设备编码', key: 'code', minWidth: 130 },
+  { title: '在线状态', slot: 'onlineStatus', minWidth: 100, align: 'center' },
+  { title: '操作', slot: 'devAction', minWidth: 90, align: 'center' }
+]
+
+// 打开设备绑定 Drawer
+const handleDevice = async (row) => {
+  state.currentChannel = row
+  state.deviceDrawerVisible = true
+  state.boundDevices = []
+  state.deviceLoading = true
+  try {
+    // 仅加载本通道已绑设备；添加设备的候选列表在弹窗中按 /admin/device/list 取
+    const bound = await parkingDeviceApi.getBoundDevices(row.id)
+    state.boundDevices = bound.data || []
+  } catch (e) {
+    console.error('加载通道设备失败', e)
+  } finally {
+    state.deviceLoading = false
+  }
+}
+
+// 把当前通道行的设备数同步为已绑设备数（绑定/解绑后局部刷新，免整表重载）
+const syncRowDeviceCount = () => {
+  const ch = state.currentChannel
+  if (!ch) return
+  const row = state.tableData.find(r => String(r.id) === String(ch.id))
+  if (row) row.deviceCount = state.boundDevices.length
+}
+
+// 添加设备 Modal 的设备列表列
+const pickerColumns = [
+  { title: '设备名称', key: 'name', minWidth: 150 },
+  { title: '设备编码', key: 'code', minWidth: 120 },
+  { title: '类型', slot: 'type', minWidth: 90, align: 'center' },
+  { title: 'IP地址', key: 'ip', minWidth: 130 },
+  { title: '在线状态', slot: 'onlineStatus', minWidth: 100, align: 'center' },
+  { title: '操作', slot: 'pickAction', minWidth: 90, align: 'center' }
+]
+
+const deviceTypeText = (type) => {
+  const map = { camera: '摄像头', gate: '道闸', screen: '显示屏', sensor: '地感' }
+  return map[type] || '-'
+}
+
+// 该设备是否已绑定到当前通道（已绑则禁用绑定按钮，显示"已绑定"）
+const isChannelBound = (device) => {
+  return state.boundDevices.some(d => String(d.id) === String(device.id))
+}
+
+// 加载设备列表（数据源 /admin/device/list，分页+筛选；
+// parkingId 锁定为当前通道所属停车场，只列同停车场设备）
+const loadPickerDevices = async () => {
+  state.pickerLoading = true
+  try {
+    const { type, onlineStatus, keyword } = state.pickerSearch
+    const res = await deviceApi.getDeviceList({
+      page: state.pickerPagination.current,
+      size: state.pickerPagination.pageSize,
+      parkingId: state.currentChannel?.parkingId || null,
+      type: type || null,
+      onlineStatus: onlineStatus !== null && onlineStatus !== '' ? onlineStatus : null,
+      keyword: keyword ? keyword.trim() : null
+    })
+    state.pickerTableData = res.data || []
+    state.pickerPagination.total = (res.result && res.result.total) || 0
+  } catch (e) {
+    console.error('获取设备列表失败', e)
+  } finally {
+    state.pickerLoading = false
+  }
+}
+
+const handlePickerSearch = () => {
+  state.pickerPagination.current = 1
+  loadPickerDevices()
+}
+
+const handlePickerReset = () => {
+  state.pickerSearch = { type: null, onlineStatus: null, keyword: '' }
+  handlePickerSearch()
+}
+
+const handlePickerPageChange = (p) => {
+  state.pickerPagination.current = p
+  loadPickerDevices()
+}
+
+// 打开添加设备 Modal
+const openDevicePicker = () => {
+  state.pickerSearch = { type: null, onlineStatus: null, keyword: '' }
+  state.pickerPagination.current = 1
+  state.pickerPagination.total = 0
+  state.pickerTableData = []
+  state.pickingDeviceId = null
+  state.devicePickerVisible = true
+  loadPickerDevices()
+}
+
+// 在设备列表中点"绑定"：将该设备绑定到当前通道
+const handlePickDevice = async (device) => {
+  const channelId = state.currentChannel?.id
+  state.pickingDeviceId = device.id
+  try {
+    await parkingDeviceApi.bind(device.id, channelId)
+    Message.success(`设备"${device.name}"绑定成功`)
+    // 刷新本通道已绑设备：该行随之变为"已绑定"（picker 表格不重载，便于连续绑定多台）
+    const bound = await parkingDeviceApi.getBoundDevices(channelId)
+    state.boundDevices = bound.data || []
+    syncRowDeviceCount()
+  } catch (e) {
+    console.error('绑定设备失败', e)
+  } finally {
+    state.pickingDeviceId = null
+  }
+}
+
+// 解绑设备
+const handleUnbindDevice = (device) => {
+  const channelId = state.currentChannel?.id
+  Modal.confirm({
+    title: '确认解绑',
+    content: `确定将设备"${device.name}"从该通道解绑吗？`,
+    onOk: async () => {
+      try {
+        await parkingDeviceApi.unbind(device.id, channelId)
+        Message.success('解绑成功')
+        const bound = await parkingDeviceApi.getBoundDevices(channelId)
+        state.boundDevices = bound.data || []
+        syncRowDeviceCount()
+      } catch (e) {
+        console.error('解绑设备失败', e)
+      }
+    }
+  })
 }
 
 onMounted(() => {
@@ -564,5 +832,52 @@ onMounted(() => {
       flex: 1;
     }
   }
+}
+
+.device-drawer-body {
+  .sub-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+
+    .bound-count {
+      font-size: var(--font-size-base);
+      font-weight: 500;
+      color: var(--text-color-title);
+    }
+  }
+}
+
+.picker-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+  .picker-filter-select { width: 140px; }
+  .picker-filter-input { width: 180px; }
+}
+
+.picker-pagination {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--spacing-md);
+}
+
+.bound-mark {
+  color: var(--text-color-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.empty-tip {
+  text-align: center;
+  color: var(--text-color-secondary);
+  padding: var(--spacing-xl) 0;
+  font-size: var(--font-size-sm);
+}
+
+.text-danger {
+  color: var(--error-color);
 }
 </style>

@@ -4,12 +4,7 @@
       <div class="filter-row">
         <div class="filter-item">
           <Select v-model="state.searchForm.type" placeholder="设备类型" class="filter-select" clearable>
-            <Option value="camera">摄像头</Option><Option value="gate">道闸</Option><Option value="screen">显示屏</Option><Option value="sensor">地感</Option>
-          </Select>
-        </div>
-        <div class="filter-item">
-          <Select v-model="state.searchForm.parkingId" placeholder="停车场" class="filter-select" clearable>
-            <Option v-for="item in state.parkingList" :key="item.id" :value="item.id">{{ item.name }}</Option>
+            <Option v-for="o in DEVICE_TYPE_OPTIONS" :key="o.value" :value="o.value">{{ o.label }}</Option>
           </Select>
         </div>
         <div class="filter-item">
@@ -34,8 +29,12 @@
     <div class="table-container">
       <TableColumnSetting :columns="columns" v-model:visible="visibleFields" v-model:open="colSettingVisible" @reset="resetColumns" />
       <Table :columns="displayColumns" :data="state.tableData" :loading="state.loading">
-        <template #type="{ row }"><span class="device-type">{{ getTypeText(row.type) }}</span></template>
+        <template #type="{ row }"><span class="device-type">{{ optLabel(DEVICE_TYPE_OPTIONS, row.type) }}</span></template>
+        <template #deviceType="{ row }">{{ optLabel(DEVICE_NODE_OPTIONS, row.deviceType) }}</template>
+        <template #connectType="{ row }">{{ optLabel(CONNECT_TYPE_OPTIONS, row.connectType) }}</template>
         <template #onlineStatus="{ row }"><Badge :status="row.onlineStatus === 1 ? 'success' : 'error'" :text="row.onlineStatus === 1 ? '在线' : '离线'" /></template>
+        <template #workStatus="{ row }"><Badge :status="workStatusBadge(row.workStatus)" :text="optLabel(WORK_STATUS_OPTIONS, row.workStatus)" /></template>
+        <template #status="{ row }"><Badge :status="row.status === 1 ? 'success' : 'error'" :text="row.status === 1 ? '启用' : '禁用'" /></template>
         <template #action="{ row }">
           <Button type="text" size="small" @click="handleEdit(row)">编辑</Button>
           <Button type="text" size="small" @click="handleRestart(row)">重启</Button>
@@ -52,16 +51,46 @@
         <FormItem label="设备名称" prop="name"><Input v-model="state.formData.name" placeholder="请输入设备名称" /></FormItem>
         <FormItem label="设备类型" prop="type">
           <Select v-model="state.formData.type">
-            <Option value="camera">摄像头</Option><Option value="gate">道闸</Option><Option value="screen">显示屏</Option><Option value="sensor">地感</Option>
+            <Option v-for="o in DEVICE_TYPE_OPTIONS" :key="o.value" :value="o.value">{{ o.label }}</Option>
           </Select>
         </FormItem>
-        <FormItem label="所属停车场" prop="parkingId">
-          <Select v-model="state.formData.parkingId" filterable>
+        <FormItem label="节点类型" prop="deviceType">
+          <Select v-model="state.formData.deviceType">
+            <Option v-for="o in DEVICE_NODE_OPTIONS" :key="o.value" :value="o.value">{{ o.label }}</Option>
+          </Select>
+        </FormItem>
+        <FormItem label="设备型号" prop="model"><Input v-model="state.formData.model" placeholder="如：CAM-X200" /></FormItem>
+        <FormItem label="序列号" prop="serialNo"><Input v-model="state.formData.serialNo" placeholder="设备序列号" /></FormItem>
+        <FormItem label="MAC地址" prop="macAddress"><Input v-model="state.formData.macAddress" placeholder="如：00:1A:2B:3C:4D:5E" /></FormItem>
+        <FormItem label="IP地址" prop="ipAddress"><Input v-model="state.formData.ipAddress" placeholder="如：192.168.1.101" /></FormItem>
+        <FormItem label="固件版本" prop="firmwareVersion"><Input v-model="state.formData.firmwareVersion" placeholder="如：v1.0.3" /></FormItem>
+        <FormItem label="连接方式" prop="connectType">
+          <Select v-model="state.formData.connectType">
+            <Option v-for="o in CONNECT_TYPE_OPTIONS" :key="o.value" :value="o.value">{{ o.label }}</Option>
+          </Select>
+        </FormItem>
+        <FormItem label="所属停车场" prop="businessId">
+          <Select v-model="state.formData.businessId" filterable>
             <Option v-for="item in state.parkingList" :key="item.id" :value="item.id">{{ item.name }}</Option>
           </Select>
         </FormItem>
-        <FormItem label="安装通道" prop="channel"><Input v-model="state.formData.channel" placeholder="如：1号入口" /></FormItem>
-        <FormItem label="IP地址" prop="ip"><Input v-model="state.formData.ip" placeholder="如：192.168.1.101" /></FormItem>
+        <FormItem label="安装位置" prop="location"><Input v-model="state.formData.location" placeholder="如：1号入口" /></FormItem>
+        <FormItem label="位置类型" prop="locationType">
+          <Select v-model="state.formData.locationType">
+            <Option v-for="o in LOCATION_TYPE_OPTIONS" :key="o.value" :value="o.value">{{ o.label }}</Option>
+          </Select>
+        </FormItem>
+        <FormItem label="工作状态" prop="workStatus">
+          <Select v-model="state.formData.workStatus">
+            <Option v-for="o in WORK_STATUS_OPTIONS" :key="o.value" :value="o.value">{{ o.label }}</Option>
+          </Select>
+        </FormItem>
+        <FormItem label="启用状态" prop="status">
+          <Select v-model="state.formData.status">
+            <Option v-for="o in STATUS_OPTIONS" :key="o.value" :value="o.value">{{ o.label }}</Option>
+          </Select>
+        </FormItem>
+        <FormItem label="设备描述" prop="description"><Input v-model="state.formData.description" type="textarea" :rows="2" placeholder="设备描述" /></FormItem>
       </Form>
       <template #footer><Button @click="state.modalVisible = false">取消</Button><Button type="primary" @click="handleSubmit">确定</Button></template>
     </Modal>
@@ -83,8 +112,77 @@ import { parkingApi, deviceApi } from '@/api'
 import TableColumnSetting from '@/components/TableColumnSetting.vue'
 import { useTableColumns } from '@/composables/useTableColumns'
 
+// ===== 选项常量（对齐 IotDevice 实体 / IotDeviceTypeEnum） =====
+// 设备类型：light/switch/airConditioner（来自 IotDeviceTypeEnum）
+const DEVICE_TYPE_OPTIONS = [
+  { value: 'light', label: '灯' },
+  { value: 'switch', label: '开关' },
+  { value: 'airConditioner', label: '空调' }
+]
+// 节点类型（设备拓扑：直连/网关/子设备）
+const DEVICE_NODE_OPTIONS = [
+  { value: 'connect', label: '直连' },
+  { value: 'gateway', label: '网关' },
+  { value: 'subDevice', label: '子设备' }
+]
+// 连接方式（实体 connectType 为 varchar，值 '1'..'5'）
+const CONNECT_TYPE_OPTIONS = [
+  { value: '1', label: 'WiFi' },
+  { value: '2', label: '蓝牙' },
+  { value: '3', label: '有线' },
+  { value: '4', label: '4G/5G' },
+  { value: '5', label: '其他' }
+]
+// 工作状态（int：0停用/1正常/2故障/3维护中）
+const WORK_STATUS_OPTIONS = [
+  { value: 0, label: '停用' },
+  { value: 1, label: '正常' },
+  { value: 2, label: '故障' },
+  { value: 3, label: '维护中' }
+]
+// 位置类型（int：1入口/2出口）
+const LOCATION_TYPE_OPTIONS = [
+  { value: 1, label: '入口' },
+  { value: 2, label: '出口' }
+]
+// 启用状态（int：0禁用/1启用）
+const STATUS_OPTIONS = [
+  { value: 0, label: '禁用' },
+  { value: 1, label: '启用' }
+]
+
+// 通用：按值查选项 label（表格 slot 与回显用）；空值返回空串
+const optLabel = (options, val) => {
+  if (val === null || val === undefined || val === '') return ''
+  const found = options.find(item => item.value === val)
+  return found ? found.label : val
+}
+// 工作状态 → Badge status 颜色
+const workStatusBadge = (s) => ({ 0: 'default', 1: 'success', 2: 'error', 3: 'warning' }[s] || 'default')
+
+// 表单默认值（新增用；编辑时由行数据覆盖）
+const defaultFormData = () => ({
+  id: null,
+  code: '',
+  name: '',
+  type: 'light',
+  deviceType: 'connect',
+  model: '',
+  serialNo: '',
+  macAddress: '',
+  ipAddress: '',
+  firmwareVersion: '',
+  connectType: '1',
+  businessId: null,
+  location: '',
+  locationType: 1,
+  workStatus: 1,
+  status: 1,
+  description: ''
+})
+
 const state = reactive({
-  searchForm: { type: null, parkingId: null, onlineStatus: null, keyword: '' },
+  searchForm: { type: null, onlineStatus: null, keyword: '' },
   stats: { total: 0, online: 0, offline: 0, fault: 0 },
   tableData: [],
   loading: false,
@@ -93,12 +191,12 @@ const state = reactive({
   parkingMap: {},
   modalVisible: false,
   modalType: 'add',
-  formData: { id: null, code: '', name: '', type: 'camera', parkingId: null, channel: '', ip: '' },
+  formData: defaultFormData(),
   rules: {
     code: [{ required: true, message: '请输入设备编号', trigger: 'blur' }],
     name: [{ required: true, message: '请输入设备名称', trigger: 'blur' }],
     type: [{ required: true, message: '请选择设备类型', trigger: 'change' }],
-    parkingId: [{ required: true, message: '请选择所属停车场', trigger: 'change' }]
+    businessId: [{ required: true, message: '请选择所属停车场', trigger: 'change' }]
   },
   faultModalVisible: false,
   faultForm: { deviceId: null, deviceName: '', faultType: '' }
@@ -108,17 +206,20 @@ const columns = [
   { field: 'code', title: '设备编号', key: 'code', minWidth: 120 },
   { field: 'name', title: '设备名称', key: 'name', minWidth: 150 },
   { field: 'type', title: '设备类型', slot: 'type', minWidth: 100 },
+  { field: 'deviceType', title: '节点类型', slot: 'deviceType', minWidth: 100 },
+  { field: 'model', title: '设备型号', key: 'model', minWidth: 110 },
   { field: 'parkingName', title: '所属停车场', key: 'parkingName', minWidth: 150 },
-  { field: 'channel', title: '安装通道', key: 'channel', minWidth: 100 },
-  { field: 'ip', title: 'IP地址', key: 'ip', minWidth: 140 },
+  { field: 'location', title: '安装位置', key: 'location', minWidth: 120 },
+  { field: 'ipAddress', title: 'IP地址', key: 'ipAddress', minWidth: 140 },
+  { field: 'connectType', title: '连接方式', slot: 'connectType', minWidth: 100 },
   { field: 'onlineStatus', title: '在线状态', slot: 'onlineStatus', minWidth: 100, align: 'center' },
-  { field: 'lastOnline', title: '最后在线', key: 'lastOnline', minWidth: 160 },
+  { field: 'workStatus', title: '工作状态', slot: 'workStatus', minWidth: 100, align: 'center' },
+  { field: 'status', title: '启用状态', slot: 'status', minWidth: 100, align: 'center' },
+  { field: 'lastOnlineTime', title: '最后在线', key: 'lastOnlineTime', minWidth: 160 },
   { title: '操作', slot: 'action', minWidth: 200, fixed: 'right' }
 ]
 
 const { visibleFields, colSettingVisible, displayColumns, resetColumns } = useTableColumns(columns, 'deviceList:columnVisible')
-
-const getTypeText = (t) => ({ camera: '摄像头', gate: '道闸', screen: '显示屏', sensor: '地感' }[t] || t)
 
 // 停车场列表（下拉选择 + 名称映射用）
 const loadParkingList = async () => {
@@ -144,7 +245,7 @@ const loadStats = async () => {
   }
 }
 
-// 设备列表（分页，parkingName 由前端按 parkingId 映射）
+// 设备列表（分页，parkingName 由前端按 businessId 映射）
 const initData = async () => {
   state.loading = true
   try {
@@ -152,13 +253,12 @@ const initData = async () => {
       page: state.pagination.current,
       size: state.pagination.pageSize,
       type: state.searchForm.type,
-      parkingId: state.searchForm.parkingId,
       onlineStatus: state.searchForm.onlineStatus,
       keyword: state.searchForm.keyword
     })
     state.tableData = (res.data || []).map(r => ({
       ...r,
-      parkingName: state.parkingMap[String(r.parkingId)] || ''
+      parkingName: state.parkingMap[String(r.businessId)] || ''
     }))
     state.pagination.total = (res.result && res.result.total) || 0
   } catch (e) {
@@ -169,17 +269,18 @@ const initData = async () => {
 }
 
 const handleSearch = () => { state.pagination.current = 1; initData() }
-const handleReset = () => { state.searchForm = { type: null, parkingId: null, onlineStatus: null, keyword: '' }; handleSearch() }
+const handleReset = () => { state.searchForm = { type: null, onlineStatus: null, keyword: '' }; handleSearch() }
 
 const handleAdd = () => {
   state.modalType = 'add'
-  state.formData = { id: null, code: '', name: '', type: 'camera', parkingId: null, channel: '', ip: '' }
+  state.formData = defaultFormData()
   state.modalVisible = true
 }
 
 const handleEdit = (r) => {
   state.modalType = 'edit'
-  state.formData = { ...r }
+  // 先填默认值再覆盖行数据，保证所有实体字段都有绑定（行数据缺字段时不报错）
+  state.formData = { ...defaultFormData(), ...r }
   state.modalVisible = true
 }
 
@@ -187,7 +288,7 @@ const handleSubmit = async () => {
   if (!state.formData.code) { Message.warning('请输入设备编号'); return }
   if (!state.formData.name) { Message.warning('请输入设备名称'); return }
   if (!state.formData.type) { Message.warning('请选择设备类型'); return }
-  if (!state.formData.parkingId) { Message.warning('请选择所属停车场'); return }
+  if (!state.formData.businessId) { Message.warning('请选择所属停车场'); return }
   try {
     await (state.modalType === 'add' ? deviceApi.addDevice : deviceApi.editDevice)({ ...state.formData })
     Message.success(state.modalType === 'add' ? '添加成功' : '编辑成功')

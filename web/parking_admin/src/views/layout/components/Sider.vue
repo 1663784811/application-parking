@@ -191,6 +191,11 @@ const menuList = [
         name: 'faultRepair',
         title: '故障报修',
         path: '/device/faultRepair'
+      },
+      {
+        name: 'thingModel',
+        title: '物模型',
+        path: '/device/thingModel'
       }
     ]
   },

@@ -180,8 +180,7 @@ const routes = [
         name: 'deviceList',
         component: () => import('@/views/device/deviceList/deviceList.vue'),
         meta: {
-          title: '设备列表',
-          showParkingSidebar: true
+          title: '设备列表'
         }
       },
       {
@@ -190,6 +189,14 @@ const routes = [
         component: () => import('@/views/device/faultRepair/faultRepair.vue'),
         meta: {
           title: '故障报修'
+        }
+      },
+      {
+        path: '/device/thingModel',
+        name: 'thingModel',
+        component: () => import('@/views/device/thingModel/thingModel.vue'),
+        meta: {
+          title: '物模型'
         }
       },
 
