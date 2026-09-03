@@ -3,10 +3,9 @@ package com.cyyaw.application.parking.gate.contoller;
 import com.cyyaw.admin.common.BaseResult;
 import com.cyyaw.application.parking.gate.common.GateConstants;
 import com.cyyaw.application.parking.gate.common.entity.PlateRecognitionPayload;
-import com.cyyaw.application.parking.gate.vehicle.PlateImageService;
-import com.cyyaw.application.parking.gate.vehicle.VehicleRecordStore;
 import com.cyyaw.application.parking.gate.common.entity.PlateRecognitionRequest;
 import com.cyyaw.application.parking.gate.common.entity.VehicleRecord;
+import com.cyyaw.application.parking.gate.vehicle.VehicleRecordStore;
 import com.cyyaw.mqtt.client.MqttApplicationClient;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -18,7 +17,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import tools.jackson.core.JacksonException;
 
-import java.nio.file.Path;
 import java.time.LocalTime;
 
 /**
@@ -40,7 +38,6 @@ import java.time.LocalTime;
 public class PlateRecognitionController {
 
     private final VehicleRecordStore store;
-    private final PlateImageService imageService;
     private final MqttApplicationClient mqttClient;
 
 
@@ -50,25 +47,10 @@ public class PlateRecognitionController {
         if (req == null || req.getCarNumber() == null || req.getCarNumber().isBlank()) {
             return BaseResult.fail("车牌号不能为空");
         }
+        //将图片上传到服务器
 
-        // 第一步: 下载图片到本地
-        Path imgPath = imageService.saveImage(req.getImg(), "img");
-        Path numberImgPath = imageService.saveImage(req.getNumberImg(), "number");
-        if (imgPath != null) {
-            log.info("车辆图片已落地：{}", imgPath);
-        }
-        if (numberImgPath != null) {
-            log.info("车牌图片已落地：{}", numberImgPath);
-        }
 
-        // 第二步：将图片上传到服务器
-        // TODO: admin 侧暂无图片上传接口（已全仓确认），待其提供后，
-        //       将上面落地的本地文件 multipart 上传，拿到服务器 URL 后由 admin 侧
-        //       按 deviceCode/时间关联到通行记录（当前 MQTT 车牌识别事件不携带图片字段）。
-
-        // 第三步: 发送 MQTT 车牌识别事件到云平台（对齐 MQTT停车场与云平台通信.md「上报 车牌识别」）
-        // 注意：物模型事件 params 仅含 deviceCode/carNumber/carType，不携带 img/numberImg；
-        //       图片经第二步上传拿到服务器 URL 后由 admin 侧另行关联，本事件不回填图片字段。
+        //
         String deviceCode = req.getDeviceCode() != null && !req.getDeviceCode().isBlank() ? req.getDeviceCode() : "unknown";
         String topic = GateConstants.MQTT_TOPIC_PREFIX + deviceCode + GateConstants.MQTT_TOPIC_SUFFIX;
         String payload = buildPlatePayload(deviceCode, req);

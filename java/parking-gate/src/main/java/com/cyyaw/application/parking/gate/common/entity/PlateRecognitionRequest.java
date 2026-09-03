@@ -20,9 +20,9 @@ public class PlateRecognitionRequest {
     @Schema(description = "车辆类型", example = "小型车")
     private String carType;
 
-    @Schema(description = "车辆图片（预留，暂不展示）")
+    @Schema(description = "车辆图片base64 ")
     private String img;
 
-    @Schema(description = "车牌图片（预留，暂不展示）")
+    @Schema(description = "车牌图片base64 ")
     private String numberImg;
 }
