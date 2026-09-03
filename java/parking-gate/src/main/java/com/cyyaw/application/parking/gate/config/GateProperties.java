@@ -1,6 +1,6 @@
 package com.cyyaw.application.parking.gate.config;
 
-import com.cyyaw.application.parking.gate.auth.model.GateUser;
+import com.cyyaw.application.parking.gate.common.entity.GateUser;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

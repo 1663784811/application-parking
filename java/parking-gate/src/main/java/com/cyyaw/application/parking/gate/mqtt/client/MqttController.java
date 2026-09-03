@@ -1,6 +1,6 @@
 package com.cyyaw.application.parking.gate.mqtt.client;
 
-import com.cyyaw.application.parking.gate.common.R;
+import com.cyyaw.admin.common.BaseResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,7 +31,7 @@ public class MqttController {
      */
     @Operation(summary = "MQTT连接状态", description = "返回门口端 MQTT 客户端连接状态：connected 是否已连接、lastError 最近断开原因")
     @GetMapping("/status")
-    public R<Map<String, Object>> status() {
-        return R.ok(Map.of("connected", MqttClientConfig.isMqttStatus(), "lastError", ""));
+    public BaseResult<Map<String, Object>> status() {
+        return BaseResult.ok(Map.of("connected", MqttClientConfig.isMqttStatus(), "lastError", ""));
     }
 }

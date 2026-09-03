@@ -1,11 +1,12 @@
-package com.cyyaw.application.parking.gate.auth;
+package com.cyyaw.application.parking.gate.contoller;
 
-import com.cyyaw.application.parking.gate.auth.model.GateUser;
-import com.cyyaw.application.parking.gate.auth.model.LoginRequest;
-import com.cyyaw.application.parking.gate.auth.model.LoginResult;
-import com.cyyaw.application.parking.gate.auth.model.UserInfo;
-import com.cyyaw.application.parking.gate.common.R;
-import com.cyyaw.application.parking.gate.jwt.JwtUtil;
+import com.cyyaw.admin.common.BaseResult;
+import com.cyyaw.application.parking.gate.config.GateUserStore;
+import com.cyyaw.application.parking.gate.common.entity.GateUser;
+import com.cyyaw.application.parking.gate.common.entity.LoginRequest;
+import com.cyyaw.application.parking.gate.common.entity.LoginResult;
+import com.cyyaw.application.parking.gate.common.entity.UserInfo;
+import com.cyyaw.application.parking.gate.common.JwtUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -36,28 +37,28 @@ public class AuthController {
 
     @Operation(summary = "登录", description = "账号密码登录，成功返回 token 与用户信息")
     @PostMapping("/login")
-    public R<LoginResult> login(@RequestBody LoginRequest req) {
+    public BaseResult<LoginResult> login(@RequestBody LoginRequest req) {
         if (req == null || req.getUsername() == null || req.getPassword() == null) {
-            return R.fail(400, "请输入账号和密码");
+            return BaseResult.fail("请输入账号和密码");
         }
         GateUser user = userStore.findByCredentials(req.getUsername(), req.getPassword());
         if (user == null) {
-            return R.fail(401, "账号或密码错误");
+            return BaseResult.fail("账号或密码错误");
         }
         String token = jwtUtil.generate(user);
         UserInfo userInfo = userStore.toUserInfo(user);
-        return R.ok(new LoginResult(token, userInfo));
+        return BaseResult.ok(new LoginResult(token, userInfo));
     }
 
     @Operation(summary = "当前用户信息", description = "依据登录 token 解析出的当前用户信息（需带 token）")
     @GetMapping("/user/info")
-    public R<UserInfo> userInfo(@Parameter(hidden = true) @RequestAttribute("currentUser") GateUser user) {
-        return R.ok(userStore.toUserInfo(user));
+    public BaseResult<UserInfo> userInfo(@Parameter(hidden = true) @RequestAttribute("currentUser") GateUser user) {
+        return BaseResult.ok(userStore.toUserInfo(user));
     }
 
     @Operation(summary = "登出", description = "JWT 无状态，客户端清除本地 token 即可")
     @PostMapping("/logout")
-    public R<Void> logout() {
-        return R.ok();
+    public BaseResult<Void> logout() {
+        return BaseResult.ok();
     }
 }

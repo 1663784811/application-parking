@@ -1,4 +1,4 @@
-package com.cyyaw.application.parking.gate.vehicle.model;
+package com.cyyaw.application.parking.gate.common.entity;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
@@ -12,7 +12,7 @@ import lombok.Data;
 public class PlateRecognitionRequest {
 
     @Schema(description = "硬件编号（摄像头/设备）", example = "CAM001")
-    private String code;
+    private String deviceCode;
 
     @Schema(description = "车牌号（必填）", example = "粤B·8K321")
     private String carNumber;

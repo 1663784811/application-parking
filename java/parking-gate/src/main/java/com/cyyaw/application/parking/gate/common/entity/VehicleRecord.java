@@ -1,4 +1,4 @@
-package com.cyyaw.application.parking.gate.vehicle.model;
+package com.cyyaw.application.parking.gate.common.entity;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;

@@ -88,6 +88,13 @@
         </dependency>
 
 
+        <dependency>
+            <groupId>com.cyyaw.admin</groupId>
+            <artifactId>admin-common</artifactId>
+            <version>1.0.1</version>
+        </dependency>
+
+
 
     </dependencies>
 

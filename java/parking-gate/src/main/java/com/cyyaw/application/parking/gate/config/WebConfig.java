@@ -1,8 +1,6 @@
 package com.cyyaw.application.parking.gate.config;
 
-import com.cyyaw.application.parking.gate.auth.GateUserStore;
-import com.cyyaw.application.parking.gate.auth.JwtAuthFilter;
-import com.cyyaw.application.parking.gate.jwt.JwtUtil;
+import com.cyyaw.application.parking.gate.common.JwtUtil;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;

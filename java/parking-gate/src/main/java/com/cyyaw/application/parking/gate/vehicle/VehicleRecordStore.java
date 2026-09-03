@@ -1,6 +1,6 @@
 package com.cyyaw.application.parking.gate.vehicle;
 
-import com.cyyaw.application.parking.gate.vehicle.model.VehicleRecord;
+import com.cyyaw.application.parking.gate.common.entity.VehicleRecord;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

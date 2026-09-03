@@ -1,8 +1,7 @@
-package com.cyyaw.application.parking.gate.auth;
+package com.cyyaw.application.parking.gate.config;
 
-import com.cyyaw.application.parking.gate.auth.model.GateUser;
-import com.cyyaw.application.parking.gate.auth.model.UserInfo;
-import com.cyyaw.application.parking.gate.config.GateProperties;
+import com.cyyaw.application.parking.gate.common.entity.GateUser;
+import com.cyyaw.application.parking.gate.common.entity.UserInfo;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,7 +1,8 @@
-package com.cyyaw.application.parking.gate.vehicle;
+package com.cyyaw.application.parking.gate.contoller;
 
-import com.cyyaw.application.parking.gate.common.R;
-import com.cyyaw.application.parking.gate.vehicle.model.VehicleRecord;
+import com.cyyaw.admin.common.BaseResult;
+import com.cyyaw.application.parking.gate.vehicle.VehicleRecordStore;
+import com.cyyaw.application.parking.gate.common.entity.VehicleRecord;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +32,7 @@ public class VehicleRecordController {
      */
     @Operation(summary = "通行记录列表", description = "返回车辆通行记录，最新在前（需带登录 token）")
     @GetMapping("/records")
-    public R<List<VehicleRecord>> records() {
-        return R.ok(store.list());
+    public BaseResult<List<VehicleRecord>> records() {
+        return BaseResult.ok(store.list());
     }
 }

@@ -1,6 +1,6 @@
-package com.cyyaw.application.parking.gate.jwt;
+package com.cyyaw.application.parking.gate.common;
 
-import com.cyyaw.application.parking.gate.auth.model.GateUser;
+import com.cyyaw.application.parking.gate.common.entity.GateUser;
 import com.cyyaw.application.parking.gate.config.GateProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;

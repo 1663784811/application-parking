@@ -27,6 +27,6 @@ public class SubscribeFilterImpl implements SubscribeFilter {
 
 
 
-        return false;
+        return true;
     }
 }

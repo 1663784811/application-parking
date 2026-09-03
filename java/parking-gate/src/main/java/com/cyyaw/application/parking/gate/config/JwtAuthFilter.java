@@ -1,7 +1,7 @@
-package com.cyyaw.application.parking.gate.auth;
+package com.cyyaw.application.parking.gate.config;
 
-import com.cyyaw.application.parking.gate.auth.model.GateUser;
-import com.cyyaw.application.parking.gate.jwt.JwtUtil;
+import com.cyyaw.application.parking.gate.common.entity.GateUser;
+import com.cyyaw.application.parking.gate.common.JwtUtil;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
