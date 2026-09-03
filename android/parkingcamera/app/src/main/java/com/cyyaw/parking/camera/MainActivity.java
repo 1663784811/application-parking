@@ -43,7 +43,7 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import org.json.JSONObject;
+import com.cyyaw.parking.camera.entity.PlateRecognitionRequest;
 
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
@@ -170,7 +170,9 @@ public class MainActivity extends BaseActivity {
     // Panel animation state
     private boolean isPanelOpen = false;
 
-    /** 拦截返回键：面板打开时先收起面板，否则交由系统退出。 */
+    /**
+     * 拦截返回键：面板打开时先收起面板，否则交由系统退出。
+     */
     private OnBackPressedCallback backPressedCallback;
 
     // Time display
@@ -204,7 +206,9 @@ public class MainActivity extends BaseActivity {
         }
     };
 
-    /** 相机打开回调：成功→保存设备并启动预览；断开/出错→关相机并提示。 */
+    /**
+     * 相机打开回调：成功→保存设备并启动预览；断开/出错→关相机并提示。
+     */
     private final CameraDevice.StateCallback cameraCallback = new CameraDevice.StateCallback() {
         @Override
         public void onOpened(@NonNull CameraDevice camera) {
@@ -375,7 +379,9 @@ public class MainActivity extends BaseActivity {
         });
     }
 
-    /** 根据当前活动网络刷新底部网络指示器：绿点=有互联网，红点=无。 */
+    /**
+     * 根据当前活动网络刷新底部网络指示器：绿点=有互联网，红点=无。
+     */
     private void updateNetworkStatus(ConnectivityManager cm) {
         Network activeNetwork = cm.getActiveNetwork();
         NetworkCapabilities caps = cm.getNetworkCapabilities(activeNetwork);
@@ -403,7 +409,9 @@ public class MainActivity extends BaseActivity {
         view.setText(text);
     }
 
-    /** 底部 MQTT 状态药丸：按 MqttClient.Status 切颜色（绿=已连接 / 琥珀=连接中 / 红=未连接），地址为空显示"未配置"。 */
+    /**
+     * 底部 MQTT 状态药丸：按 MqttClient.Status 切颜色（绿=已连接 / 琥珀=连接中 / 红=未连接），地址为空显示"未配置"。
+     */
     private void updateMqttStatusBar() {
         String address = getSharedPreferences(PREFS_NAME, MODE_PRIVATE).getString(KEY_MQTT_ADDRESS, "");
         if (address.isEmpty()) {
@@ -424,13 +432,17 @@ public class MainActivity extends BaseActivity {
         }
     }
 
-    /** 底部信令状态药丸：仅按地址是否非空判断"已配置/未配置"（信令连接尚未实现）。 */
+    /**
+     * 底部信令状态药丸：仅按地址是否非空判断"已配置/未配置"（信令连接尚未实现）。
+     */
     private void updateSignalingStatusBar() {
         String server = getSharedPreferences(PREFS_NAME, MODE_PRIVATE).getString(KEY_SIGNALING_SERVER, "");
         setStatusPill(signalingStatus, server.isEmpty() ? "信令未配置" : "信令已配置", server.isEmpty() ? 0x80FFFFFF : 0xFF66FF66);
     }
 
-    /** 底部车牌回调状态药丸：仅按 URL 是否非空判断"已配置/未配置"。 */
+    /**
+     * 底部车牌回调状态药丸：仅按 URL 是否非空判断"已配置/未配置"。
+     */
     private void updateCallbackStatusBar() {
         String url = getSharedPreferences(PREFS_NAME, MODE_PRIVATE).getString(KEY_LPR_CALLBACK, "");
         setStatusPill(callbackStatus, url.isEmpty() ? "回调未配置" : "回调已配置", url.isEmpty() ? 0x80FFFFFF : 0xFF66FF66);
@@ -438,7 +450,9 @@ public class MainActivity extends BaseActivity {
 
     // ───── Settings sliding panel ─────
 
-    /** 绑定设置面板各控件：开/关面板、四行设置项分别打开对应配置弹窗，并刷新各自摘要。 */
+    /**
+     * 绑定设置面板各控件：开/关面板、四行设置项分别打开对应配置弹窗，并刷新各自摘要。
+     */
     private void setupSettingsPanel() {
         // Settings icon opens the panel
         settingsIcon.setOnClickListener(v -> openSettingsPanel());
@@ -468,7 +482,9 @@ public class MainActivity extends BaseActivity {
 
     // ───── MQTT settings ─────
 
-    /** 设置面板里 MQTT 行的摘要：地址 + 连接状态，颜色随状态变化。 */
+    /**
+     * 设置面板里 MQTT 行的摘要：地址 + 连接状态，颜色随状态变化。
+     */
     private void updateMqttSummary() {
         updateMqttStatusBar();
         String address = getSharedPreferences(PREFS_NAME, MODE_PRIVATE).getString(KEY_MQTT_ADDRESS, "");
@@ -541,7 +557,7 @@ public class MainActivity extends BaseActivity {
 
     /**
      * 首次启动时把默认值写入 SharedPreferences，使设置面板的信息持久化保存
-     *（而非仅作为 {@code getString} 的回退默认值）。仅写入尚未存在的键，用户在
+     * （而非仅作为 {@code getString} 的回退默认值）。仅写入尚未存在的键，用户在
      * 弹窗里改过的配置不受影响。基础信息 / 信令 / MQTT / 车牌回调 四组设置全部
      * 预置默认值并持久化；其中 MQTT 地址等服务器地址为占位值，用户应在设置弹窗
      * 里改成真实地址后保存。
@@ -550,18 +566,25 @@ public class MainActivity extends BaseActivity {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         SharedPreferences.Editor e = prefs.edit();
         if (!prefs.contains(KEY_MQTT_ADDRESS)) e.putString(KEY_MQTT_ADDRESS, DEFAULT_MQTT_ADDRESS);
-        if (!prefs.contains(KEY_MQTT_USERNAME)) e.putString(KEY_MQTT_USERNAME, DEFAULT_MQTT_USERNAME);
-        if (!prefs.contains(KEY_MQTT_PASSWORD)) e.putString(KEY_MQTT_PASSWORD, DEFAULT_MQTT_PASSWORD);
-        if (!prefs.contains(KEY_MQTT_CLIENT_ID)) e.putString(KEY_MQTT_CLIENT_ID, DEFAULT_MQTT_CLIENT_ID);
+        if (!prefs.contains(KEY_MQTT_USERNAME))
+            e.putString(KEY_MQTT_USERNAME, DEFAULT_MQTT_USERNAME);
+        if (!prefs.contains(KEY_MQTT_PASSWORD))
+            e.putString(KEY_MQTT_PASSWORD, DEFAULT_MQTT_PASSWORD);
+        if (!prefs.contains(KEY_MQTT_CLIENT_ID))
+            e.putString(KEY_MQTT_CLIENT_ID, DEFAULT_MQTT_CLIENT_ID);
         if (!prefs.contains(KEY_LPR_CALLBACK)) e.putString(KEY_LPR_CALLBACK, DEFAULT_LPR_CALLBACK);
-        if (!prefs.contains(KEY_SIGNALING_SERVER)) e.putString(KEY_SIGNALING_SERVER, DEFAULT_SIGNALING_SERVER);
-        if (!prefs.contains(KEY_TIMESTAMP_VISIBLE)) e.putBoolean(KEY_TIMESTAMP_VISIBLE, DEFAULT_TIMESTAMP_VISIBLE);
+        if (!prefs.contains(KEY_SIGNALING_SERVER))
+            e.putString(KEY_SIGNALING_SERVER, DEFAULT_SIGNALING_SERVER);
+        if (!prefs.contains(KEY_TIMESTAMP_VISIBLE))
+            e.putBoolean(KEY_TIMESTAMP_VISIBLE, DEFAULT_TIMESTAMP_VISIBLE);
         if (!prefs.contains(KEY_CAMERA_ID)) e.putString(KEY_CAMERA_ID, DEFAULT_CAMERA_ID);
         if (!prefs.contains(KEY_BARRIER_ID)) e.putString(KEY_BARRIER_ID, DEFAULT_BARRIER_ID);
         e.apply();
     }
 
-    /** 从持久化配置构造 MQTT 客户端，注册指令监听 + 预登记下行主题；真正连接发生在 onStart。 */
+    /**
+     * 从持久化配置构造 MQTT 客户端，注册指令监听 + 预登记下行主题；真正连接发生在 onStart。
+     */
     private void setupMqttClient() {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         String addr = prefs.getString(KEY_MQTT_ADDRESS, DEFAULT_MQTT_ADDRESS);
@@ -580,14 +603,18 @@ public class MainActivity extends BaseActivity {
 
     // ───── License-plate recognition callback ─────
 
-    /** 设置面板里车牌回调行的摘要：显示回调 URL，未配置则显示"未配置"。 */
+    /**
+     * 设置面板里车牌回调行的摘要：显示回调 URL，未配置则显示"未配置"。
+     */
     private void updateLprCallbackSummary() {
         updateCallbackStatusBar();
         String url = getSharedPreferences(PREFS_NAME, MODE_PRIVATE).getString(KEY_LPR_CALLBACK, "");
         lprCallbackSummary.setText(url.isEmpty() ? "未配置" : url);
     }
 
-    /** 车牌回调 URL 设置弹窗，保存后写回 SharedPreferences。 */
+    /**
+     * 车牌回调 URL 设置弹窗，保存后写回 SharedPreferences。
+     */
     private void showLprCallbackDialog() {
         Dialog dialog = new Dialog(this);
         dialog.setContentView(R.layout.dialog_lpr_callback);
@@ -607,7 +634,9 @@ public class MainActivity extends BaseActivity {
 
     // ───── Basic info: timestamp / camera ID / barrier ID ─────
 
-    /** 设置面板里基础信息行的摘要：摄像头ID · 道闸ID。 */
+    /**
+     * 设置面板里基础信息行的摘要：摄像头ID · 道闸ID。
+     */
     private void updateBasicInfoSummary() {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         String cameraIdVal = prefs.getString(KEY_CAMERA_ID, DEFAULT_CAMERA_ID);
@@ -615,7 +644,9 @@ public class MainActivity extends BaseActivity {
         basicInfoSummary.setText(cameraIdVal + " · " + barrierIdVal);
     }
 
-    /** 基础信息弹窗：时间戳开关 / 摄像头ID / 道闸ID；保存后同步刷新底栏与时间显示。 */
+    /**
+     * 基础信息弹窗：时间戳开关 / 摄像头ID / 道闸ID；保存后同步刷新底栏与时间显示。
+     */
     private void showBasicInfoDialog() {
         Dialog dialog = new Dialog(this);
         dialog.setContentView(R.layout.dialog_basic_info);
@@ -651,14 +682,18 @@ public class MainActivity extends BaseActivity {
 
     // ───── Signaling server ─────
 
-    /** 设置面板里信令服务器行的摘要：显示信令地址，未配置则显示"未配置"。 */
+    /**
+     * 设置面板里信令服务器行的摘要：显示信令地址，未配置则显示"未配置"。
+     */
     private void updateSignalingServerSummary() {
         updateSignalingStatusBar();
         String server = getSharedPreferences(PREFS_NAME, MODE_PRIVATE).getString(KEY_SIGNALING_SERVER, "");
         signalingServerSummary.setText(server.isEmpty() ? "未配置" : server);
     }
 
-    /** 信令服务器地址设置弹窗，保存后写回 SharedPreferences。 */
+    /**
+     * 信令服务器地址设置弹窗，保存后写回 SharedPreferences。
+     */
     private void showSignalingServerDialog() {
         Dialog dialog = new Dialog(this);
         dialog.setContentView(R.layout.dialog_signaling_server);
@@ -676,7 +711,9 @@ public class MainActivity extends BaseActivity {
         dialog.show();
     }
 
-    /** 从右侧滑入设置面板 + 渐显遮罩，并启用返回键拦截（再按返回收起面板）。 */
+    /**
+     * 从右侧滑入设置面板 + 渐显遮罩，并启用返回键拦截（再按返回收起面板）。
+     */
     private void openSettingsPanel() {
         if (isPanelOpen) return;
         isPanelOpen = true;
@@ -695,7 +732,9 @@ public class MainActivity extends BaseActivity {
         settingsPanel.animate().translationX(0f).setDuration(300).start();
     }
 
-    /** 滑出设置面板 + 渐隐遮罩，并关闭返回键拦截（再按返回退出界面）。 */
+    /**
+     * 滑出设置面板 + 渐隐遮罩，并关闭返回键拦截（再按返回退出界面）。
+     */
     private void closeSettingsPanel() {
         if (!isPanelOpen) return;
         isPanelOpen = false;
@@ -711,7 +750,9 @@ public class MainActivity extends BaseActivity {
         }).start();
     }
 
-    /** 每秒刷新时间显示（可见时），自递归 postDelayed 驱动。 */
+    /**
+     * 每秒刷新时间显示（可见时），自递归 postDelayed 驱动。
+     */
     private void startTimeUpdater() {
         final Runnable tick = new Runnable() {
             @Override
@@ -725,35 +766,45 @@ public class MainActivity extends BaseActivity {
         tick.run();
     }
 
-    /** 界面可见时建立 MQTT 连接（仅前台保持连接）。 */
+    /**
+     * 界面可见时建立 MQTT 连接（仅前台保持连接）。
+     */
     @Override
     protected void onStart() {
         super.onStart();
         if (mqtt != null) mqtt.connect();
     }
 
-    /** 界面不可见时主动断开 MQTT，避免后台占用连接。 */
+    /**
+     * 界面不可见时主动断开 MQTT，避免后台占用连接。
+     */
     @Override
     protected void onStop() {
         super.onStop();
         if (mqtt != null) mqtt.disconnect();
     }
 
-    /** 回到前台时开启相机预览。 */
+    /**
+     * 回到前台时开启相机预览。
+     */
     @Override
     protected void onResume() {
         super.onResume();
         openCamera();
     }
 
-    /** 切到后台时关闭相机，释放会话与 ImageReader。 */
+    /**
+     * 切到后台时关闭相机，释放会话与 ImageReader。
+     */
     @Override
     protected void onPause() {
         super.onPause();
         closeCamera();
     }
 
-    /** 销毁：移除 Surface 回调、关相机、断 MQTT、关 LPR 引擎与后台线程。 */
+    /**
+     * 销毁：移除 Surface 回调、关相机、断 MQTT、关 LPR 引擎与后台线程。
+     */
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -773,7 +824,9 @@ public class MainActivity extends BaseActivity {
         }
     }
 
-    /** 相机权限授予结果：通过则开相机，否则提示。 */
+    /**
+     * 相机权限授予结果：通过则开相机，否则提示。
+     */
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -786,7 +839,9 @@ public class MainActivity extends BaseActivity {
         }
     }
 
-    /** 优先选后置摄像头，找不到则回退到第一个可用摄像头。 */
+    /**
+     * 优先选后置摄像头，找不到则回退到第一个可用摄像头。
+     */
     private String pickBackCameraId() {
         try {
             for (String id : cameraManager.getCameraIdList()) {
@@ -950,7 +1005,9 @@ public class MainActivity extends BaseActivity {
         }
     }
 
-    /** 停止重复请求并关闭当前会话，置空引用。 */
+    /**
+     * 停止重复请求并关闭当前会话，置空引用。
+     */
     private void closePreviewSession() {
         if (captureSession != null) {
             try {
@@ -962,7 +1019,9 @@ public class MainActivity extends BaseActivity {
         }
     }
 
-    /** 关闭预览会话、LPR ImageReader、相机设备，重置打开状态。 */
+    /**
+     * 关闭预览会话、LPR ImageReader、相机设备，重置打开状态。
+     */
     private void closeCamera() {
         closePreviewSession();
         opening = false;
@@ -978,7 +1037,9 @@ public class MainActivity extends BaseActivity {
 
     // ───── License-plate recognition ─────
 
-    /** 启动 LPR 后台线程 + Handler，异步初始化 HyperLPR3 引擎（加载 onnx 模型）。 */
+    /**
+     * 启动 LPR 后台线程 + Handler，异步初始化 HyperLPR3 引擎（加载 onnx 模型）。
+     */
     private void startLprEngine() {
         lprThread = new HandlerThread("lpr-recognizer");
         lprThread.start();
@@ -1100,14 +1161,10 @@ public class MainActivity extends BaseActivity {
         final String cameraId = prefs.getString(KEY_CAMERA_ID, "CAM-001");
         final String payload;
         try {
-            JSONObject json = new JSONObject();
-            // 字段对齐 parking-gate PlateRecognitionRequest：deviceCode/carNumber/carType/img/numberImg
-            json.put("deviceCode", cameraId);
-            json.put("carNumber", plate);
-            json.put("carType", LprRecognizer.plateTypeName(best.plateType));
-            json.put("img", ImageUtils.bitmapToJpegBase64(frame));        // 原图 JPEG base64
-            json.put("numberImg", ImageUtils.cropPlateJpegBase64(frame, best.box));     // 车牌图 JPEG base64
-            payload = json.toString();
+            PlateRecognitionRequest request = new PlateRecognitionRequest(cameraId, plate, LprRecognizer.plateTypeName(best.plateType), ImageUtils.bitmapToJpegBase64(frame),        // 原图 JPEG base64
+                    ImageUtils.cropPlateJpegBase64(frame, best.box)  // 车牌图 JPEG base64
+            );
+            payload = request.toJson();
         } catch (Exception e) {
             Log.e("Lpr", "build payload failed", e);
             return;
@@ -1167,7 +1224,9 @@ public class MainActivity extends BaseActivity {
         }
     }
 
-    /** 弹一个短 Toast。 */
+    /**
+     * 弹一个短 Toast。
+     */
     private void toast(String msg) {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
