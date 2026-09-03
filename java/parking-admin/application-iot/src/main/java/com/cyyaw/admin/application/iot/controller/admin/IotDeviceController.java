@@ -30,13 +30,10 @@ public class IotDeviceController {
 
     @Operation(summary = "设备列表", description = "分页查询设备")
     @GetMapping("/list")
-    public BaseResult<List<IotDevice>> list(@RequestParam(defaultValue = "1") Integer page, @RequestParam(defaultValue = "10") Integer size, @RequestParam(required = false) String type, @RequestParam(required = false) Long parkingId, @RequestParam(required = false) Integer onlineStatus, @RequestParam(required = false) String keyword) {
+    public BaseResult<List<IotDevice>> list(@RequestParam(defaultValue = "1") Integer page, @RequestParam(defaultValue = "10") Integer size, @RequestParam(required = false) String type, @RequestParam(required = false) Integer onlineStatus, @RequestParam(required = false) String keyword) {
         QueryWrapper<IotDevice> wrapper = new QueryWrapper<>();
         if (StringUtils.hasText(type)) {
             wrapper.eq("type", type);
-        }
-        if (parkingId != null) {
-            wrapper.eq("parking_id", parkingId);
         }
         if (onlineStatus != null) {
             wrapper.eq("online_status", onlineStatus);
