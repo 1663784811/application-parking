@@ -37,8 +37,7 @@
         <template #status="{ row }"><Badge :status="row.status === 1 ? 'success' : 'error'" :text="row.status === 1 ? '启用' : '禁用'" /></template>
         <template #action="{ row }">
           <Button type="text" size="small" @click="handleEdit(row)">编辑</Button>
-          <Button type="text" size="small" @click="handleRestart(row)">重启</Button>
-          <Button type="text" size="small" @click="handleReportFault(row)" class="text-warning">报修</Button>
+          <Button type="text" size="small" @click="handleChangePassword(row)">修改密码</Button>
           <Button type="text" size="small" @click="handleDelete(row)" class="text-danger">删除</Button>
         </template>
       </Table>
@@ -95,12 +94,13 @@
       <template #footer><Button @click="state.modalVisible = false">取消</Button><Button type="primary" @click="handleSubmit">确定</Button></template>
     </Modal>
 
-    <Modal v-model="state.faultModalVisible" title="设备报修" width="420">
-      <Form :model="state.faultForm" :label-width="100">
-        <FormItem label="设备名称">{{ state.faultForm.deviceName }}</FormItem>
-        <FormItem label="故障类型"><Input v-model="state.faultForm.faultType" placeholder="如：画面丢失" /></FormItem>
+    <Modal v-model="state.pwdModalVisible" title="修改设备密码" width="420">
+      <Form :model="state.pwdForm" :label-width="100">
+        <FormItem label="设备名称">{{ state.pwdForm.deviceName }}</FormItem>
+        <FormItem label="新密码"><Input v-model="state.pwdForm.password" type="password" placeholder="请输入新密码" /></FormItem>
+        <FormItem label="确认密码"><Input v-model="state.pwdForm.confirm" type="password" placeholder="请再次输入新密码" /></FormItem>
       </Form>
-      <template #footer><Button @click="state.faultModalVisible = false">取消</Button><Button type="primary" @click="handleFaultSubmit">提交报修</Button></template>
+      <template #footer><Button @click="state.pwdModalVisible = false">取消</Button><Button type="primary" @click="handlePwdSubmit">确定</Button></template>
     </Modal>
   </div>
 </template>
@@ -198,8 +198,8 @@ const state = reactive({
     type: [{ required: true, message: '请选择设备类型', trigger: 'change' }],
     businessId: [{ required: true, message: '请选择所属停车场', trigger: 'change' }]
   },
-  faultModalVisible: false,
-  faultForm: { deviceId: null, deviceName: '', faultType: '' }
+  pwdModalVisible: false,
+  pwdForm: { id: null, deviceName: '', password: '', confirm: '' }
 })
 
 const columns = [
@@ -300,36 +300,21 @@ const handleSubmit = async () => {
   }
 }
 
-const handleRestart = (r) => {
-  Modal.confirm({
-    title: '确认重启',
-    content: `确定重启设备"${r.name}"吗？`,
-    onOk: async () => {
-      try {
-        await deviceApi.remoteRestart(r.id)
-        Message.success('重启命令已发送')
-      } catch (e) {
-        console.error('重启失败', e)
-      }
-    }
-  })
+const handleChangePassword = (r) => {
+  state.pwdForm = { id: r.id, deviceName: r.name, password: '', confirm: '' }
+  state.pwdModalVisible = true
 }
 
-const handleReportFault = (r) => {
-  state.faultForm = { deviceId: r.id, deviceName: r.name, faultType: '' }
-  state.faultModalVisible = true
-}
-
-const handleFaultSubmit = async () => {
-  if (!state.faultForm.faultType) { Message.warning('请输入故障类型'); return }
+const handlePwdSubmit = async () => {
+  if (!state.pwdForm.password) { Message.warning('请输入新密码'); return }
+  if (state.pwdForm.password !== state.pwdForm.confirm) { Message.warning('两次输入的密码不一致'); return }
   try {
-    await deviceApi.createFault({ deviceId: state.faultForm.deviceId, faultType: state.faultForm.faultType })
-    Message.success('报修成功')
-    state.faultModalVisible = false
-    loadStats()
+    await deviceApi.changePassword(state.pwdForm.id, state.pwdForm.password)
+    Message.success('密码修改成功')
+    state.pwdModalVisible = false
   } catch (e) {
-    console.error('报修失败', e)
-    Message.error('报修失败')
+    console.error('修改密码失败', e)
+    Message.error('修改密码失败')
   }
 }
 

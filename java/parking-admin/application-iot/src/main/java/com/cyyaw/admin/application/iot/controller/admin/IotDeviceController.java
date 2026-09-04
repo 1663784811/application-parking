@@ -75,6 +75,17 @@ public class IotDeviceController {
         return BaseResult.ok();
     }
 
+    @Operation(summary = "修改设备密码", description = "根据ID修改设备密码；密码以 JSON body 传 { password }")
+    @PostMapping("/changePassword/{id}")
+    public BaseResult<Void> changePassword(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        String password = body.get("password") == null ? null : body.get("password").toString();
+        if (password == null || password.isBlank()) {
+            throw new RuntimeException("密码不能为空");
+        }
+        iotDeviceService.changePassword(id, password);
+        return BaseResult.ok();
+    }
+
     @Operation(summary = "设备统计", description = "设备数量统计")
     @GetMapping("/stats")
     public BaseResult<Map<String, Object>> stats() {

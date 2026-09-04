@@ -22,11 +22,8 @@ public class ParkingMessageHandle implements PublishMessageHandle {
     @Override
     public void handle(MqttSessionManager sessionManager, String topic, byte[] payload) {
 
-
-
-
-
-
+        // 处理
+        log.info("接收消息处理: {} ,{}", topic, new String(payload));
 
 
 

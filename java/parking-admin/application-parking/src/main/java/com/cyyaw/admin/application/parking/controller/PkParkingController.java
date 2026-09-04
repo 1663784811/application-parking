@@ -1,4 +1,4 @@
-package com.cyyaw.admin.application.parking.controller.admin;
+package com.cyyaw.admin.application.parking.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;

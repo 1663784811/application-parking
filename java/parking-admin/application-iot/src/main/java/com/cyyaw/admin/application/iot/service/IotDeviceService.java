@@ -18,6 +18,11 @@ public interface IotDeviceService {
 
     void restart(Long id);
 
+    /**
+     * 修改设备密码（TODO: 实际应加密存储，当前与 save 一致按原值写入）
+     */
+    void changePassword(Long id, String password);
+
     Map<String, Object> stats();
 
     /**

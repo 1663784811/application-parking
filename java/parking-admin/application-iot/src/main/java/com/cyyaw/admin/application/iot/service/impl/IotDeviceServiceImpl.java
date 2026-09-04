@@ -52,6 +52,17 @@ public class IotDeviceServiceImpl implements IotDeviceService {
     }
 
     @Override
+    public void changePassword(Long id, String password) {
+        IotDevice device = iotDeviceDao.selectById(id);
+        if (device == null) {
+            throw new RuntimeException("设备不存在");
+        }
+        // TODO: 实际应加密存储（如 BCrypt）；当前与 save 一致按原值写入
+        device.setPassword(password);
+        iotDeviceDao.save(device);
+    }
+
+    @Override
     public Map<String, Object> stats() {
         Map<String, Object> s = new HashMap<>();
         s.put("total", iotDeviceDao.selectCount(null));

@@ -22,11 +22,6 @@ public class SubscribeFilterImpl implements SubscribeFilter {
     public boolean handle(MqttSessionManager sessionManager, String clientId, List<String> topic) {
 
 
-
-
-
-
-
-        return false;
+        return true;
     }
 }

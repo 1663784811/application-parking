@@ -42,7 +42,7 @@ public class PlateRecognitionController {
 
 
     @Operation(summary = "车牌识别回调", description = "摄像头识别到车牌后回调：① 下载图片到本地 ② 上传到服务器（TODO）③ 发 MQTT 车牌识别消息；该端点放行 JWT，供无 token 设备回调")
-    @PostMapping("/recognize")
+        @PostMapping("/recognize")
     public BaseResult<VehicleRecord> recognize(@RequestBody PlateRecognitionRequest req) {
         if (req == null || req.getCarNumber() == null || req.getCarNumber().isBlank()) {
             return BaseResult.fail("车牌号不能为空");
