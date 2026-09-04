@@ -28,6 +28,8 @@
         <module>../admin-config</module>
 
 
+        <module>../application-common-mqtt-client</module>
+
         <!--================     应用服务    =================-->
         <module>../application-user</module>
         <module>../application-order</module>

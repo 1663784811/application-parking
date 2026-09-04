@@ -10,7 +10,7 @@
         <version>1.0.1</version>
     </parent>
 
-    <artifactId>application-parking</artifactId>
+    <artifactId>application-common-mqtt-client</artifactId>
     <version>1.0.1</version>
     <packaging>jar</packaging>
 
@@ -21,47 +21,17 @@
     </properties>
 
     <dependencies>
+
         <dependency>
             <groupId>com.cyyaw.admin</groupId>
             <artifactId>admin-entity</artifactId>
             <version>${project.version}</version>
         </dependency>
-
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-spring-boot4-starter</artifactId>
-            <version>3.5.17</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.mysql</groupId>
-            <artifactId>mysql-connector-j</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <optional>true</optional>
-        </dependency>
-
-        <dependency>
-            <groupId>com.cyyaw.admin</groupId>
-            <artifactId>admin-common</artifactId>
+            <groupId>com.cyyaw</groupId>
+            <artifactId>mqtt-client</artifactId>
             <version>1.0.1</version>
         </dependency>
-
-        <dependency>
-            <groupId>com.cyyaw.admin</groupId>
-            <artifactId>admin-dao</artifactId>
-            <version>1.0.1</version>
-        </dependency>
-
         <dependency>
             <groupId>com.cyyaw.admin</groupId>
             <artifactId>admin-config</artifactId>
@@ -69,16 +39,6 @@
             <scope>compile</scope>
         </dependency>
 
-        <dependency>
-            <groupId>io.micrometer</groupId>
-            <artifactId>micrometer-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.cyyaw.admin</groupId>
-            <artifactId>application-common-mqtt-client</artifactId>
-            <version>1.0.1</version>
-            <scope>compile</scope>
-        </dependency>
     </dependencies>
 
     <build>
