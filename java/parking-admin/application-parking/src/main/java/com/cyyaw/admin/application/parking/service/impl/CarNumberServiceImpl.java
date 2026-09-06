@@ -10,6 +10,7 @@ import com.cyyaw.admin.entity.dto.iot.RecognizeDto;
 import com.cyyaw.admin.entity.module.iot.IotDevice;
 import com.cyyaw.admin.entity.module.parking.PkChannel;
 import com.cyyaw.admin.entity.module.parking.PkParkingDevice;
+import com.cyyaw.admin.inf.InfIot;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,16 +20,14 @@ import java.util.Map;
 
 /**
  * 车牌识别处理。
- * <p>识别相机上报车牌后，按设备编码定位摄像头设备，判断其处于入口还是出口，
- * 进而决定是否开闸。本服务运行在 admin 侧（与 MQTT broker 分进程部署），
- * 开闸下行指令的下发见 {@link #openGate}。
  */
 @Slf4j
 @Service
 public class CarNumberServiceImpl implements CarNumberService {
 
+
     @Autowired
-    private IotDeviceDao iotDeviceDao;
+    private InfIot infIot;
 
     @Autowired
     private PkParkingDeviceDao pkParkingDeviceDao;
@@ -42,13 +41,18 @@ public class CarNumberServiceImpl implements CarNumberService {
 
     @Override
     public Map<String, Object> recognize(RecognizeDto dto) {
+        String deviceCode = dto.getDeviceCode();
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("deviceCode", dto.getDeviceCode());
         result.put("carNumber", dto.getCarNumber());
         result.put("carType", dto.getCarType());
 
         // 1. 通过 deviceCode 查摄像头设备（code 唯一，传 false 防脏数据抛 TooManyResultsException）
-        IotDevice device = iotDeviceDao.selectOne(new QueryWrapper<IotDevice>().eq("code", dto.getDeviceCode()), false);
+        IotDevice device = infIot.findIotDeviceByCode(deviceCode);;
+
+
+
+
         if (device == null) {
             log.warn("车牌识别：设备不存在 deviceCode={}", dto.getDeviceCode());
             result.put("direction", "unknown");

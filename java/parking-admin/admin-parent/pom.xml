@@ -49,10 +49,13 @@
         <!--        -->
         <module>../netty-application-mqtt</module>
 
+
+        <!-- ===============      集群/单机接口调用        ===================== -->
+        <module>../admin-interface</module>
         <!--    集群接口抽象层    -->
-
-
+        <module>../cloud-interface-impl</module>
         <!--    单机接口抽象层    -->
+        <module>../single-interface-impl</module>
 
 
     </modules>

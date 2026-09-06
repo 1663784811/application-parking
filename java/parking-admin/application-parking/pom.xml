@@ -73,12 +73,26 @@
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-core</artifactId>
         </dependency>
+
         <dependency>
             <groupId>com.cyyaw.admin</groupId>
             <artifactId>application-common-mqtt-client</artifactId>
             <version>1.0.1</version>
             <scope>compile</scope>
         </dependency>
+
+        <dependency>
+            <groupId>com.cyyaw.admin</groupId>
+            <artifactId>admin-interface</artifactId>
+            <version>1.0.1</version>
+            <scope>compile</scope>
+        </dependency>
+
+
+
+
+
+
     </dependencies>
 
     <build>
