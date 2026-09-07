@@ -29,6 +29,7 @@
     <div class="table-container">
       <TableColumnSetting :columns="columns" v-model:visible="visibleFields" v-model:open="colSettingVisible" @reset="resetColumns" />
       <Table :columns="displayColumns" :data="state.tableData" :loading="state.loading">
+        <template #pid="{ row }">{{ state.deviceMap[String(row.pid)] || '-' }}</template>
         <template #type="{ row }"><span class="device-type">{{ optLabel(DEVICE_TYPE_OPTIONS, row.type) }}</span></template>
         <template #deviceType="{ row }">{{ optLabel(DEVICE_NODE_OPTIONS, row.deviceType) }}</template>
         <template #connectType="{ row }">{{ optLabel(CONNECT_TYPE_OPTIONS, row.connectType) }}</template>
@@ -56,6 +57,11 @@
         <FormItem label="节点类型" prop="deviceType">
           <Select v-model="state.formData.deviceType">
             <Option v-for="o in DEVICE_NODE_OPTIONS" :key="o.value" :value="o.value">{{ o.label }}</Option>
+          </Select>
+        </FormItem>
+        <FormItem label="父级设备" prop="pid">
+          <Select v-model="state.formData.pid" filterable clearable placeholder="子设备时选择其父级网关">
+            <Option v-for="item in state.deviceList.filter(d => String(d.id) !== String(state.formData.id))" :key="item.id" :value="item.id">{{ item.name }}（{{ item.code }}）</Option>
           </Select>
         </FormItem>
         <FormItem label="设备型号" prop="model"><Input v-model="state.formData.model" placeholder="如：CAM-X200" /></FormItem>
@@ -97,6 +103,7 @@
     <Modal v-model="state.pwdModalVisible" title="修改设备密码" width="420">
       <Form :model="state.pwdForm" :label-width="100">
         <FormItem label="设备名称">{{ state.pwdForm.deviceName }}</FormItem>
+        <FormItem label="账号"><Input v-model="state.pwdForm.account" placeholder="请输入账号" /></FormItem>
         <FormItem label="新密码"><Input v-model="state.pwdForm.password" type="password" placeholder="请输入新密码" /></FormItem>
         <FormItem label="确认密码"><Input v-model="state.pwdForm.confirm" type="password" placeholder="请再次输入新密码" /></FormItem>
       </Form>
@@ -167,6 +174,7 @@ const defaultFormData = () => ({
   name: '',
   type: 'light',
   deviceType: 'connect',
+  pid: null,
   model: '',
   serialNo: '',
   macAddress: '',
@@ -189,6 +197,8 @@ const state = reactive({
   pagination: { total: 0, current: 1, pageSize: 10 },
   parkingList: [],
   parkingMap: {},
+  deviceList: [],
+  deviceMap: {},
   modalVisible: false,
   modalType: 'add',
   formData: defaultFormData(),
@@ -199,12 +209,13 @@ const state = reactive({
     businessId: [{ required: true, message: '请选择所属停车场', trigger: 'change' }]
   },
   pwdModalVisible: false,
-  pwdForm: { id: null, deviceName: '', password: '', confirm: '' }
+  pwdForm: { id: null, deviceName: '', account: '', password: '', confirm: '' }
 })
 
 const columns = [
   { field: 'code', title: '设备编号', key: 'code', minWidth: 120 },
   { field: 'name', title: '设备名称', key: 'name', minWidth: 150 },
+  { field: 'pid', title: '父级设备', slot: 'pid', minWidth: 150 },
   { field: 'type', title: '设备类型', slot: 'type', minWidth: 100 },
   { field: 'deviceType', title: '节点类型', slot: 'deviceType', minWidth: 100 },
   { field: 'model', title: '设备型号', key: 'model', minWidth: 110 },
@@ -232,6 +243,20 @@ const loadParkingList = async () => {
     state.parkingMap = map
   } catch (e) {
     console.error('获取停车场列表失败', e)
+  }
+}
+
+// 全部设备（父级选择器选项 + 名称映射用）
+const loadDeviceList = async () => {
+  try {
+    const res = await deviceApi.getDeviceList({ page: 1, size: 1000 })
+    const list = res.data || []
+    state.deviceList = list
+    const map = {}
+    list.forEach(d => { map[String(d.id)] = d.name })
+    state.deviceMap = map
+  } catch (e) {
+    console.error('获取设备列表失败', e)
   }
 }
 
@@ -294,6 +319,7 @@ const handleSubmit = async () => {
     Message.success(state.modalType === 'add' ? '添加成功' : '编辑成功')
     state.modalVisible = false
     loadStats()
+    loadDeviceList()
     initData()
   } catch (e) {
     console.error('保存设备失败', e)
@@ -301,15 +327,16 @@ const handleSubmit = async () => {
 }
 
 const handleChangePassword = (r) => {
-  state.pwdForm = { id: r.id, deviceName: r.name, password: '', confirm: '' }
+  state.pwdForm = { id: r.id, deviceName: r.name, account: r.username || '', password: '', confirm: '' }
   state.pwdModalVisible = true
 }
 
 const handlePwdSubmit = async () => {
+  if (!state.pwdForm.account) { Message.warning('请输入账号'); return }
   if (!state.pwdForm.password) { Message.warning('请输入新密码'); return }
   if (state.pwdForm.password !== state.pwdForm.confirm) { Message.warning('两次输入的密码不一致'); return }
   try {
-    await deviceApi.changePassword(state.pwdForm.id, state.pwdForm.password)
+    await deviceApi.changePassword(state.pwdForm.id, state.pwdForm.account, state.pwdForm.password)
     Message.success('密码修改成功')
     state.pwdModalVisible = false
   } catch (e) {
@@ -339,6 +366,7 @@ const handlePageChange = (p) => { state.pagination.current = p; initData() }
 
 onMounted(() => {
   loadParkingList()
+  loadDeviceList()
   loadStats()
   initData()
 })

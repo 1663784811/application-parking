@@ -23,14 +23,15 @@ import java.time.Duration;
 @Component
 public class AdminDeviceClient {
 
-    private final HttpClient httpClient = HttpClient.newBuilder()
-            .connectTimeout(Duration.ofSeconds(3))
-            .build();
+    private final HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).build();
 
     private final String validateUrl;
+    private final String statusUrl;
 
     public AdminDeviceClient(@Value("${admin.api.base-url:http://127.0.0.1:10000/api}") String baseUrl) {
-        this.validateUrl = baseUrl.replaceAll("/+$", "") + "/internal/mqtt/validate";
+        String base = baseUrl.replaceAll("/+$", "");
+        this.validateUrl = base + "/internal/mqtt/validate";
+        this.statusUrl = base + "/internal/mqtt/status";
     }
 
     public ValidateResult validate(String username, String password, String clientId) {
@@ -40,12 +41,7 @@ public class AdminDeviceClient {
             body.set("password", password);
             body.set("clientId", clientId);
 
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(validateUrl))
-                    .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(body.toString()))
-                    .timeout(Duration.ofSeconds(5))
-                    .build();
+            HttpRequest request = HttpRequest.newBuilder().uri(URI.create(validateUrl)).header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString(body.toString())).timeout(Duration.ofSeconds(5)).build();
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() != 200) {
@@ -63,6 +59,26 @@ public class AdminDeviceClient {
         } catch (Exception e) {
             log.warn("调用 admin 设备校验失败（拒绝连接）: {}", e.getMessage());
             return new ValidateResult(false, null);
+        }
+    }
+
+    /**
+     * 通知 admin 更新设备在线状态（连接成功置 1、断开置 0）。
+     * 此时连接已建立/已断开，状态更新属副作用，失败仅记日志、不抛异常，
+     * 以免影响会话或后续处理。
+     */
+    public void updateOnlineStatus(String clientId, int onlineStatus) {
+        try {
+            JSONObject body = new JSONObject();
+            body.set("clientId", clientId);
+            body.set("onlineStatus", onlineStatus);
+            HttpRequest request = HttpRequest.newBuilder().uri(URI.create(statusUrl)).header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString(body.toString())).timeout(Duration.ofSeconds(5)).build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() != 200) {
+                log.warn("admin 更新设备在线状态返回非 200: clientId={}, status={}, body={}", clientId, response.statusCode(), response.body());
+            }
+        } catch (Exception e) {
+            log.warn("调用 admin 更新设备在线状态失败: clientId={}, {}", clientId, e.getMessage());
         }
     }
 

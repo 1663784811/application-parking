@@ -181,8 +181,8 @@ export const deviceApi = {
   deleteDevice: (id) => authRequest.delete(`/admin/device/delete/${id}`),
   // 远程重启
   remoteRestart: (id) => authRequest.post(`/admin/device/restart/${id}`),
-  // 修改设备密码
-  changePassword: (id, password) => authRequest.post(`/admin/device/changePassword/${id}`, { password }),
+  // 修改设备密码（含账号）
+  changePassword: (id, account, password) => authRequest.post(`/admin/device/changePassword/${id}`, { account, password }),
   // 设备数量统计
   getDeviceStats: () => authRequest.get('/admin/device/stats'),
   // 故障工单列表（分页）

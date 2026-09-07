@@ -65,7 +65,15 @@ public class MqttClientConfig {
                 log.info("subscribeSuccess");
             }
         });
-        mqttClient.initMqtt();
+
+        new Thread(() -> {
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            mqttClient.initMqtt();
+        }).start();
         return mqttClient;
     }
 

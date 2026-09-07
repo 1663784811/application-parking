@@ -39,6 +39,9 @@ public class IotDevice extends BaseEntity {
     @Column(name = "product_id", columnDefinition = "bigint COMMENT '产品ID'")
     private Long productId;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
+    @Column(name = "pid", columnDefinition = "bigint COMMENT '父级'")
+    private Long pid;
     // =====================================================================
 
     @Column(name = "name", columnDefinition = "varchar(100) COMMENT '设备名称'")

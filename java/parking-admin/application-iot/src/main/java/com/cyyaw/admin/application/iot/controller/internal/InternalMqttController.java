@@ -53,6 +53,16 @@ public class InternalMqttController {
         return BaseResult.ok(result, "用户名或密码错误");
     }
 
+    @PostMapping("/status")
+    public BaseResult<Void> updateStatus(@RequestBody StatusRequest req) {
+        if (req == null || !StringUtils.hasText(req.getClientId())) {
+            return BaseResult.ok(null, "clientId 为空");
+        }
+        // clientId 即设备 code；onlineStatus: 1=上线, 0=离线
+        iotDeviceService.updateOnlineStatus(req.getClientId(), req.getOnlineStatus());
+        return BaseResult.ok();
+    }
+
     @Data
     public static class ValidateRequest {
         private String username;
@@ -64,6 +74,12 @@ public class InternalMqttController {
     public static class ValidateResult {
         private Boolean allowConnect;
         private String role;
+    }
+
+    @Data
+    public static class StatusRequest {
+        private String clientId;
+        private Integer onlineStatus;
     }
 
 }

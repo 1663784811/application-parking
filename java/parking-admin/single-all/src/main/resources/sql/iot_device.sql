@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS `iot_device` (
   `classification_id` bigint DEFAULT NULL COMMENT '分类表ID',
   `thing_model_id` bigint DEFAULT NULL COMMENT '物模型ID',
   `product_id` bigint DEFAULT NULL COMMENT '产品ID',
+  `pid` bigint DEFAULT NULL COMMENT '父级',
   `name` varchar(100) DEFAULT NULL COMMENT '设备名称',
   `code` varchar(50) DEFAULT NULL COMMENT '设备编码',
   `type` varchar(50) DEFAULT NULL COMMENT '设备类型{switch:开关,light:电灯,aircondition:空调,refrigerator:冰箱}',

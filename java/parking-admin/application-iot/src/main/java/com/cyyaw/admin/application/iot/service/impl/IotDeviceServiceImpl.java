@@ -1,6 +1,7 @@
 package com.cyyaw.admin.application.iot.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cyyaw.admin.application.iot.service.IotDeviceService;
 import com.cyyaw.admin.dao.iot.IotDeviceDao;
@@ -10,6 +11,7 @@ import com.cyyaw.admin.entity.module.iot.IotDeviceFault;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -52,12 +54,13 @@ public class IotDeviceServiceImpl implements IotDeviceService {
     }
 
     @Override
-    public void changePassword(Long id, String password) {
+    public void changePassword(Long id, String account, String password) {
         IotDevice device = iotDeviceDao.selectById(id);
         if (device == null) {
             throw new RuntimeException("设备不存在");
         }
         // TODO: 实际应加密存储（如 BCrypt）；当前与 save 一致按原值写入
+        device.setUsername(account);
         device.setPassword(password);
         iotDeviceDao.save(device);
     }
@@ -80,6 +83,21 @@ public class IotDeviceServiceImpl implements IotDeviceService {
         }
         // code 唯一，传 false 防止脏数据抛 TooManyResultsException
         return iotDeviceDao.selectOne(new QueryWrapper<IotDevice>().eq("code", code), false);
+    }
+
+    @Override
+    public void updateOnlineStatus(String code, Integer onlineStatus) {
+        if (code == null || code.isBlank() || onlineStatus == null) {
+            return;
+        }
+        // 仅更新在线状态列，避免整行回写覆盖其它字段；上线同步刷新最后在线时间
+        UpdateWrapper<IotDevice> uw = new UpdateWrapper<>();
+        uw.eq("code", code);
+        uw.set("online_status", onlineStatus);
+        if (onlineStatus == 1) {
+            uw.set("last_online_time", LocalDateTime.now());
+        }
+        iotDeviceDao.update(null, uw);
     }
 
 }

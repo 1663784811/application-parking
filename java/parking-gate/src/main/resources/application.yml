@@ -50,7 +50,7 @@ cyyaw:
       - url: tcp://127.0.0.1:1883
         username: admin
         password: 123456
-        clientId: sssddd
+        clientId: aaa
 
 
 netty:
