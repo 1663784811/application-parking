@@ -8,6 +8,10 @@ spring:
   application:
     name: parking-gate
 
+# admin 服务地址（车辆通行记录等内部接口调用；/internal/** 在 admin 放行）
+admin:
+  api:
+    base-url: http://127.0.0.1:10000/api
 
 gate:
   jwt:

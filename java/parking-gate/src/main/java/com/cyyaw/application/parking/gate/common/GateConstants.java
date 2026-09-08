@@ -34,16 +34,12 @@ public final class GateConstants {
      */
     public static final String MQTT_TOPIC_SUFFIX = "/thing/event/property/post";
 
+    public static final String MQTT_TOPIC_RECOGNIZE = "/thing/event/recognize/post";
+
     /**
      * 报文 id（sys.ack=0 时不强制唯一，仅递增占位，对齐文档示例 "10002" 风格）
      */
     public static final AtomicLong MSG_ID = new AtomicLong(10000);
 
-    // ===== JSON 序列化（Jackson 3） =====
 
-    /**
-     * Jackson 3 序列化器（SB4 默认即 Jackson 3）；手动 new 而非注入，避免误注入
-     * jackson2 ObjectMapper 导致启动崩（见 memory spring-boot-4-jackson-3）
-     */
-    public static final ObjectMapper MAPPER = new ObjectMapper();
 }

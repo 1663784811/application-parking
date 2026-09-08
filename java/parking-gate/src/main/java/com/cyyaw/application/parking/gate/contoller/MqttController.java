@@ -1,6 +1,7 @@
-package com.cyyaw.application.parking.gate.mqtt.client;
+package com.cyyaw.application.parking.gate.contoller;
 
 import com.cyyaw.admin.common.BaseResult;
+import com.cyyaw.application.parking.gate.mqtt.client.MqttClientConfig;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
