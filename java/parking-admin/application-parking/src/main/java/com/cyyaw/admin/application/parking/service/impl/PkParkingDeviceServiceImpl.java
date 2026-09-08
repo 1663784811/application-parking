@@ -5,6 +5,7 @@ import com.cyyaw.admin.application.parking.service.PkParkingDeviceService;
 import com.cyyaw.admin.dao.iot.IotDeviceDao;
 import com.cyyaw.admin.dao.parking.PkChannelDao;
 import com.cyyaw.admin.dao.parking.PkParkingDeviceDao;
+import com.cyyaw.admin.entity.em.IotDeviceTypeEnum;
 import com.cyyaw.admin.entity.module.iot.IotDevice;
 import com.cyyaw.admin.entity.module.parking.PkChannel;
 import com.cyyaw.admin.entity.module.parking.PkParkingDevice;
@@ -95,7 +96,7 @@ public class PkParkingDeviceServiceImpl implements PkParkingDeviceService {
     }
 
     @Override
-    public void bind(Long deviceId, Long channelId) {
+    public void bind(Long deviceId, Long channelId, String channelType) {
         // 校验通道存在，并取 parkingId/appId 冗余进绑定记录
         PkChannel channel = pkChannelDao.selectById(channelId);
         if (channel == null) {
@@ -118,11 +119,35 @@ public class PkParkingDeviceServiceImpl implements PkParkingDeviceService {
         if (dup != null && dup > 0) {
             throw new RuntimeException("该设备已绑定到此通道");
         }
+        // 通道类型规则（摄像头与通道一对一：单台摄像头要么入口要么出口，不可能是出入口）：
+        //   摄像头(camera) + 出入口(inout)通道 → 必须由用户在 in/out 间二选一；
+        //   摄像头(camera) + 入口/出口通道     → 与通道自身 type 一致，无需用户选择；
+        //   道闸(gate)                          → 强制与通道自身 type 一致；
+        //   其余类型                            → 默认取通道自身 type。
+        String deviceType = device.getType();
+        String channelOwnType = channel.getType();
+        String resolvedChannelType;
+        if (IotDeviceTypeEnum.CAMERA.getType().equals(deviceType)) {
+            if ("inout".equals(channelOwnType)) {
+                // 出入口通道：用户需在 入口/出口 间二选一（单台摄像头不可能是出入口）
+                if (!"in".equals(channelType) && !"out".equals(channelType)) {
+                    throw new RuntimeException("出入口通道的摄像头需选择入口(in)或出口(out)");
+                }
+                resolvedChannelType = channelType;
+            } else {
+                // 入口/出口通道：摄像头类型即通道类型，无需用户选择
+                resolvedChannelType = channelOwnType;
+            }
+        } else {
+            // 道闸与通道类型保持一致；其余类型同样默认取通道类型
+            resolvedChannelType = channelOwnType;
+        }
         PkParkingDevice rec = new PkParkingDevice();
         rec.setAppId(channel.getAppId());
         rec.setParkingId(channel.getParkingId());
         rec.setChannelId(channelId);
         rec.setDeviceId(deviceId);
+        rec.setChannelType(resolvedChannelType);
         pkParkingDeviceDao.insert(rec);
     }
 

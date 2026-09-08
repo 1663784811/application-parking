@@ -37,10 +37,10 @@ public class PkParkingDeviceController {
         return BaseResult.ok(pkParkingDeviceService.countByChannel(channelIds));
     }
 
-    @Operation(summary = "绑定设备到通道", description = "将指定设备绑定到指定通道（设备全局唯一绑定）")
+    @Operation(summary = "绑定设备到通道", description = "设备全局唯一绑定。出入口通道的摄像头需传 channelType（in/out）；入口/出口通道及道闸由服务端按通道类型确定")
     @PostMapping("/bind/{deviceId}/{channelId}")
-    public BaseResult<Void> bind(@PathVariable Long deviceId, @PathVariable Long channelId) {
-        pkParkingDeviceService.bind(deviceId, channelId);
+    public BaseResult<Void> bind(@PathVariable Long deviceId, @PathVariable Long channelId, @RequestParam(required = false) String channelType) {
+        pkParkingDeviceService.bind(deviceId, channelId, channelType);
         return BaseResult.ok();
     }
 

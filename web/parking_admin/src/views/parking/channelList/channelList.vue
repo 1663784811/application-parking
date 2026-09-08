@@ -229,6 +229,29 @@
         />
       </div>
     </Modal>
+
+    <!-- 出入口通道绑定摄像头：选入口/出口方向（摄像头与通道一对一，不可能是出入口） -->
+    <Modal v-model="state.channelTypeModalVisible" title="选择摄像头方向" width="420" :footer-hide="true">
+      <div class="channel-type-tip">
+        当前通道为出入口，摄像头“{{ state.pendingDevice?.name }}”需选择方向（入口或出口）：
+      </div>
+      <Form :label-width="100">
+        <FormItem label="方向" prop="channelType">
+          <Select v-model="state.channelTypeValue" placeholder="请选择方向">
+            <Option value="in">入口</Option>
+            <Option value="out">出口</Option>
+          </Select>
+        </FormItem>
+      </Form>
+      <div class="channel-type-footer">
+        <Button @click="state.channelTypeModalVisible = false">取消</Button>
+        <Button
+          type="primary"
+          :loading="state.pickingDeviceId === state.pendingDevice?.id"
+          @click="confirmChannelTypeBind"
+        >确定绑定</Button>
+      </div>
+    </Modal>
   </div>
 </template>
 
@@ -308,7 +331,12 @@ const state = reactive({
   pickerPagination: { total: 0, current: 1, pageSize: 10 },
   pickerTableData: [],
   pickerLoading: false,
-  pickingDeviceId: null
+  pickingDeviceId: null,
+
+  // 摄像头绑定：通道类型选择弹窗（道闸由服务端取通道类型，不走此弹窗）
+  channelTypeModalVisible: false,
+  pendingDevice: null,
+  channelTypeValue: null
 })
 
 const columns = [
@@ -689,19 +717,47 @@ const openDevicePicker = () => {
   loadPickerDevices()
 }
 
-// 在设备列表中点"绑定"：将该设备绑定到当前通道
-const handlePickDevice = async (device) => {
+// 在设备列表中点"绑定"：
+//   摄像头 + 出入口(inout)通道 → 选入口/出口方向（摄像头与通道一对一，不可能是出入口）；
+//   摄像头 + 入口/出口通道     → 直接绑定（服务端按通道类型确定）；
+//   其余类型(道闸等)           → 直接绑定（服务端取通道类型）。
+const handlePickDevice = (device) => {
+  if (device.type === 'camera' && state.currentChannel?.type === 'inout') {
+    state.pendingDevice = device
+    state.channelTypeValue = null
+    state.channelTypeModalVisible = true
+    return
+  }
+  doBind(device, null)
+}
+
+// 摄像头：确认方向后绑定
+const confirmChannelTypeBind = async () => {
+  if (!state.channelTypeValue) {
+    Message.warning('请选择方向（入口或出口）')
+    return
+  }
+  const ok = await doBind(state.pendingDevice, state.channelTypeValue)
+  if (ok) {
+    state.channelTypeModalVisible = false
+  }
+}
+
+// 执行绑定：camera 传 channelType（用户选择）；gate/其余由服务端取通道类型
+const doBind = async (device, channelType) => {
   const channelId = state.currentChannel?.id
   state.pickingDeviceId = device.id
   try {
-    await parkingDeviceApi.bind(device.id, channelId)
+    await parkingDeviceApi.bind(device.id, channelId, channelType)
     Message.success(`设备"${device.name}"绑定成功`)
     // 刷新本通道已绑设备：该行随之变为"已绑定"（picker 表格不重载，便于连续绑定多台）
     const bound = await parkingDeviceApi.getBoundDevices(channelId)
     state.boundDevices = bound.data || []
     syncRowDeviceCount()
+    return true
   } catch (e) {
     console.error('绑定设备失败', e)
+    return false
   } finally {
     state.pickingDeviceId = null
   }
@@ -868,6 +924,20 @@ onMounted(() => {
 .bound-mark {
   color: var(--text-color-secondary);
   font-size: var(--font-size-sm);
+}
+
+.channel-type-tip {
+  margin-bottom: var(--spacing-md);
+  color: var(--text-color-secondary);
+  font-size: var(--font-size-sm);
+  line-height: 1.6;
+}
+
+.channel-type-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
 }
 
 .empty-tip {

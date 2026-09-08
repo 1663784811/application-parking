@@ -36,4 +36,7 @@ public class PkParkingDevice extends BaseEntity {
     @Column(name = "device_id", columnDefinition = "bigint COMMENT '设备ID'")
     private Long deviceId;
 
+    @Column(name = "channel_type", columnDefinition = "varchar(16) COMMENT '通道类型{in:入口,out:出口,inout:出入口}'")
+    private String channelType;
+
 }

@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS `pk_parking_device` (
   `parking_id` bigint DEFAULT NULL COMMENT '所属停车场ID',
   `channel_id` bigint DEFAULT NULL COMMENT '所属通道ID',
   `device_id` bigint DEFAULT NULL COMMENT '设备ID',
+  `channel_type` varchar(16) DEFAULT NULL COMMENT '通道类型{in:入口,out:出口,inout:出入口}（摄像头由用户选择；道闸与通道类型一致）',
   `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `note` varchar(255) DEFAULT '' COMMENT '备注',

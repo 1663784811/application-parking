@@ -10,6 +10,9 @@ public enum IotDeviceTypeEnum {
    LIGHT("light", "灯")
     ,SWITCH("switch", "开关")
     ,AIRCONDITIONER("airConditioner", "空调")
+    ,CAMERA("camera", "摄像头")
+    ,GATE("gate", "道闸")
+    ,GATEWAY("gateway", "网关")
     ;
 
     private String type;

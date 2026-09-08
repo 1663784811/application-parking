@@ -26,8 +26,16 @@ public interface PkParkingDeviceService {
     /**
      * 将设备绑定到通道（新增一条停车设备记录）。
      * 设备全局唯一绑定：已绑定到其他通道会抛异常。
+     * <p>
+     * channelType 规则（摄像头与通道一对一：单台摄像头要么入口要么出口）：
+     * <ul>
+     *   <li>摄像头(camera) + 出入口(inout)通道：必须由调用方传 in/out 二选一；</li>
+     *   <li>摄像头(camera) + 入口/出口通道：忽略入参，取通道自身 type；</li>
+     *   <li>道闸(gate)：忽略入参，强制取通道自身 type；</li>
+     *   <li>其余类型：默认取通道自身 type。</li>
+     * </ul>
      */
-    void bind(Long deviceId, Long channelId);
+    void bind(Long deviceId, Long channelId, String channelType);
 
     /**
      * 解绑：删除该通道上该设备的绑定记录。

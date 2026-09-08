@@ -129,8 +129,8 @@ export const parkingDeviceApi = {
   getUnboundDevices: (parkingId) => authRequest.get('/admin/parking/parkingDevice/unbound', { params: { parkingId } }),
   // 按通道批量统计已绑设备数：传 channelIds 逗号分隔，返回 { [channelId]: count }
   countByChannel: (channelIds) => authRequest.get('/admin/parking/parkingDevice/countByChannel', { params: { channelIds: channelIds.join(',') } }),
-  // 绑定设备到通道（设备全局唯一绑定）
-  bind: (deviceId, channelId) => authRequest.post(`/admin/parking/parkingDevice/bind/${deviceId}/${channelId}`),
+  // 绑定设备到通道（设备全局唯一绑定）；摄像头需传 channelType（in/out/inout），道闸由服务端取通道类型
+  bind: (deviceId, channelId, channelType) => authRequest.post(`/admin/parking/parkingDevice/bind/${deviceId}/${channelId}`, {}, { params: { channelType } }),
   // 解绑设备
   unbind: (deviceId, channelId) => authRequest.post(`/admin/parking/parkingDevice/unbind/${deviceId}/${channelId}`)
 }
