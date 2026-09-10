@@ -13,7 +13,7 @@
 
 ## 上报 设备上线/下线
 
-主题: /server/parking/${设备编码}/thing/event/online/post
+主题: /server/parking/${设备编码}/thing/event/{事件标识符}/post
 
 ```json
 {
@@ -33,7 +33,7 @@
 
 ## 上报 车牌识别
 
-主题: /server/parking/${设备编码}/thing/event/property/post
+主题: /server/parking/${设备编码}/thing/event/{事件标识符}/post
 
 报文 Payload
 
@@ -57,11 +57,14 @@
 
 ## 下发 开闸/关闸
 
-主题:
+主题: /device/parking/${设备编码}/thing/service/{事件标识符}/set
 
 报文 Payload
 
 ```json
+
+
+
 
 ```
 

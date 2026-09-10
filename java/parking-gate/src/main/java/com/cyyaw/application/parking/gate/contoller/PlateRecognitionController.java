@@ -3,9 +3,10 @@ package com.cyyaw.application.parking.gate.contoller;
 import com.cyyaw.admin.common.BaseResult;
 import com.cyyaw.application.parking.gate.common.GateConstants;
 import com.cyyaw.application.parking.gate.common.JsonUtil;
-import com.cyyaw.application.parking.gate.common.entity.PlateRecognitionPayload;
 import com.cyyaw.application.parking.gate.common.entity.PlateRecognitionRequest;
 import com.cyyaw.application.parking.gate.common.entity.VehicleRecord;
+import com.cyyaw.application.parking.gate.common.entity.mqtt.MqttPayload;
+import com.cyyaw.application.parking.gate.common.entity.mqtt.RecognizeDto;
 import com.cyyaw.application.parking.gate.vehicle.VehicleRecordStore;
 import com.cyyaw.mqtt.client.MqttApplicationClient;
 import io.swagger.v3.oas.annotations.Operation;
@@ -70,18 +71,21 @@ public class PlateRecognitionController {
     /**
      */
     private String buildPlatePayload(String deviceCode, String childCode, PlateRecognitionRequest req) {
-        PlateRecognitionPayload payload = new PlateRecognitionPayload();
+        MqttPayload<RecognizeDto> payload = new MqttPayload<>();
         payload.setId(String.valueOf(GateConstants.MSG_ID.getAndIncrement()));
-        PlateRecognitionPayload.Sys sys = new PlateRecognitionPayload.Sys();
+        payload.setVersion("1.0");
+        MqttPayload.Sys sys = new MqttPayload.Sys();
+        sys.setAck(0);
         sys.setDeviceCode(deviceCode);
         sys.setChildCode(childCode);
-        // childCode 暂置 null（单设备部署，无独立子设备层）
         payload.setSys(sys);
-        PlateRecognitionPayload.Params params = new PlateRecognitionPayload.Params();
-        params.setDeviceCode(deviceCode);
-        params.setCarNumber(req.getCarNumber());
-        params.setCarType(req.getCarType());
-        payload.setParams(params);
+        payload.setMethod("thing.event.property.set");
+        RecognizeDto recognizeDto = new RecognizeDto();
+        recognizeDto.setDeviceCode(req.getDeviceCode());
+        recognizeDto.setCarNumber(req.getCarNumber());
+        recognizeDto.setCarType(req.getCarType());
+
+        payload.setParams(recognizeDto);
         return JsonUtil.toJson(payload);
     }
 }
