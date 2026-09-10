@@ -5,6 +5,7 @@ import com.cyyaw.admin.application.parking.service.PkParkingDeviceService;
 import com.cyyaw.admin.dao.iot.IotDeviceDao;
 import com.cyyaw.admin.dao.parking.PkChannelDao;
 import com.cyyaw.admin.dao.parking.PkParkingDeviceDao;
+import com.cyyaw.admin.entity.em.ChannelTypeEnum;
 import com.cyyaw.admin.entity.em.IotDeviceTypeEnum;
 import com.cyyaw.admin.entity.module.iot.IotDevice;
 import com.cyyaw.admin.entity.module.parking.PkChannel;
@@ -128,9 +129,9 @@ public class PkParkingDeviceServiceImpl implements PkParkingDeviceService {
         String channelOwnType = channel.getType();
         String resolvedChannelType;
         if (IotDeviceTypeEnum.CAMERA.getType().equals(deviceType)) {
-            if ("inout".equals(channelOwnType)) {
+            if (ChannelTypeEnum.INOUT.getType().equals(channelOwnType)) {
                 // 出入口通道：用户需在 入口/出口 间二选一（单台摄像头不可能是出入口）
-                if (!"in".equals(channelType) && !"out".equals(channelType)) {
+                if (!ChannelTypeEnum.IN.getType().equals(channelType) && !ChannelTypeEnum.OUT.getType().equals(channelType)) {
                     throw new RuntimeException("出入口通道的摄像头需选择入口(in)或出口(out)");
                 }
                 resolvedChannelType = channelType;

@@ -1,6 +1,7 @@
 package com.cyyaw.netty.mqtt.message.parking;
 
 import com.cyyaw.netty.mqtt.client.AdminCarNumberClient;
+import com.cyyaw.netty.mqtt.client.AdminDeviceClient;
 import com.cyyaw.netty.mqtt.common.PublishMessageHandle;
 import com.cyyaw.netty.mqtt.session.MqttSessionManager;
 import lombok.AllArgsConstructor;
@@ -14,9 +15,12 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @AllArgsConstructor
-public class ParkingMessageHandle implements PublishMessageHandle {
+public class ParkingEventHandle implements PublishMessageHandle {
 
     private final AdminCarNumberClient adminCarNumberClient;
+
+    private final AdminDeviceClient adminDeviceClient;
+
 
     public String topic() {
         return "/server/parking/#";
@@ -34,8 +38,15 @@ public class ParkingMessageHandle implements PublishMessageHandle {
         log.info("接收消息处理: {} ,{}, deviceCode: {}", topic, new String(payload), deviceCode);
 
         // 车牌识别事件：转发给 admin 的 CarNumberController（/internal/parking/carNumber/recognize）
-        if (parts.length > 6 && "recognize".equals(parts[6]) && !deviceCode.isEmpty()) {
-            adminCarNumberClient.forwardRecognize(deviceCode, payload);
+        if (parts.length > 6) {
+            if ("recognize".equals(parts[6]) && !deviceCode.isEmpty()) {
+                // 识别车牌
+                adminCarNumberClient.forwardRecognize(deviceCode, payload);
+            } else if ("connect".equals(parts[6]) && !deviceCode.isEmpty()) {
+                // 设备上报上线
+                adminDeviceClient.updateOnlineStatus(deviceCode, 1);
+            }
         }
+
     }
 }

@@ -4,6 +4,8 @@ import com.cyyaw.admin.dao.BaseMapperPlus;
 import com.cyyaw.admin.entity.module.parking.PkCarLog;
 import org.apache.ibatis.annotations.Select;
 
+import java.util.List;
+
 public interface PkCarLogDao extends BaseMapperPlus<PkCarLogDao, PkCarLog> {
 
     @Select("select count(*) from pk_car_log where parking_id = #{parkingId} and `status` = #{status}")
@@ -14,5 +16,8 @@ public interface PkCarLogDao extends BaseMapperPlus<PkCarLogDao, PkCarLog> {
 
     @Select("select count(*) from pk_car_log where entry_time >= CURDATE()")
     int selectTodayCount();
+
+    @Select("select * from pk_car_log where parking_id = #{parkingId} and car_number = #{carNumber} and `status` = 0 ")
+    List<PkCarLog>  selectUnfinishedLog(Long parkingId, String carNumber);
 
 }
