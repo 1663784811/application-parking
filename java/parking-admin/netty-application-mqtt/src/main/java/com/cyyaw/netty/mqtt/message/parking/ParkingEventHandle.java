@@ -42,9 +42,9 @@ public class ParkingEventHandle implements PublishMessageHandle {
             if ("recognize".equals(parts[6]) && !deviceCode.isEmpty()) {
                 // 识别车牌
                 adminCarNumberClient.forwardRecognize(deviceCode, payload);
-            } else if ("connect".equals(parts[6]) && !deviceCode.isEmpty()) {
-                // 设备上报上线
-                adminDeviceClient.updateOnlineStatus(deviceCode, 1);
+            } else if ("online".equals(parts[6]) && !deviceCode.isEmpty()) {
+                // 设备上报上线/下线：直接转发报文到 admin，由 admin 解析 params.online
+                adminDeviceClient.updateOnlineStatus(deviceCode, payload);
             }
         }
 

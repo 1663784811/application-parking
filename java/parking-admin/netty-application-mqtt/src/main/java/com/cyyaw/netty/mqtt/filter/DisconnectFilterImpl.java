@@ -22,8 +22,8 @@ public class DisconnectFilterImpl implements DisconnectFilter {
     @Override
     public void handle(MqttSessionManager sessionManager, String clientId) {
         log.info(" === 设备: {} ， 断开连接", clientId);
-        // 修改数据库设备状态：设备离线，置 online_status=0
-        adminDeviceClient.updateOnlineStatus(clientId, 0);
+        // 修改数据库设备状态：gate 直连云 broker 下线，转发 online 报文到 admin（params.online=false→置 online_status=0）
+        adminDeviceClient.updateOnlineStatus(clientId, false);
 
 
 

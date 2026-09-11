@@ -38,8 +38,8 @@ public class ConnectFilterImpl implements ConnectFilter {
     @Override
     public void handle(MqttSessionManager sessionManager, String clientId) {
         log.info("MQTT 客户端连接成功处理，clientId: {}", clientId);
-        // 修改数据库设备状态：设备上线，置 online_status=1、last_online_time=now
-        adminDeviceClient.updateOnlineStatus(clientId, 1);
+        // 修改数据库设备状态：gate 直连云 broker 上线，转发 online 报文到 admin（params.online=true→置 online_status=1）
+        adminDeviceClient.updateOnlineStatus(clientId, true);
     }
 
 

@@ -26,6 +26,7 @@
   },
   "method": "thing.event.online.post",
   "params": {
+    "deviceCode": "ABCDEFG001",
     "online": true
   }
 }

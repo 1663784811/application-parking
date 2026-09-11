@@ -61,9 +61,10 @@ public class MqttClientConfig {
             }
 
             @Override
-            public void subscribeSuccess(String topic) {
-                log.info("subscribeSuccess");
+            public void subscribe(String topic, boolean success) {
+                log.info("subscribe:  {} {}", topic, success);
             }
+
         });
 
         new Thread(() -> {

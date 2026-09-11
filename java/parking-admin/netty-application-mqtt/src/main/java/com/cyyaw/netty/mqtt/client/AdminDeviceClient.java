@@ -10,6 +10,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
 /**
@@ -63,23 +64,41 @@ public class AdminDeviceClient {
     }
 
     /**
-     * 通知 admin 更新设备在线状态（连接成功置 1、断开置 0）。
-     * 此时连接已建立/已断开，状态更新属副作用，失败仅记日志、不抛异常，
-     * 以免影响会话或后续处理。
+     * 转发设备上线/下线报文到 admin 的 /internal/mqtt/status。
+     * <p>
+     * 报文为物模型 thing.event.online.post 信封，admin 解析 params.{deviceCode, online}
+     * 后更新 iot_device.online_status。deviceCode 取自 MQTT topic（路由真值），仅用于日志。
+     * 转发用 sendAsync 异步执行，不阻塞 netty I/O 线程；失败仅记日志、不抛异常。
      */
-    public void updateOnlineStatus(String clientId, int onlineStatus) {
-        try {
-            JSONObject body = new JSONObject();
-            body.set("clientId", clientId);
-            body.set("onlineStatus", onlineStatus);
-            HttpRequest request = HttpRequest.newBuilder().uri(URI.create(statusUrl)).header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString(body.toString())).timeout(Duration.ofSeconds(5)).build();
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() != 200) {
-                log.warn("admin 更新设备在线状态返回非 200: clientId={}, status={}, body={}", clientId, response.statusCode(), response.body());
+    public void updateOnlineStatus(String deviceCode, byte[] payload) {
+        forwardOnline(deviceCode, new String(payload, StandardCharsets.UTF_8));
+    }
+
+    /**
+     * gate 直连云 broker 的上线/下线（无 MQTT 报文）：按 thing.event.online.post
+     * 报文格式构造 params.{deviceCode, online} 后转发给 admin。
+     */
+    public void updateOnlineStatus(String deviceCode, boolean online) {
+        JSONObject params = new JSONObject();
+        params.set("deviceCode", deviceCode);
+        params.set("online", online);
+        JSONObject body = new JSONObject();
+        body.set("params", params);
+        forwardOnline(deviceCode, body.toString());
+    }
+
+    private void forwardOnline(String deviceCode, String body) {
+        HttpRequest request = HttpRequest.newBuilder().uri(URI.create(statusUrl)).header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8)).timeout(Duration.ofSeconds(5)).build();
+        httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString()).thenAccept(r -> {
+            if (r.statusCode() != 200) {
+                log.warn("admin 更新设备在线状态返回非 200: deviceCode={}, status={}, body={}", deviceCode, r.statusCode(), r.body());
+            } else {
+                log.info("admin 更新设备在线状态完成: deviceCode={}, resp={}", deviceCode, r.body());
             }
-        } catch (Exception e) {
-            log.warn("调用 admin 更新设备在线状态失败: clientId={}, {}", clientId, e.getMessage());
-        }
+        }).exceptionally(e -> {
+            log.warn("转发设备在线状态报文到 admin 失败: deviceCode={}, {}", deviceCode, e.getMessage());
+            return null;
+        });
     }
 
     public record ValidateResult(Boolean allowConnect, String role) {

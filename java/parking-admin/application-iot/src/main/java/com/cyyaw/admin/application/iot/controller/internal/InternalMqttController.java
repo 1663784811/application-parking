@@ -2,6 +2,8 @@ package com.cyyaw.admin.application.iot.controller.internal;
 
 import com.cyyaw.admin.application.iot.service.IotDeviceService;
 import com.cyyaw.admin.common.BaseResult;
+import com.cyyaw.admin.entity.dto.iot.OnlineDto;
+import com.cyyaw.admin.entity.dto.iot.mqtt.MqttPayload;
 import com.cyyaw.admin.entity.module.iot.IotDevice;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -54,12 +56,13 @@ public class InternalMqttController {
     }
 
     @PostMapping("/status")
-    public BaseResult<Void> updateStatus(@RequestBody StatusRequest req) {
-        if (req == null || !StringUtils.hasText(req.getClientId())) {
-            return BaseResult.ok(null, "clientId 为空");
+    public BaseResult<Void> updateStatus(@RequestBody MqttPayload<OnlineDto> payload) {
+        if (payload == null || payload.getParams() == null || !StringUtils.hasText(payload.getParams().getDeviceCode())) {
+            return BaseResult.ok(null, "deviceCode 为空");
         }
-        // clientId 即设备 code；onlineStatus: 1=上线, 0=离线
-        iotDeviceService.updateOnlineStatus(req.getClientId(), req.getOnlineStatus());
+        // params.deviceCode 即设备 code；params.online: true=上线, false=离线
+        int onlineStatus = Boolean.TRUE.equals(payload.getParams().getOnline()) ? 1 : 0;
+        iotDeviceService.updateOnlineStatus(payload.getParams().getDeviceCode(), onlineStatus);
         return BaseResult.ok();
     }
 
@@ -74,12 +77,6 @@ public class InternalMqttController {
     public static class ValidateResult {
         private Boolean allowConnect;
         private String role;
-    }
-
-    @Data
-    public static class StatusRequest {
-        private String clientId;
-        private Integer onlineStatus;
     }
 
 }
