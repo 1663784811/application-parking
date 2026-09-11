@@ -42,6 +42,7 @@ public class MqttClientConfig {
             public void connect(boolean reconnect, String serverURI) {
                 log.info("connect");
                 mqttStatus = true;
+                mqttClient.subscribe("/device/parking/WG001/#");
             }
 
             @Override
@@ -61,9 +62,10 @@ public class MqttClientConfig {
             }
 
             @Override
-            public void subscribeSuccess(String topic) {
-                log.info("subscribeSuccess");
+            public void subscribe(String topic, boolean success) {
+                log.info("subscribe:  {} {}", topic, success);
             }
+
         });
         mqttClient.initMqtt();
         return mqttClient;
