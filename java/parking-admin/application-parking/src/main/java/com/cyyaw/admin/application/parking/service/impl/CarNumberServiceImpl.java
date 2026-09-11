@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -86,10 +87,15 @@ public class CarNumberServiceImpl implements CarNumberService {
             // 查询该车牌在这个停车场的停车记录
             List<PkCarLog> pkCarLogList = pkCarLogDao.selectUnfinishedLog(parkingId, carNumber);
             if (pkCarLogList.size() > 0) {
-                for (int i = 0; i < pkCarLogList.size(); i++) {
-                    PkCarLog pkCarLog = pkCarLogList.get(i);
-                    // TODO 结束订单、修改为已出场状态
-
+                // 该车牌在本停车场仍有未出场记录（上次未识别出场或异常重复入场），
+                // 强制结束上一笔记录，避免脏数据残留。
+                log.warn("车牌 {} 在停车场 {} 存在未出场记录，强制结束旧记录共 {} 笔", carNumber, parkingId, pkCarLogList.size());
+                for (PkCarLog oldLog : pkCarLogList) {
+                    oldLog.setStatus(1);              // 1=已出场
+                    oldLog.setOutTime(LocalDateTime.now());
+                    pkCarLogService.save(oldLog);
+                    // 结束订单：当前停车流程尚未接入订单（application-order），且 PkCarLog 与 OrOrder
+                    // 之间无关联字段，待订单流建立 car_log_id 关联并在 application-parking 暴露接口后在此关闭。
                 }
             }
             // 生成 日志记录、 新订单
