@@ -53,7 +53,9 @@ public class MqttClientConfig {
 
             @Override
             public void messageArrived(String topic, MqttMessage mqttMessage) {
-                log.info("messageArrived");
+                String payload = new String(mqttMessage.getPayload());
+
+                log.info("messageArrived: {}", payload);
             }
 
             @Override

@@ -96,9 +96,8 @@ public class CarNumberServiceImpl implements CarNumberService {
             carInParking(parkingId, carNumber, carType, device, code);
         } else if (ChannelTypeEnum.OUT.getType().equals(channelType)) {
             // 出口
+            carOutParking(parkingId, carNumber, carType, device, code);
         }
-
-
         return vo;
     }
 
@@ -156,6 +155,15 @@ public class CarNumberServiceImpl implements CarNumberService {
     }
 
     private void carOutParking(Long parkingId, String carNumber, String carType, IotDevice device, String code) {
+
+        // 查找订单
+
+
+        // 判断订单是不已支付
+
+        //
+
+
         // 开闸
         iotService.ctlBarrierGate(code, true);
 
