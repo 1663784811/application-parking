@@ -238,7 +238,6 @@
               :columns="displayColumns"
               :data="state.logList"
               :loading="state.logLoading"
-              size="small"
             >
               <template #actionType="{ row }">
                 <Tag :color="getActionColor(row.actionType)">

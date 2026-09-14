@@ -3,7 +3,7 @@ import App from './App.vue'
 import router from './router'
 import pinia from './stores'
 import ViewUIPlus from 'view-ui-plus'
-import './styles/viewuiplus.css'
+import 'view-ui-plus/dist/styles/viewuiplus.css'
 import './styles/variables.css'
 
 const app = createApp(App)

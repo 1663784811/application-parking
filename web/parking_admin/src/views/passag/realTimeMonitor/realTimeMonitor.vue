@@ -59,7 +59,6 @@
           :data="state.passageList"
           :loading="state.loading"
           :height="320"
-          size="small"
         >
           <template #type="{ row }">
             <Tag :color="row.type === 'in' ? 'blue' : 'green'">

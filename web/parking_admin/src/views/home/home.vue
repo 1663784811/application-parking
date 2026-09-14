@@ -135,7 +135,6 @@
           :columns="displayColumns"
           :data="state.passageList"
           :loading="state.passageLoading"
-          size="small"
         >
           <template #captureImage="{ row }">
             <div class="capture-thumbnail">

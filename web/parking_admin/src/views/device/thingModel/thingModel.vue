@@ -42,7 +42,7 @@
       <Tabs :value="state.activeTab" @on-click="handleTabClick">
         <TabPane label="属性" name="attribute">
           <div class="sub-toolbar"><Button type="primary" size="small" @click="handleSubAdd"><Icon type="ios-add" />添加属性</Button></div>
-          <Table :columns="attrColumns" :data="state.attributeList" :loading="state.subLoading" size="small">
+          <Table :columns="attrColumns" :data="state.attributeList" :loading="state.subLoading">
             <template #attrType="{ row }"><span class="tsl-type">{{ getDataTypeText(row.dataType) }}</span></template>
             <template #attrRange="{ row }">{{ getAttrRangeText(row) }}</template>
             <template #subAction="{ row }">
@@ -53,7 +53,7 @@
         </TabPane>
         <TabPane label="事件" name="event">
           <div class="sub-toolbar"><Button type="primary" size="small" @click="handleSubAdd"><Icon type="ios-add" />添加事件</Button></div>
-          <Table :columns="subColumns" :data="state.eventList" :loading="state.subLoading" size="small">
+          <Table :columns="subColumns" :data="state.eventList" :loading="state.subLoading">
             <template #subAction="{ row }">
               <Button type="text" size="small" @click="handleSubEdit(row)">编辑</Button>
               <Button type="text" size="small" @click="handleSubDelete(row)" class="text-danger">删除</Button>
@@ -62,7 +62,7 @@
         </TabPane>
         <TabPane label="指令" name="command">
           <div class="sub-toolbar"><Button type="primary" size="small" @click="handleSubAdd"><Icon type="ios-add" />添加指令</Button></div>
-          <Table :columns="subColumns" :data="state.commandList" :loading="state.subLoading" size="small">
+          <Table :columns="subColumns" :data="state.commandList" :loading="state.subLoading">
             <template #subAction="{ row }">
               <Button type="text" size="small" @click="handleSubEdit(row)">编辑</Button>
               <Button type="text" size="small" @click="handleSubDelete(row)" class="text-danger">删除</Button>

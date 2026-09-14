@@ -154,7 +154,6 @@
           :columns="deviceColumns"
           :data="state.boundDevices"
           :loading="state.deviceLoading"
-          size="small"
         >
           <template #onlineStatus="{ row }">
             <Badge
@@ -199,7 +198,6 @@
         :columns="pickerColumns"
         :data="state.pickerTableData"
         :loading="state.pickerLoading"
-        size="small"
       >
         <template #type="{ row }">{{ deviceTypeText(row.type) }}</template>
         <template #onlineStatus="{ row }">

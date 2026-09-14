@@ -25,7 +25,7 @@
     <div class="export-preview">
       <h3 class="preview-title">报表预览</h3>
       <TableColumnSetting :columns="columns" v-model:visible="visibleFields" v-model:open="colSettingVisible" @reset="resetColumns" />
-      <Table :columns="displayColumns" :data="state.tableData" :loading="state.loading" size="small"></Table>
+      <Table :columns="displayColumns" :data="state.tableData" :loading="state.loading"></Table>
     </div>
     <div class="export-actions">
       <Button type="primary" size="large" @click="handleExportExcel">
