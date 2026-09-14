@@ -34,4 +34,8 @@ public interface OrOrderService {
 
     List<OrOrderStatusLog> findOrderStatusLogList(Long orderId);
 
+
+    OrOrder createOrder(List<OrOrderDetail> orderDetailList);
+
+
 }

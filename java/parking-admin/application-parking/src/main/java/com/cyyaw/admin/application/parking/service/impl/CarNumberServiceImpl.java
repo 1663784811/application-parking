@@ -12,14 +12,19 @@ import com.cyyaw.admin.entity.dto.iot.RecognizeVo;
 import com.cyyaw.admin.entity.em.ChannelTypeEnum;
 import com.cyyaw.admin.entity.em.IotDeviceTypeEnum;
 import com.cyyaw.admin.entity.module.iot.IotDevice;
+import com.cyyaw.admin.entity.module.or.OrOrder;
+import com.cyyaw.admin.entity.module.or.OrOrderDetail;
 import com.cyyaw.admin.entity.module.parking.PkCarLog;
 import com.cyyaw.admin.entity.module.parking.PkParkingDevice;
 import com.cyyaw.admin.inf.InfIot;
+import com.cyyaw.admin.inf.InfOrder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -48,11 +53,15 @@ public class CarNumberServiceImpl implements CarNumberService {
     @Autowired
     private PkCarLogDao pkCarLogDao;
 
+    @Autowired
+    private InfOrder infOrder;
+
 
     @Override
     public RecognizeVo recognize(RecognizeDto dto) {
         String deviceCode = dto.getDeviceCode();
         String carNumber = dto.getCarNumber();
+        String carType = dto.getCarType();
         RecognizeVo vo = new RecognizeVo();
         vo.setDeviceCode(deviceCode);
         vo.setCarNumber(dto.getCarNumber());
@@ -84,38 +93,72 @@ public class CarNumberServiceImpl implements CarNumberService {
         String channelType = binding.getChannelType();
         if (ChannelTypeEnum.IN.getType().equals(channelType)) {
             // 入口
-            // 查询该车牌在这个停车场的停车记录
-            List<PkCarLog> pkCarLogList = pkCarLogDao.selectUnfinishedLog(parkingId, carNumber);
-            if (pkCarLogList.size() > 0) {
-                // 该车牌在本停车场仍有未出场记录（上次未识别出场或异常重复入场），
-                // 强制结束上一笔记录，避免脏数据残留。
-                log.warn("车牌 {} 在停车场 {} 存在未出场记录，强制结束旧记录共 {} 笔", carNumber, parkingId, pkCarLogList.size());
-                for (PkCarLog oldLog : pkCarLogList) {
-                    oldLog.setStatus(1);              // 1=已出场
-                    oldLog.setOutTime(LocalDateTime.now());
-                    pkCarLogService.save(oldLog);
-                    // 结束订单：当前停车流程尚未接入订单（application-order），且 PkCarLog 与 OrOrder
-                    // 之间无关联字段，待订单流建立 car_log_id 关联并在 application-parking 暴露接口后在此关闭。
-                }
-            }
-            // 生成 日志记录、 新订单
-
-
-            // 开闸
-            iotService.ctlBarrierGate(code, true);
-            // 显示屏
-            iotService.ctlScreen(code, "欢迎 " + carNumber + "进场");
-
+            carInParking(parkingId, carNumber, carType, device, code);
         } else if (ChannelTypeEnum.OUT.getType().equals(channelType)) {
             // 出口
-
-            // 开闸
-            iotService.ctlBarrierGate(code, true);
         }
 
 
         return vo;
     }
 
+    private void carInParking(Long parkingId, String carNumber, String carType, IotDevice device, String code) {
+        // 入口
+        // 查询该车牌在这个停车场的停车记录
+        List<PkCarLog> pkCarLogList = pkCarLogDao.selectUnfinishedLog(parkingId, carNumber);
+        if (!pkCarLogList.isEmpty()) {
+            // 该车牌在本停车场仍有未出场记录（上次未识别出场或异常重复入场），
+            // 强制结束上一笔记录，避免脏数据残留。
+            log.warn("车牌 {} 在停车场 {} 存在未出场记录，强制结束旧记录共 {} 笔", carNumber, parkingId, pkCarLogList.size());
+            for (PkCarLog oldLog : pkCarLogList) {
+                oldLog.setStatus(1);              // 1=已出场
+                oldLog.setOutTime(LocalDateTime.now());
+                pkCarLogService.save(oldLog);
+                // 结束订单：当前停车流程尚未接入订单（application-order），且 PkCarLog 与 OrOrder
+                // 之间无关联字段，待订单流建立 car_log_id 关联并在 application-parking 暴露接口后在此关闭。
+                // 查询订单
+            }
+        }
+        // 生成 日志记录、
+        PkCarLog newLog = new PkCarLog();
+        newLog.setParkingId(parkingId);
+        newLog.setCarNumber(carNumber);
+        newLog.setEntryTime(LocalDateTime.now());
+        newLog.setStatus(0);
+        newLog.setCarType(carType);
+        newLog.setEnId(device.getEnId());
+        newLog.setCreateTime(LocalDateTime.now());
+        newLog.setUpdateTime(LocalDateTime.now());
+        newLog.setNote("");
+        PkCarLog pkCarLog = pkCarLogService.save(newLog);
+        // 新订单
+        List<OrOrderDetail> orderDetailList = new ArrayList<>();
+        OrOrderDetail orderDetail = new OrOrderDetail();
+        orderDetail.setBusinessId(pkCarLog.getId());
+        orderDetail.setProductName("停车场: ,车牌:" + carNumber);
+        orderDetail.setProductImage("");
+        orderDetail.setProductPrice(new BigDecimal("0"));
+        orderDetail.setQuantity(1);
+        orderDetail.setTotalAmount(new BigDecimal("0"));
+        orderDetail.setDiscountAmount(new BigDecimal("0"));
+        orderDetail.setEnId(pkCarLog.getEnId());
+        orderDetail.setCreateTime(LocalDateTime.now());
+        orderDetail.setUpdateTime(LocalDateTime.now());
+        orderDetail.setNote("");
+        orderDetailList.add(orderDetail);
+        OrOrder carNumberOrder = infOrder.createCarNumberOrder(orderDetailList);
+        if (null != carNumberOrder) {
+            // 开闸
+            iotService.ctlBarrierGate(code, true);
+            // 显示屏
+            iotService.ctlScreen(code, "欢迎 " + carNumber + "进场");
+        }
+    }
+
+    private void carOutParking(Long parkingId, String carNumber, String carType, IotDevice device, String code) {
+        // 开闸
+        iotService.ctlBarrierGate(code, true);
+
+    }
 
 }

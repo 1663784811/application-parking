@@ -95,4 +95,12 @@ public class OrOrderServiceImpl implements OrOrderService {
         );
     }
 
+    @Override
+    public OrOrder createOrder(List<OrOrderDetail> orderDetailList) {
+
+
+
+        return null;
+    }
+
 }
