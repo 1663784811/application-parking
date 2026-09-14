@@ -4,12 +4,17 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cyyaw.admin.application.parking.service.PkChannelService;
 import com.cyyaw.admin.dao.parking.PkChannelDao;
+import com.cyyaw.admin.dao.parking.PkParkingDao;
 import com.cyyaw.admin.entity.module.parking.PkChannel;
+import com.cyyaw.admin.entity.module.parking.PkParking;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class PkChannelServiceImpl implements PkChannelService {
+
+    @Autowired
+    private PkParkingDao pkParkingDao;
 
     @Autowired
     private PkChannelDao pkChannelDao;
@@ -21,7 +26,13 @@ public class PkChannelServiceImpl implements PkChannelService {
 
     @Override
     public PkChannel save(PkChannel channel) {
-        return pkChannelDao.save(channel);
+        PkParking pkParking = pkParkingDao.selectById(channel.getParkingId());
+        if (null != pkParking) {
+            Long appId = pkParking.getAppId();
+            channel.setAppId(appId);
+            return pkChannelDao.save(channel);
+        }
+        return null;
     }
 
     @Override

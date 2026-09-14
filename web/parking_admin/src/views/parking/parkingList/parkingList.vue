@@ -169,33 +169,98 @@
       </template>
     </Modal>
 
-    <!-- 设置收费规则弹窗 -->
+    <!-- 设置收费规则弹窗：展示停车场已关联规则，表格前有添加按钮 -->
     <Modal
       v-model="state.ruleModalVisible"
       title="设置收费规则"
-      width="600"
+      width="900"
       @on-cancel="state.ruleModalVisible = false"
     >
-      <p v-if="state.currentParking" style="margin-bottom: 12px; color: var(--text-color-secondary)">
-        为「{{ state.currentParking.name }}」选择适用的收费规则
-      </p>
-      <Select
-        v-model="state.selectedRuleIds"
-        multiple
-        filterable
-        placeholder="请选择收费规则"
+      <div class="rule-modal-header">
+        <Button type="primary" @click="handleOpenAddRule">
+          <Icon type="ios-add" />
+          添加
+        </Button>
+        <span v-if="state.currentParking" class="rule-modal-tip">
+          停车场「{{ state.currentParking.name }}」已关联 {{ state.associatedRules.length }} 条规则
+        </span>
+      </div>
+      <Table
+        :columns="associatedRuleColumns"
+        :data="state.associatedRules"
         :loading="state.ruleLoading"
-        style="width: 100%"
+        row-key="id"
+        max-height="420"
+        empty-text="暂未关联收费规则，点击上方「添加」选择规则"
       >
-        <Option v-for="item in state.allCostRules" :key="item.id" :value="item.id">
-          {{ item.name }}
-        </Option>
-      </Select>
+        <template #carType="{ row }">
+          <span>{{ carTypeText(row.carType) }}</span>
+        </template>
+        <template #type="{ row }">
+          <Tag :color="typeColor(row.type)">{{ typeText(row.type) }}</Tag>
+        </template>
+        <template #timeRange="{ row }">
+          <span v-if="row.startTime && row.endTime">{{ row.startTime }} ~ {{ row.endTime }}</span>
+          <span v-else-if="row.rule_time != null">{{ row.rule_time }} 分钟</span>
+          <span v-else class="text-secondary">—</span>
+        </template>
+        <template #amount="{ row }">
+          <span>{{ row.amount != null ? `${row.amount} 元` : '—' }}</span>
+        </template>
+        <template #action="{ row }">
+          <Button type="text" size="small" class="text-danger" @click="handleRemoveRule(row)">
+            移除
+          </Button>
+        </template>
+      </Table>
       <template #footer>
         <Button @click="state.ruleModalVisible = false">取消</Button>
         <Button type="primary" :loading="state.ruleSaving" @click="handleSaveRules">
           确定
         </Button>
+      </template>
+    </Modal>
+
+    <!-- 添加收费规则弹窗：规则列表多选 -->
+    <Modal
+      v-model="state.ruleAddModalVisible"
+      title="添加收费规则"
+      width="800"
+      @on-cancel="state.ruleAddModalVisible = false"
+    >
+      <div class="rule-modal-header">
+        <span v-if="state.currentParking" class="rule-modal-tip">
+          为停车场「{{ state.currentParking.name }}」选择要添加的收费规则
+        </span>
+        <span class="rule-modal-tip">已选 {{ state.addSelectedIds.length }} 条</span>
+      </div>
+      <Table
+        :columns="ruleColumns"
+        :data="state.candidateRules"
+        :loading="state.addRuleLoading"
+        row-key="id"
+        max-height="420"
+        empty-text="没有可添加的收费规则"
+        @on-selection-change="handleAddSelectionChange"
+      >
+        <template #carType="{ row }">
+          <span>{{ carTypeText(row.carType) }}</span>
+        </template>
+        <template #type="{ row }">
+          <Tag :color="typeColor(row.type)">{{ typeText(row.type) }}</Tag>
+        </template>
+        <template #timeRange="{ row }">
+          <span v-if="row.startTime && row.endTime">{{ row.startTime }} ~ {{ row.endTime }}</span>
+          <span v-else-if="row.rule_time != null">{{ row.rule_time }} 分钟</span>
+          <span v-else class="text-secondary">—</span>
+        </template>
+        <template #amount="{ row }">
+          <span>{{ row.amount != null ? `${row.amount} 元` : '—' }}</span>
+        </template>
+      </Table>
+      <template #footer>
+        <Button @click="state.ruleAddModalVisible = false">取消</Button>
+        <Button type="primary" @click="handleConfirmAdd">确定</Button>
       </template>
     </Modal>
   </div>
@@ -211,6 +276,7 @@ import {
   DatePicker,
   Button,
   Table,
+  Tag,
   Page,
   Modal,
   Form,
@@ -315,6 +381,40 @@ const {
   resetColumns
 } = useTableColumns(allColumns, 'parkingList:columnVisible')
 
+// 收费规则显示映射（与 chargeRuleConfig 一致）
+const carTypeText = (carType) => {
+  const map = { '0': '小型汽车', '1': '中型汽车', '2': '大型汽车' }
+  return map[carType] ?? carType ?? '—'
+}
+const typeText = (type) => {
+  const map = { 0: '首段收费', 2: '计费时段', 3: '每天封顶', 5: '每次封顶' }
+  return map[type] ?? '—'
+}
+const typeColor = (type) => {
+  const map = { 0: 'blue', 2: 'green', 3: 'orange', 5: 'purple' }
+  return map[type] || 'default'
+}
+
+// 设置收费规则弹窗：已关联规则表格列（含移除操作）
+const associatedRuleColumns = [
+  { title: '规则名称', key: 'name', minWidth: 150 },
+  { title: '车辆类型', slot: 'carType', minWidth: 100, align: 'center' },
+  { title: '收费类型', slot: 'type', minWidth: 110, align: 'center' },
+  { title: '计费时段/时长', slot: 'timeRange', minWidth: 170 },
+  { title: '金额', slot: 'amount', minWidth: 100, align: 'right' },
+  { title: '操作', slot: 'action', width: 80, align: 'center', fixed: 'right' }
+]
+
+// 添加收费规则弹窗：规则列表表格列（selection 列驱动多选）
+const ruleColumns = [
+  { type: 'selection', width: 55, align: 'center' },
+  { title: '规则名称', key: 'name', minWidth: 150 },
+  { title: '车辆类型', slot: 'carType', minWidth: 100, align: 'center' },
+  { title: '收费类型', slot: 'type', minWidth: 110, align: 'center' },
+  { title: '计费时段/时长', slot: 'timeRange', minWidth: 170 },
+  { title: '金额', slot: 'amount', minWidth: 100, align: 'right' }
+]
+
 const state = reactive({
   // 搜索表单
   searchForm: {
@@ -367,13 +467,20 @@ const state = reactive({
     ]
   },
 
-  // 设置收费规则弹窗
+  // 设置收费规则弹窗（已关联规则表格 + 添加按钮）
   ruleModalVisible: false,
   ruleLoading: false,
   ruleSaving: false,
   currentParking: null,      // 当前设置规则的停车场行
-  allCostRules: [],          // 全部收费规则（供多选下拉）
-  selectedRuleIds: []        // 已选规则ID（字符串，防雪花ID精度丢失）
+  allCostRules: [],          // 全部收费规则（缓存，供表格渲染）
+  associatedRules: [],       // 已关联规则（完整对象，供表格展示）
+  selectedRuleIds: [],       // 已关联规则ID（字符串，防雪花ID精度丢失，保存基线）
+
+  // 添加收费规则弹窗（规则列表多选）
+  ruleAddModalVisible: false,
+  addRuleLoading: false,
+  candidateRules: [],        // 可添加的规则（排除已关联）
+  addSelectedIds: []         // 添加弹窗勾选的规则ID（字符串，防雪花ID精度丢失）
 })
 
 // 初始化数据
@@ -467,25 +574,60 @@ const handleViewSpaces = (row) => {
   router.push({ name: 'spaceManagement', query: { parkingId: row.id } })
 }
 
-// 设置收费规则：打开弹窗，加载全部规则（缓存）+ 该停车场已关联规则
+// 设置收费规则：打开弹窗，加载全部规则（缓存）+ 该停车场已关联规则，组装关联表格数据
 const handleSetRules = async (row) => {
   state.currentParking = row
-  state.selectedRuleIds = []
   state.ruleModalVisible = true
   state.ruleLoading = true
+  state.associatedRules = []
+  state.selectedRuleIds = []
   try {
-    // 规则总量不大，size 取较大值一次性加载供多选；已加载则复用缓存
+    // 规则总量不大，size 取较大值一次性加载供表格展示；已加载则复用缓存
     if (state.allCostRules.length === 0) {
       const rulesRes = await costRulesApi.getCostRulesList({ size: 1000 })
       state.allCostRules = rulesRes.data || []
     }
     const res = await costRulesApi.getCostRulesByParking(row.id)
-    state.selectedRuleIds = Array.isArray(res.data) ? [...res.data] : []
+    // 已关联规则ID集合 → 字符串集合（防雪花ID精度丢失），过滤出完整规则对象供表格展示
+    const associated = new Set((Array.isArray(res.data) ? res.data : []).map(id => String(id)))
+    state.selectedRuleIds = [...associated]
+    state.associatedRules = state.allCostRules.filter(r => associated.has(String(r.id)))
   } catch (e) {
     console.error('获取收费规则关联失败', e)
   } finally {
     state.ruleLoading = false
   }
+}
+
+// 打开添加收费规则弹窗：候选 = 全部规则 - 已关联规则，重新置空勾选
+const handleOpenAddRule = () => {
+  state.candidateRules = state.allCostRules.filter(r => !state.selectedRuleIds.includes(String(r.id)))
+  state.addSelectedIds = []
+  state.ruleAddModalVisible = true
+}
+
+// 添加弹窗选择变化：同步勾选规则ID（字符串，防雪花ID精度丢失）
+const handleAddSelectionChange = (selection) => {
+  state.addSelectedIds = selection.map(r => String(r.id))
+}
+
+// 确认添加：合并所选规则到已关联列表，刷新保存基线
+const handleConfirmAdd = () => {
+  if (state.addSelectedIds.length === 0) {
+    Message.warning('请先选择要添加的收费规则')
+    return
+  }
+  const addIds = new Set(state.addSelectedIds)
+  const added = state.candidateRules.filter(r => addIds.has(String(r.id)))
+  state.associatedRules = [...state.associatedRules, ...added]
+  state.selectedRuleIds = state.associatedRules.map(r => String(r.id))
+  state.ruleAddModalVisible = false
+}
+
+// 移除已关联规则：同步更新关联列表与保存基线
+const handleRemoveRule = (row) => {
+  state.associatedRules = state.associatedRules.filter(r => String(r.id) !== String(row.id))
+  state.selectedRuleIds = state.associatedRules.map(r => String(r.id))
 }
 
 // 保存收费规则关联（按停车场同步多对多）
@@ -628,6 +770,17 @@ onMounted(() => {
       justify-content: flex-end;
       margin-top: var(--spacing-xl);
     }
+  }
+
+  .rule-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-md);
+  }
+
+  .rule-modal-tip {
+    color: var(--text-color-secondary);
   }
 }
 </style>

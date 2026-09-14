@@ -339,6 +339,12 @@ const state = reactive({
 
 const columns = [
   {
+    field: 'parkingName',
+    title: '所属停车场',
+    key: 'parkingName',
+    minWidth: 160
+  },
+  {
     field: 'code',
     title: '通道编号',
     key: 'code',
@@ -355,12 +361,6 @@ const columns = [
     title: '通道类型',
     slot: 'type',
     minWidth: 100
-  },
-  {
-    field: 'parkingName',
-    title: '所属停车场',
-    key: 'parkingName',
-    minWidth: 160
   },
   {
     field: 'ip',
