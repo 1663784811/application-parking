@@ -2,6 +2,7 @@ package com.cyyaw.admin.application.parking.space.controller;
 
 import com.cyyaw.admin.application.parking.space.service.PkSpaceService;
 import com.cyyaw.admin.common.BaseResult;
+import com.cyyaw.admin.entity.dto.parking.PkSpaceQueryDTO;
 import com.cyyaw.admin.entity.module.parking.PkSpace;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -19,13 +20,10 @@ public class PkSpaceController {
     @Autowired
     private PkSpaceService pkSpaceService;
 
-    @Operation(summary = "车位列表", description = "按停车场/状态/类型/编号筛选，返回全部匹配车位（平面图）")
+    @Operation(summary = "车位列表", description = "按停车场/状态/类型/编号筛选，返回全部匹配车位（平面图）；以 PkSpaceQueryDTO 接收查询参数")
     @GetMapping("/list")
-    public BaseResult<List<PkSpace>> list(@RequestParam(required = false) Long parkingId,
-                                          @RequestParam(required = false) Integer status,
-                                          @RequestParam(required = false) Integer type,
-                                          @RequestParam(required = false) String keyword) {
-        return BaseResult.ok(pkSpaceService.list(parkingId, status, type, keyword));
+    public BaseResult<List<PkSpace>> list(PkSpaceQueryDTO query) {
+        return BaseResult.ok(pkSpaceService.list(query.getParkingId(), query.getStatus(), query.getType(), query.getKeyword()));
     }
 
     @Operation(summary = "车位状态统计", description = "返回 { free, fixed, temp, fault }")

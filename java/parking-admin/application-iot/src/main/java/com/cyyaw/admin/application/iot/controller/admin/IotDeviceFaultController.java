@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cyyaw.admin.application.iot.service.IotDeviceFaultService;
 import com.cyyaw.admin.common.BaseResult;
+import com.cyyaw.admin.entity.dto.iot.IotDeviceFaultQueryDTO;
 import com.cyyaw.admin.entity.module.iot.IotDeviceFault;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -32,13 +33,14 @@ public class IotDeviceFaultController {
         return BaseResult.ok(iotDeviceFaultService.findById(id));
     }
 
-    @Operation(summary = "故障工单列表", description = "分页查询故障工单")
+    @Operation(summary = "故障工单列表", description = "分页查询故障工单；以 IotDeviceFaultQueryDTO 接收查询参数")
     @GetMapping("/list")
-    public BaseResult<List<IotDeviceFault>> list(@RequestParam(defaultValue = "1") Integer page,
-                                                 @RequestParam(defaultValue = "10") Integer size,
-                                                 @RequestParam(required = false) String status,
-                                                 @RequestParam(required = false) String startTime,
-                                                 @RequestParam(required = false) String endTime) {
+    public BaseResult<List<IotDeviceFault>> list(IotDeviceFaultQueryDTO query) {
+        Integer page = query.getPage();
+        Integer size = query.getSize();
+        String status = query.getStatus();
+        String startTime = query.getStartTime();
+        String endTime = query.getEndTime();
         QueryWrapper<IotDeviceFault> wrapper = new QueryWrapper<>();
         if (StringUtils.hasText(status)) {
             wrapper.eq("status", status);

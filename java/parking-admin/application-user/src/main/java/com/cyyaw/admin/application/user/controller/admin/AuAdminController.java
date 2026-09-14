@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cyyaw.admin.application.user.service.AuAdminService;
 import com.cyyaw.admin.common.BaseResult;
+import com.cyyaw.admin.entity.dto.user.AuAdminQueryDTO;
 import com.cyyaw.admin.entity.module.user.AuAdmin;
 import com.cyyaw.admin.entity.utils.LoginInfo;
 import com.cyyaw.admin.entity.utils.LoginInfoContext;
@@ -23,12 +24,13 @@ public class AuAdminController {
     @Autowired
     private AuAdminService auAdminService;
 
-    @Operation(summary = "管理员列表", description = "分页查询当前企业管理员（支持账号、真实姓名、手机号、状态筛选）")
+    @Operation(summary = "管理员列表", description = "分页查询当前企业管理员（支持账号、真实姓名、手机号、状态筛选）；查询参数 page/size/keyword/status，以 AuAdminQueryDTO 实体类接收（Spring 隐式 @ModelAttribute 按名绑定查询串到字段）")
     @GetMapping("/list")
-    public BaseResult<List<AuAdmin>> list(@RequestParam(defaultValue = "1") Integer page,
-                                          @RequestParam(defaultValue = "10") Integer size,
-                                          @RequestParam(required = false) String keyword,
-                                          @RequestParam(required = false) Integer status) {
+    public BaseResult<List<AuAdmin>> list(AuAdminQueryDTO query) {
+        Integer page = query.getPage();
+        Integer size = query.getSize();
+        String keyword = query.getKeyword();
+        Integer status = query.getStatus();
         LoginInfo loginInfo = LoginInfoContext.getLoginInfo();
         Long enId = loginInfo != null ? loginInfo.getEnId() : null;
         QueryWrapper<AuAdmin> wrapper = new QueryWrapper<>();

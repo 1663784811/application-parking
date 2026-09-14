@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cyyaw.admin.application.user.service.AuLogService;
 import com.cyyaw.admin.common.BaseResult;
+import com.cyyaw.admin.entity.dto.user.AuLogQueryDTO;
 import com.cyyaw.admin.entity.module.user.AuLog;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -27,14 +28,15 @@ public class AuLogController {
         return BaseResult.ok(auLogService.findById(id));
     }
 
-    @Operation(summary = "日志列表", description = "分页查询日志（登录日志/操作日志）")
+    @Operation(summary = "日志列表", description = "分页查询日志（登录日志/操作日志）；查询参数 page/size/logType/startTime/endTime/keyword，以 AuLogQueryDTO 实体类接收（Spring 隐式 @ModelAttribute 按名绑定查询串到字段）")
     @GetMapping("/list")
-    public BaseResult<List<AuLog>> list(@RequestParam(defaultValue = "1") Integer page,
-                                        @RequestParam(defaultValue = "10") Integer size,
-                                        @RequestParam(required = false) String logType,
-                                        @RequestParam(required = false) String startTime,
-                                        @RequestParam(required = false) String endTime,
-                                        @RequestParam(required = false) String keyword) {
+    public BaseResult<List<AuLog>> list(AuLogQueryDTO query) {
+        Integer page = query.getPage();
+        Integer size = query.getSize();
+        String logType = query.getLogType();
+        String startTime = query.getStartTime();
+        String endTime = query.getEndTime();
+        String keyword = query.getKeyword();
         QueryWrapper<AuLog> wrapper = new QueryWrapper<>();
         if (StringUtils.hasText(logType)) {
             wrapper.eq("log_type", logType);

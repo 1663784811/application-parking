@@ -4,11 +4,11 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cyyaw.admin.application.parking.service.PkCarLogService;
 import com.cyyaw.admin.common.BaseResult;
+import com.cyyaw.admin.entity.dto.parking.InternalParkingQueryDTO;
 import com.cyyaw.admin.entity.module.parking.PkCarLog;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -30,9 +30,10 @@ public class InternalParkingController {
     private final PkCarLogService pkCarLogService;
 
     @GetMapping("/list")
-    public BaseResult<List<PkCarLog>> list(@RequestParam(defaultValue = "1") Integer page,
-                                           @RequestParam(defaultValue = "10") Integer size,
-                                           @RequestParam(required = false) Long parkingId) {
+    public BaseResult<List<PkCarLog>> list(InternalParkingQueryDTO query) {
+        Integer page = query.getPage();
+        Integer size = query.getSize();
+        Long parkingId = query.getParkingId();
         QueryWrapper<PkCarLog> wrapper = new QueryWrapper<>();
         if (parkingId != null) {
             wrapper.eq("parking_id", parkingId);

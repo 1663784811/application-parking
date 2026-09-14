@@ -2,6 +2,9 @@ package com.cyyaw.admin.application.parking.controller;
 
 import com.cyyaw.admin.application.parking.service.PkParkingDeviceService;
 import com.cyyaw.admin.common.BaseResult;
+import com.cyyaw.admin.entity.dto.parking.PkParkingDeviceBindDTO;
+import com.cyyaw.admin.entity.dto.parking.PkParkingDeviceCountByChannelDTO;
+import com.cyyaw.admin.entity.dto.parking.PkParkingDeviceUnboundDTO;
 import com.cyyaw.admin.entity.module.iot.IotDevice;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -25,22 +28,22 @@ public class PkParkingDeviceController {
         return BaseResult.ok(pkParkingDeviceService.findDevicesByChannelId(channelId));
     }
 
-    @Operation(summary = "未绑定通道的设备", description = "查询某停车场下未绑定通道的设备；parkingId 为空时查全部未绑设备")
+    @Operation(summary = "未绑定通道的设备", description = "查询某停车场下未绑定通道的设备；parkingId 为空时查全部未绑设备；以 PkParkingDeviceUnboundDTO 接收查询参数")
     @GetMapping("/unbound")
-    public BaseResult<List<IotDevice>> unbound(@RequestParam(required = false) Long parkingId) {
-        return BaseResult.ok(pkParkingDeviceService.findUnboundDevices(parkingId));
+    public BaseResult<List<IotDevice>> unbound(PkParkingDeviceUnboundDTO query) {
+        return BaseResult.ok(pkParkingDeviceService.findUnboundDevices(query.getParkingId()));
     }
 
-    @Operation(summary = "按通道统计设备数（批量）", description = "传 channelIds 逗号分隔，返回 { channelId: count }")
+    @Operation(summary = "按通道统计设备数（批量）", description = "传 channelIds 集合，返回 { channelId: count }；以 PkParkingDeviceCountByChannelDTO 接收查询参数")
     @GetMapping("/countByChannel")
-    public BaseResult<Map<Long, Integer>> countByChannel(@RequestParam List<Long> channelIds) {
-        return BaseResult.ok(pkParkingDeviceService.countByChannel(channelIds));
+    public BaseResult<Map<Long, Integer>> countByChannel(PkParkingDeviceCountByChannelDTO query) {
+        return BaseResult.ok(pkParkingDeviceService.countByChannel(query.getChannelIds()));
     }
 
-    @Operation(summary = "绑定设备到通道", description = "设备全局唯一绑定。出入口通道的摄像头需传 channelType（in/out）；入口/出口通道及道闸由服务端按通道类型确定")
+    @Operation(summary = "绑定设备到通道", description = "设备全局唯一绑定。出入口通道的摄像头需传 channelType（in/out）；入口/出口通道及道闸由服务端按通道类型确定。deviceId/channelId 为路径参数，channelType 以 PkParkingDeviceBindDTO 接收")
     @PostMapping("/bind/{deviceId}/{channelId}")
-    public BaseResult<Void> bind(@PathVariable Long deviceId, @PathVariable Long channelId, @RequestParam(required = false) String channelType) {
-        pkParkingDeviceService.bind(deviceId, channelId, channelType);
+    public BaseResult<Void> bind(@PathVariable Long deviceId, @PathVariable Long channelId, PkParkingDeviceBindDTO query) {
+        pkParkingDeviceService.bind(deviceId, channelId, query.getChannelType());
         return BaseResult.ok();
     }
 

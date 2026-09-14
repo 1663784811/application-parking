@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cyyaw.admin.application.member.service.MeRenewalRecordService;
 import com.cyyaw.admin.common.BaseResult;
+import com.cyyaw.admin.entity.dto.member.MeRenewalRecordQueryDTO;
 import com.cyyaw.admin.entity.module.member.MeRenewalRecord;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,14 +29,15 @@ public class MeRenewalRecordController {
         return BaseResult.ok(meRenewalRecordService.findById(id));
     }
 
-    @Operation(summary = "续费记录列表", description = "分页查询续费记录")
+    @Operation(summary = "续费记录列表", description = "分页查询续费记录；以 MeRenewalRecordQueryDTO 接收查询参数")
     @GetMapping("/list")
-    public BaseResult<List<MeRenewalRecord>> list(@RequestParam(defaultValue = "1") Integer page,
-                                                  @RequestParam(defaultValue = "10") Integer size,
-                                                  @RequestParam(required = false) String plate,
-                                                  @RequestParam(required = false) Integer cardType,
-                                                  @RequestParam(required = false) String startTime,
-                                                  @RequestParam(required = false) String endTime) {
+    public BaseResult<List<MeRenewalRecord>> list(MeRenewalRecordQueryDTO query) {
+        Integer page = query.getPage();
+        Integer size = query.getSize();
+        String plate = query.getPlate();
+        Integer cardType = query.getCardType();
+        String startTime = query.getStartTime();
+        String endTime = query.getEndTime();
         QueryWrapper<MeRenewalRecord> wrapper = new QueryWrapper<>();
         if (StringUtils.hasText(plate)) {
             wrapper.like("plate", plate);

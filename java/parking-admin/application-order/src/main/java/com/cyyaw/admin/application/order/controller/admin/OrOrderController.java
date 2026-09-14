@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cyyaw.admin.application.order.service.OrOrderService;
 import com.cyyaw.admin.common.BaseResult;
+import com.cyyaw.admin.entity.dto.order.OrOrderFindByOrderNoDTO;
+import com.cyyaw.admin.entity.dto.order.OrOrderQueryDTO;
 import com.cyyaw.admin.entity.module.or.OrOrder;
 import com.cyyaw.admin.entity.module.or.OrOrderDetail;
 import com.cyyaw.admin.entity.module.or.OrOrderPay;
@@ -23,15 +25,16 @@ public class OrOrderController {
     @Autowired
     private OrOrderService orOrderService;
 
-    @Operation(summary = "订单列表", description = "分页查询订单列表（支持订单号、订单状态、支付状态、创建时间区间筛选）")
+    @Operation(summary = "订单列表", description = "分页查询订单列表（支持订单号、订单状态、支付状态、创建时间区间筛选）；以 OrOrderQueryDTO 接收查询参数")
     @GetMapping("/list")
-    public BaseResult<List<OrOrder>> list(@RequestParam(defaultValue = "1") Integer page,
-                                          @RequestParam(defaultValue = "10") Integer size,
-                                          @RequestParam(required = false) String orderNo,
-                                          @RequestParam(required = false) Integer orderStatus,
-                                          @RequestParam(required = false) Integer payStatus,
-                                          @RequestParam(required = false) String startDate,
-                                          @RequestParam(required = false) String endDate) {
+    public BaseResult<List<OrOrder>> list(OrOrderQueryDTO query) {
+        Integer page = query.getPage();
+        Integer size = query.getSize();
+        String orderNo = query.getOrderNo();
+        Integer orderStatus = query.getOrderStatus();
+        Integer payStatus = query.getPayStatus();
+        String startDate = query.getStartDate();
+        String endDate = query.getEndDate();
         QueryWrapper<OrOrder> wrapper = new QueryWrapper<>();
         if (orderNo != null && !orderNo.isEmpty()) {
             wrapper.like("order_no", orderNo);
@@ -61,10 +64,10 @@ public class OrOrderController {
         return BaseResult.ok(order);
     }
 
-    @Operation(summary = "查询订单", description = "根据订单编号查询订单")
+    @Operation(summary = "查询订单", description = "根据订单编号查询订单；以 OrOrderFindByOrderNoDTO 接收查询参数")
     @GetMapping("/findByOrderNo")
-    public BaseResult<OrOrder> findByOrderNo(@RequestParam String orderNo) {
-        OrOrder order = orOrderService.findByOrderNo(orderNo);
+    public BaseResult<OrOrder> findByOrderNo(OrOrderFindByOrderNoDTO query) {
+        OrOrder order = orOrderService.findByOrderNo(query.getOrderNo());
         return BaseResult.ok(order);
     }
 
@@ -109,5 +112,4 @@ public class OrOrderController {
         List<OrOrderStatusLog> list = orOrderService.findOrderStatusLogList(orderId);
         return BaseResult.ok(list);
     }
-
 }

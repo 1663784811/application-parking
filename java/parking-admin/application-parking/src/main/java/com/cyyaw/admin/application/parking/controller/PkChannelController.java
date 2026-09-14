@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cyyaw.admin.application.parking.service.PkChannelService;
 import com.cyyaw.admin.common.BaseResult;
+import com.cyyaw.admin.entity.dto.parking.PkChannelQueryDTO;
 import com.cyyaw.admin.entity.module.parking.PkChannel;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -27,14 +28,15 @@ public class PkChannelController {
         return BaseResult.ok(pkChannelService.findById(id));
     }
 
-    @Operation(summary = "通道列表", description = "分页查询通道列表")
+    @Operation(summary = "通道列表", description = "分页查询通道列表；以 PkChannelQueryDTO 接收查询参数")
     @GetMapping("/list")
-    public BaseResult<List<PkChannel>> list(@RequestParam(defaultValue = "1") Integer page,
-                                            @RequestParam(defaultValue = "10") Integer size,
-                                            @RequestParam(required = false) String type,
-                                            @RequestParam(required = false) Integer status,
-                                            @RequestParam(required = false) Long parkingId,
-                                            @RequestParam(required = false) String keyword) {
+    public BaseResult<List<PkChannel>> list(PkChannelQueryDTO query) {
+        Integer page = query.getPage();
+        Integer size = query.getSize();
+        String type = query.getType();
+        Integer status = query.getStatus();
+        Long parkingId = query.getParkingId();
+        String keyword = query.getKeyword();
         QueryWrapper<PkChannel> wrapper = new QueryWrapper<>();
         if (StringUtils.hasText(type)) {
             wrapper.eq("type", type);

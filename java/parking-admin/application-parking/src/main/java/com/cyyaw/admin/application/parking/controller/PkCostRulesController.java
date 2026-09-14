@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cyyaw.admin.application.parking.service.PkCostRulesService;
 import com.cyyaw.admin.common.BaseResult;
+import com.cyyaw.admin.entity.dto.parking.PkCostRulesQueryDTO;
 import com.cyyaw.admin.entity.module.parking.PkCostRules;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,11 +29,12 @@ public class PkCostRulesController {
         return BaseResult.ok(rules);
     }
 
-    @Operation(summary = "计费规则列表", description = "分页查询计费规则")
+    @Operation(summary = "计费规则列表", description = "分页查询计费规则；以 PkCostRulesQueryDTO 接收查询参数")
     @GetMapping("/list")
-    public BaseResult<List<PkCostRules>> list(@RequestParam(defaultValue = "1") Integer page,
-                                              @RequestParam(defaultValue = "10") Integer size,
-                                              @RequestParam(required = false) String name) {
+    public BaseResult<List<PkCostRules>> list(PkCostRulesQueryDTO query) {
+        Integer page = query.getPage();
+        Integer size = query.getSize();
+        String name = query.getName();
         QueryWrapper<PkCostRules> wrapper = new QueryWrapper<>();
         if (StringUtils.hasText(name)) {
             wrapper.like("name", name);

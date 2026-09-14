@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cyyaw.admin.application.member.service.MeMemberService;
 import com.cyyaw.admin.common.BaseResult;
+import com.cyyaw.admin.entity.dto.member.MeMemberQueryDTO;
 import com.cyyaw.admin.entity.module.member.MeMember;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,13 +30,14 @@ public class MeMemberController {
         return BaseResult.ok(meMemberService.findById(id));
     }
 
-    @Operation(summary = "会员列表", description = "分页查询会员")
+    @Operation(summary = "会员列表", description = "分页查询会员；以 MeMemberQueryDTO 接收查询参数")
     @GetMapping("/list")
-    public BaseResult<List<MeMember>> list(@RequestParam(defaultValue = "1") Integer page,
-                                           @RequestParam(defaultValue = "10") Integer size,
-                                           @RequestParam(required = false) String plate,
-                                           @RequestParam(required = false) String phone,
-                                           @RequestParam(required = false) Integer status) {
+    public BaseResult<List<MeMember>> list(MeMemberQueryDTO query) {
+        Integer page = query.getPage();
+        Integer size = query.getSize();
+        String plate = query.getPlate();
+        String phone = query.getPhone();
+        Integer status = query.getStatus();
         QueryWrapper<MeMember> wrapper = new QueryWrapper<>();
         if (StringUtils.hasText(plate)) {
             wrapper.like("plate", plate);

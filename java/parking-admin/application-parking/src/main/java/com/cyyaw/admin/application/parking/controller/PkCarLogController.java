@@ -4,6 +4,9 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cyyaw.admin.application.parking.service.PkCarLogService;
 import com.cyyaw.admin.common.BaseResult;
+import com.cyyaw.admin.entity.dto.parking.PkCarFindByCarDTO;
+import com.cyyaw.admin.entity.dto.parking.PkCarLogQueryDTO;
+import com.cyyaw.admin.entity.dto.parking.PkCarStatusCountDTO;
 import com.cyyaw.admin.entity.module.parking.PkCarLog;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -27,12 +30,13 @@ public class PkCarLogController {
         return BaseResult.ok(carLog);
     }
 
-    @Operation(summary = "停车记录列表", description = "分页查询停车记录")
+    @Operation(summary = "停车记录列表", description = "分页查询停车记录；以 PkCarLogQueryDTO 接收查询参数")
     @GetMapping("/list")
-    public BaseResult<List<PkCarLog>> list(@RequestParam(defaultValue = "1") Integer page,
-                                           @RequestParam(defaultValue = "10") Integer size,
-                                           @RequestParam(required = false) Long parkingId,
-                                           @RequestParam(required = false) String carNumber) {
+    public BaseResult<List<PkCarLog>> list(PkCarLogQueryDTO query) {
+        Integer page = query.getPage();
+        Integer size = query.getSize();
+        Long parkingId = query.getParkingId();
+        String carNumber = query.getCarNumber();
         QueryWrapper<PkCarLog> wrapper = new QueryWrapper<>();
         if (parkingId != null) {
             wrapper.eq("parking_id", parkingId);
@@ -53,17 +57,18 @@ public class PkCarLogController {
         return BaseResult.ok(result);
     }
 
-    @Operation(summary = "在场车辆数", description = "查询停车场当前在场车辆数")
+    @Operation(summary = "在场车辆数", description = "查询停车场当前在场车辆数；parkingId 为路径参数，status 以 PkCarStatusCountDTO 接收")
     @GetMapping("/statusCount/{parkingId}")
-    public BaseResult<Integer> statusCount(@PathVariable Long parkingId, @RequestParam(defaultValue = "0") int status) {
+    public BaseResult<Integer> statusCount(@PathVariable Long parkingId, PkCarStatusCountDTO query) {
+        int status = query.getStatus() == null ? 0 : query.getStatus();
         int count = pkCarLogService.selectStatusCount(parkingId, status);
         return BaseResult.ok(count);
     }
 
-    @Operation(summary = "查询在场车辆", description = "根据停车场ID和车牌查询在场车辆")
+    @Operation(summary = "查询在场车辆", description = "根据停车场ID和车牌查询在场车辆；以 PkCarFindByCarDTO 接收查询参数")
     @GetMapping("/findByCar")
-    public BaseResult<PkCarLog> findByCar(@RequestParam Long parkingId, @RequestParam String carNumber) {
-        PkCarLog carLog = pkCarLogService.selectByParkingIdAndCarNumber(parkingId, carNumber);
+    public BaseResult<PkCarLog> findByCar(PkCarFindByCarDTO query) {
+        PkCarLog carLog = pkCarLogService.selectByParkingIdAndCarNumber(query.getParkingId(), query.getCarNumber());
         return BaseResult.ok(carLog);
     }
 

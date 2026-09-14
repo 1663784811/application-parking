@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cyyaw.admin.application.parking.service.PkParkingService;
 import com.cyyaw.admin.common.BaseResult;
+import com.cyyaw.admin.entity.dto.parking.PkParkingQueryDTO;
 import com.cyyaw.admin.entity.module.parking.PkParking;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,12 +29,13 @@ public class PkParkingController {
         return BaseResult.ok(parking);
     }
 
-    @Operation(summary = "停车场列表", description = "分页查询停车场列表")
+    @Operation(summary = "停车场列表", description = "分页查询停车场列表；查询参数 page/size/name/status，以 PkParkingQueryDTO 实体类接收（Spring 隐式 @ModelAttribute 按名绑定查询串到字段）")
     @GetMapping("/list")
-    public BaseResult<List<PkParking>> list(@RequestParam(defaultValue = "1") Integer page,
-                                            @RequestParam(defaultValue = "10") Integer size,
-                                            @RequestParam(required = false) String name,
-                                            @RequestParam(required = false) Integer status) {
+    public BaseResult<List<PkParking>> list(PkParkingQueryDTO query) {
+        Integer page = query.getPage();
+        Integer size = query.getSize();
+        String name = query.getName();
+        Integer status = query.getStatus();
         QueryWrapper<PkParking> wrapper = new QueryWrapper<>();
         if (StringUtils.hasText(name)) {
             wrapper.like("name", name);

@@ -4,6 +4,9 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cyyaw.admin.application.iot.service.IotThingModelService;
 import com.cyyaw.admin.common.BaseResult;
+import com.cyyaw.admin.entity.dto.iot.IotThingModelAttributeDTO;
+import com.cyyaw.admin.entity.dto.iot.IotThingModelQueryDTO;
+import com.cyyaw.admin.entity.dto.iot.IotThingModelSubDTO;
 import com.cyyaw.admin.entity.module.iot.IotThingAttribute;
 import com.cyyaw.admin.entity.module.iot.IotThingCommand;
 import com.cyyaw.admin.entity.module.iot.IotThingEvent;
@@ -33,9 +36,12 @@ public class IotThingModelController {
         return BaseResult.ok(iotThingModelService.findById(id));
     }
 
-    @Operation(summary = "物模型列表", description = "分页查询物模型")
+    @Operation(summary = "物模型列表", description = "分页查询物模型；以 IotThingModelQueryDTO 接收查询参数")
     @GetMapping("/list")
-    public BaseResult<List<IotThingModel>> list(@RequestParam(defaultValue = "1") Integer page, @RequestParam(defaultValue = "10") Integer size, @RequestParam(required = false) String keyword) {
+    public BaseResult<List<IotThingModel>> list(IotThingModelQueryDTO query) {
+        Integer page = query.getPage();
+        Integer size = query.getSize();
+        String keyword = query.getKeyword();
         QueryWrapper<IotThingModel> wrapper = new QueryWrapper<>();
         if (StringUtils.hasText(keyword)) {
             wrapper.like("name", keyword);
@@ -65,18 +71,18 @@ public class IotThingModelController {
         return BaseResult.ok(iotThingModelService.stats());
     }
 
-    @Operation(summary = "子实体计数", description = "批量统计多个物模型的属性/事件/指令数量")
+    @Operation(summary = "子实体计数", description = "批量统计多个物模型的属性/事件/指令数量；以 IotThingModelSubDTO 接收查询参数")
     @GetMapping("/subCounts")
-    public BaseResult<Map<Long, Map<String, Integer>>> subCounts(@RequestParam(required = false) List<Long> modelIds) {
-        return BaseResult.ok(iotThingModelService.countSubByModelIds(modelIds));
+    public BaseResult<Map<Long, Map<String, Integer>>> subCounts(IotThingModelSubDTO query) {
+        return BaseResult.ok(iotThingModelService.countSubByModelIds(query.getModelIds()));
     }
 
     // ===== 属性 =====
 
-    @Operation(summary = "属性列表", description = "按物模型ID查询全部属性")
+    @Operation(summary = "属性列表", description = "按物模型ID查询全部属性；以 IotThingModelAttributeDTO 接收查询参数")
     @GetMapping("/attribute/list")
-    public BaseResult<List<IotThingAttribute>> listAttribute(@RequestParam Long thingModelId) {
-        return BaseResult.ok(iotThingModelService.listAttributeByModelId(thingModelId));
+    public BaseResult<List<IotThingAttribute>> listAttribute(IotThingModelAttributeDTO query) {
+        return BaseResult.ok(iotThingModelService.listAttributeByModelId(query.getThingModelId()));
     }
 
     @Operation(summary = "保存属性", description = "新增或更新属性")
@@ -94,10 +100,10 @@ public class IotThingModelController {
 
     // ===== 事件 =====
 
-    @Operation(summary = "事件列表", description = "按物模型ID查询全部事件")
+    @Operation(summary = "事件列表", description = "按物模型ID查询全部事件；以 IotThingModelAttributeDTO 接收查询参数")
     @GetMapping("/event/list")
-    public BaseResult<List<IotThingEvent>> listEvent(@RequestParam Long thingModelId) {
-        return BaseResult.ok(iotThingModelService.listEventByModelId(thingModelId));
+    public BaseResult<List<IotThingEvent>> listEvent(IotThingModelAttributeDTO query) {
+        return BaseResult.ok(iotThingModelService.listEventByModelId(query.getThingModelId()));
     }
 
     @Operation(summary = "保存事件", description = "新增或更新事件")
@@ -115,10 +121,10 @@ public class IotThingModelController {
 
     // ===== 指令 =====
 
-    @Operation(summary = "指令列表", description = "按物模型ID查询全部指令")
+    @Operation(summary = "指令列表", description = "按物模型ID查询全部指令；以 IotThingModelAttributeDTO 接收查询参数")
     @GetMapping("/command/list")
-    public BaseResult<List<IotThingCommand>> listCommand(@RequestParam Long thingModelId) {
-        return BaseResult.ok(iotThingModelService.listCommandByModelId(thingModelId));
+    public BaseResult<List<IotThingCommand>> listCommand(IotThingModelAttributeDTO query) {
+        return BaseResult.ok(iotThingModelService.listCommandByModelId(query.getThingModelId()));
     }
 
     @Operation(summary = "保存指令", description = "新增或更新指令")
