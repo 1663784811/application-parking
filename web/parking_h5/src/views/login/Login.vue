@@ -9,34 +9,35 @@
         <div class="logo">
           <div class="logo-ring"></div>
           <img
-            v-if="showLogo"
-            class="logo-img"
-            :src="appStore.appLogo"
-            alt="logo"
-            @error="logoFailed = true"
+              v-if="showLogo"
+              class="logo-img"
+              :src="appStore.appLogo"
+              alt="logo"
+              @error="logoFailed = true"
           />
           <svg v-else viewBox="0 0 64 64" width="60" height="60" role="img" :aria-label="appName">
-            <rect x="3" y="3" width="58" height="58" rx="18" fill="#ffffff" />
+            <rect x="3" y="3" width="58" height="58" rx="18" fill="#ffffff"/>
             <rect
-              x="3"
-              y="3"
-              width="58"
-              height="58"
-              rx="18"
-              fill="none"
-              stroke="#ffffff"
-              stroke-opacity="0.7"
-              stroke-width="2"
+                x="3"
+                y="3"
+                width="58"
+                height="58"
+                rx="18"
+                fill="none"
+                stroke="#ffffff"
+                stroke-opacity="0.7"
+                stroke-width="2"
             />
             <text
-              x="33"
-              y="45"
-              text-anchor="middle"
-              font-family="PingFang SC, Arial, sans-serif"
-              font-size="40"
-              font-weight="800"
-              fill="#10b981"
-            >P</text>
+                x="33"
+                y="45"
+                text-anchor="middle"
+                font-family="PingFang SC, Arial, sans-serif"
+                font-size="40"
+                font-weight="800"
+                fill="#10b981"
+            >P
+            </text>
           </svg>
         </div>
         <h1 class="app-name">{{ appName }}</h1>
@@ -55,15 +56,15 @@
         <van-cell-group class="field-group" :border="false">
           <!-- 手机号 -->
           <van-field
-            v-model="state.phone"
-            type="tel"
-            name="phone"
-            left-icon="phone-o"
-            placeholder="请输入手机号"
-            clearable
-            maxlength="11"
-            :border="false"
-            :rules="[
+              v-model="state.phone"
+              type="tel"
+              name="phone"
+              left-icon="phone-o"
+              placeholder="请输入手机号"
+              clearable
+              maxlength="11"
+              :border="false"
+              :rules="[
               { required: true, message: '请输入手机号' },
               { pattern: phoneRegex, message: '请输入正确的手机号' },
             ]"
@@ -71,24 +72,24 @@
 
           <!-- 验证码 -->
           <van-field
-            v-model="state.code"
-            type="digit"
-            name="code"
-            left-icon="shield-o"
-            placeholder="请输入验证码"
-            clearable
-            maxlength="6"
-            :border="false"
-            :rules="[{ required: true, message: '请输入验证码' }]"
+              v-model="state.code"
+              type="digit"
+              name="code"
+              left-icon="shield-o"
+              placeholder="请输入验证码"
+              clearable
+              maxlength="6"
+              :border="false"
+              :rules="[{ required: true, message: '请输入验证码' }]"
           >
             <template #button>
               <van-button
-                class="code-btn"
-                size="small"
-                native-type="button"
-                :disabled="!canSendCode"
-                :loading="sendingCode"
-                @click="onSendCode"
+                  class="code-btn"
+                  size="small"
+                  native-type="button"
+                  :disabled="!canSendCode"
+                  :loading="sendingCode"
+                  @click="onSendCode"
               >
                 {{ countdown > 0 ? `${countdown}s 后重获` : '获取验证码' }}
               </van-button>
@@ -106,11 +107,11 @@
         <!-- 登录按钮 -->
         <div class="submit">
           <van-button
-            class="submit-btn"
-            block
-            round
-            native-type="submit"
-            :loading="state.loading"
+              class="submit-btn"
+              block
+              round
+              native-type="submit"
+              :loading="state.loading"
           >
             登录
           </van-button>
@@ -125,13 +126,13 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { showToast } from 'vant'
-import { getBrowserFingerprint } from '@/api/browser'
-import { getVerifyPhoneCode, phoneLogin } from '@/api/app'
-import { useLoginInfoStore } from '@/stores/loginInfo'
-import { useAppStore } from '@/stores/app'
+import {computed, onMounted, onUnmounted, reactive, ref} from 'vue'
+import {useRoute, useRouter} from 'vue-router'
+import {showToast} from 'vant'
+import {getBrowserFingerprint} from '@/api/browser'
+import {getVerifyPhoneCode, phoneLogin} from '@/api/app'
+import {useLoginInfoStore} from '@/stores/loginInfo'
+import {useAppStore} from '@/stores/app'
 
 const route = useRoute()
 const router = useRouter()
@@ -187,7 +188,7 @@ const startCountdown = () => {
 }
 // 发送验证码按钮是否可用
 const canSendCode = computed(
-  () => phoneRegex.test(state.phone) && countdown.value === 0 && !sendingCode.value
+    () => phoneRegex.test(state.phone) && countdown.value === 0 && !sendingCode.value
 )
 
 onMounted(() => {
@@ -217,22 +218,18 @@ const onSendCode = () => {
     return
   }
   sendingCode.value = true
-  getBrowserFingerprint()
-    .then((fp) => {
-      state.fingerprint = fp
-      return getVerifyPhoneCode({ phone: state.phone, fingerprint: fp })
-    })
-    .then(() => {
-      codeSent.value = true
-      showToast('验证码已发送')
-      startCountdown()
-    })
-    .catch((err) => {
-      showToast(err?.msg || '验证码发送失败')
-    })
-    .finally(() => {
-      sendingCode.value = false
-    })
+  getBrowserFingerprint().then((fp) => {
+    state.fingerprint = fp
+    return getVerifyPhoneCode({phone: state.phone, fingerprint: fp})
+  }).then(() => {
+    codeSent.value = true
+    showToast('验证码已发送')
+    startCountdown()
+  }).catch((err) => {
+    showToast(err?.msg || '验证码发送失败')
+  }).finally(() => {
+    sendingCode.value = false
+  })
 }
 
 // 提交登录
@@ -241,7 +238,7 @@ const onSubmit = () => {
   if (MOCK_LOGIN) {
     handleRemember()
     loginInfoStore.setToken('mock-token', 'mock-refresh-token')
-    router.replace({ name: 'mainIndex', params: { appId: route.params.appId } })
+    router.replace({name: 'mainIndex', params: {appId: route.params.appId}})
     return
   }
   if (!codeSent.value) {
@@ -254,19 +251,16 @@ const onSubmit = () => {
     code: state.code,
     fingerprint: state.fingerprint,
     appId: route.params.appId,
+  }).then((res) => {
+    // 业务数据: { jwtToken, refreshToken }
+    handleRemember()
+    loginInfoStore.setToken(res.data.jwtToken, res.data.refreshToken)
+    router.replace({name: 'mainIndex', params: {appId: route.params.appId}})
+  }).catch((err) => {
+    showToast(err?.msg || '登录失败')
+  }).finally(() => {
+    state.loading = false
   })
-    .then((res) => {
-      // 业务数据: { jwtToken, refreshToken }
-      handleRemember()
-      loginInfoStore.setToken(res.data.jwtToken, res.data.refreshToken)
-      router.replace({ name: 'mainIndex', params: { appId: route.params.appId } })
-    })
-    .catch((err) => {
-      showToast(err?.msg || '登录失败')
-    })
-    .finally(() => {
-      state.loading = false
-    })
 }
 
 // 记住 / 清除手机号
@@ -486,28 +480,56 @@ const handleRemember = () => {
 
 // ===== 动画 =====
 @keyframes fade-down {
-  0% { opacity: 0; transform: translateY(-16px); }
-  100% { opacity: 1; transform: translateY(0); }
+  0% {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes fade-up {
-  0% { opacity: 0; transform: translateY(16px); }
-  100% { opacity: 1; transform: translateY(0); }
+  0% {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes pop {
-  0% { opacity: 0; transform: scale(0.6); }
-  100% { opacity: 1; transform: scale(1); }
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 @keyframes pulse {
-  0%, 100% { transform: scale(1); opacity: 0.6; }
-  50% { transform: scale(1.14); opacity: 0.3; }
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.14);
+    opacity: 0.3;
+  }
 }
 
 @keyframes float-a {
-  0%, 100% { transform: translate(0, 0); }
-  50% { transform: translate(-10px, 14px); }
+  0%, 100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(-10px, 14px);
+  }
 }
 
 // 无障碍：减少动效偏好
