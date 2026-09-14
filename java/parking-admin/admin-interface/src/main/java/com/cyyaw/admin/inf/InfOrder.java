@@ -11,7 +11,7 @@ public interface InfOrder {
     /**
      * 创建车牌订单
      */
-    OrOrder createCarNumberOrder(List<OrOrderDetail> orderDetailList);
+    OrOrder createOrder(List<OrOrderDetail> orderDetailList);
 
 
 }

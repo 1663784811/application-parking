@@ -18,7 +18,7 @@ public class InfOrderSingle implements InfOrder {
 
 
     @Override
-    public OrOrder createCarNumberOrder(List<OrOrderDetail> orderDetailList) {
+    public OrOrder createOrder(List<OrOrderDetail> orderDetailList) {
         return orOrderService.createOrder(orderDetailList);
     }
 }

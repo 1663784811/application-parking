@@ -146,7 +146,7 @@ public class CarNumberServiceImpl implements CarNumberService {
         orderDetail.setUpdateTime(LocalDateTime.now());
         orderDetail.setNote("");
         orderDetailList.add(orderDetail);
-        OrOrder carNumberOrder = infOrder.createCarNumberOrder(orderDetailList);
+        OrOrder carNumberOrder = infOrder.createOrder(orderDetailList);
         if (null != carNumberOrder) {
             // 开闸
             iotService.ctlBarrierGate(code, true);
