@@ -1,7 +1,7 @@
-package com.cyyaw.admin.application.parking.report.controller;
+package com.cyyaw.admin.application.parking.controller;
 
-import com.cyyaw.admin.application.parking.report.service.TrafficReportService;
-import com.cyyaw.admin.application.parking.report.vo.TrafficReportVO;
+import com.cyyaw.admin.application.parking.service.TrafficReportService;
+import com.cyyaw.admin.entity.dto.parking.TrafficReportVO;
 import com.cyyaw.admin.common.BaseResult;
 import com.cyyaw.admin.entity.dto.parking.TrafficReportDTO;
 import io.swagger.v3.oas.annotations.Operation;

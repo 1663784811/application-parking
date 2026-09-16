@@ -1,6 +1,6 @@
-package com.cyyaw.admin.application.parking.space.controller;
+package com.cyyaw.admin.application.parking.controller;
 
-import com.cyyaw.admin.application.parking.space.service.PkSpaceService;
+import com.cyyaw.admin.application.parking.service.PkSpaceService;
 import com.cyyaw.admin.common.BaseResult;
 import com.cyyaw.admin.entity.dto.parking.PkSpaceQueryDTO;
 import com.cyyaw.admin.entity.module.parking.PkSpace;

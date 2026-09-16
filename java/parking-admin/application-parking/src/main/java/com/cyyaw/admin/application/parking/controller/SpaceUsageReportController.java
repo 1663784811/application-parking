@@ -1,7 +1,7 @@
-package com.cyyaw.admin.application.parking.report.controller;
+package com.cyyaw.admin.application.parking.controller;
 
-import com.cyyaw.admin.application.parking.report.service.SpaceUsageReportService;
-import com.cyyaw.admin.application.parking.report.vo.SpaceUsageReportVO;
+import com.cyyaw.admin.application.parking.service.SpaceUsageReportService;
+import com.cyyaw.admin.entity.dto.parking.SpaceUsageReportVO;
 import com.cyyaw.admin.common.BaseResult;
 import com.cyyaw.admin.entity.dto.parking.SpaceUsageReportDTO;
 import io.swagger.v3.oas.annotations.Operation;

@@ -1,7 +1,7 @@
-package com.cyyaw.admin.application.parking.space.service.impl;
+package com.cyyaw.admin.application.parking.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.cyyaw.admin.application.parking.space.service.PkSpaceService;
+import com.cyyaw.admin.application.parking.service.PkSpaceService;
 import com.cyyaw.admin.dao.parking.PkSpaceDao;
 import com.cyyaw.admin.entity.module.parking.PkSpace;
 import org.springframework.beans.factory.annotation.Autowired;

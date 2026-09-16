@@ -427,7 +427,8 @@ const resolveAppId = (channel) => {
 const buildChannelQrUrl = (channel) => {
   const appId = resolveAppId(channel)
   const code = channel.code ? encodeURIComponent(channel.code) : ''
-  return `${H5_BASE_URL}/#/app/${appId}/scanExit?channelId=${channel.id}&code=${code}`
+  console.log(channel)
+  return `${H5_BASE_URL}/#/app/${appId}/parkingExit?channelId=${channel.id}&parkingId=${channel.parkingId}`
 }
 
 // 打开二维码弹窗（appId 缺失时阻断，避免生成无效链接）

@@ -1,4 +1,4 @@
-package com.cyyaw.admin.application.parking.report.vo;
+package com.cyyaw.admin.entity.dto.parking;
 
 import lombok.Data;
 

@@ -1,6 +1,6 @@
-package com.cyyaw.admin.application.parking.report.service;
+package com.cyyaw.admin.application.parking.service;
 
-import com.cyyaw.admin.application.parking.report.vo.MemberRevenueReportVO;
+import com.cyyaw.admin.entity.dto.parking.MemberRevenueReportVO;
 
 import java.util.List;
 import java.util.Map;

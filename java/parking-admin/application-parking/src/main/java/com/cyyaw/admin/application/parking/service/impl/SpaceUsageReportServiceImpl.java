@@ -1,7 +1,7 @@
-package com.cyyaw.admin.application.parking.report.service.impl;
+package com.cyyaw.admin.application.parking.service.impl;
 
-import com.cyyaw.admin.application.parking.report.service.SpaceUsageReportService;
-import com.cyyaw.admin.application.parking.report.vo.SpaceUsageReportVO;
+import com.cyyaw.admin.application.parking.service.SpaceUsageReportService;
+import com.cyyaw.admin.entity.dto.parking.SpaceUsageReportVO;
 import com.cyyaw.admin.dao.report.ReportDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

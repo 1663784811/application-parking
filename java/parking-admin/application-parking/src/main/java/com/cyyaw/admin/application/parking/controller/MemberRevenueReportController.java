@@ -1,7 +1,7 @@
-package com.cyyaw.admin.application.parking.report.controller;
+package com.cyyaw.admin.application.parking.controller;
 
-import com.cyyaw.admin.application.parking.report.service.MemberRevenueReportService;
-import com.cyyaw.admin.application.parking.report.vo.MemberRevenueReportVO;
+import com.cyyaw.admin.application.parking.service.MemberRevenueReportService;
+import com.cyyaw.admin.entity.dto.parking.MemberRevenueReportVO;
 import com.cyyaw.admin.common.BaseResult;
 import com.cyyaw.admin.entity.dto.parking.MemberRevenueReportDTO;
 import com.cyyaw.admin.entity.dto.parking.MemberRevenueReportDetailDTO;

@@ -1,7 +1,7 @@
-package com.cyyaw.admin.application.parking.dashboard.controller;
+package com.cyyaw.admin.application.parking.controller;
 
-import com.cyyaw.admin.application.parking.dashboard.service.DashboardService;
-import com.cyyaw.admin.application.parking.dashboard.vo.DashboardStatsVO;
+import com.cyyaw.admin.application.parking.service.DashboardService;
+import com.cyyaw.admin.entity.dto.parking.DashboardStatsVO;
 import com.cyyaw.admin.common.BaseResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

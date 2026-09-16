@@ -1,4 +1,4 @@
-package com.cyyaw.admin.application.parking.space.service;
+package com.cyyaw.admin.application.parking.service;
 
 import com.cyyaw.admin.entity.module.parking.PkSpace;
 

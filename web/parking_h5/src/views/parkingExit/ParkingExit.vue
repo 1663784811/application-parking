@@ -1,11 +1,11 @@
 <template>
   <div class="parking-exit-page">
-    <van-nav-bar title="停车出场" left-arrow @click-left="router.back()" />
+    <van-nav-bar title="停车出场" left-arrow @click-left="router.back()"/>
 
     <div class="exit-content">
       <div class="exit-card">
 
-        <PlateInput v-model:prefix="state.platePrefix" v-model:number="state.plateNumber" />
+        <PlateInput v-model:prefix="state.platePrefix" v-model:number="state.plateNumber"/>
 
         <div class="parking-info">
           <div class="info-item">
@@ -31,13 +31,9 @@
         <van-button type="primary" size="large" block @click="handlePay">
           确认支付 ¥{{ state.amount }}
         </van-button>
-        <van-button type="default" size="large" block plain @click="handleUseCoupon">
-          使用优惠券/卡包
-        </van-button>
       </div>
-
       <div class="tips">
-        <van-icon name="info-o" />
+        <van-icon name="info-o"/>
         <span>请在{{ state.expiredTime || '30分钟' }}内完成支付</span>
       </div>
     </div>
@@ -45,9 +41,9 @@
 </template>
 
 <script setup>
-import { reactive, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { showToast, showLoadingToast, closeToast } from 'vant'
+import {reactive, watch} from 'vue'
+import {useRoute, useRouter} from 'vue-router'
+import {closeToast, showLoadingToast, showToast} from 'vant'
 import PlateInput from '@/components/PlateInput.vue'
 
 const route = useRoute()
@@ -92,7 +88,7 @@ const handlePay = () => {
     return
   }
 
-  showLoadingToast({ message: '支付中...', forbidClick: true })
+  showLoadingToast({message: '支付中...', forbidClick: true})
 
   // TODO: 调用支付接口（payOrder）
   setTimeout(() => {
@@ -102,18 +98,11 @@ const handlePay = () => {
       onClose: () => {
         router.replace({
           name: 'mainIndex',
-          params: { appId: route.params.appId },
+          params: {appId: route.params.appId},
         })
       },
     })
   }, 1500)
-}
-
-const handleUseCoupon = () => {
-  router.push({
-    name: 'cardPackage',
-    params: { appId: route.params.appId },
-  })
 }
 </script>
 

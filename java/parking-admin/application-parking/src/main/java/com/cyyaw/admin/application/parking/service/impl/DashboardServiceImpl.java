@@ -1,7 +1,7 @@
-package com.cyyaw.admin.application.parking.dashboard.service.impl;
+package com.cyyaw.admin.application.parking.service.impl;
 
-import com.cyyaw.admin.application.parking.dashboard.service.DashboardService;
-import com.cyyaw.admin.application.parking.dashboard.vo.DashboardStatsVO;
+import com.cyyaw.admin.application.parking.service.DashboardService;
+import com.cyyaw.admin.entity.dto.parking.DashboardStatsVO;
 import com.cyyaw.admin.dao.dashboard.DashboardDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

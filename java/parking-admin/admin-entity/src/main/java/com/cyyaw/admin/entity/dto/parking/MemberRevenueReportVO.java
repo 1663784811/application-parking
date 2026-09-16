@@ -1,4 +1,4 @@
-package com.cyyaw.admin.application.parking.report.vo;
+package com.cyyaw.admin.entity.dto.parking;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
