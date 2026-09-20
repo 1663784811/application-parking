@@ -153,4 +153,45 @@ public class OrOrderServiceImpl implements OrOrderService {
         return order;
     }
 
+    @Override
+    public OrOrder findOrderByCarLogId(Long carLogId) {
+        if (carLogId == null) {
+            return null;
+        }
+        OrOrderDetail detail = orOrderDetailDao.selectByBusinessId(carLogId);
+        if (detail == null || detail.getOrderId() == null) {
+            return null;
+        }
+        return orOrderDao.selectById(detail.getOrderId());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public OrOrder updateOrderAmountByCarLogId(Long carLogId, Long parkingId, BigDecimal amount) {
+        OrOrder order = findOrderByCarLogId(carLogId);
+        if (order == null) {
+            return null;
+        }
+        // 出场费用即应收：无优惠，实付 = 总额
+        BigDecimal payAmount = amount == null ? BigDecimal.ZERO : amount;
+        order.setTotalAmount(payAmount);
+        order.setDiscountAmount(BigDecimal.ZERO);
+        order.setPayAmount(payAmount);
+        if (parkingId != null) {
+            // 入场流程建单时没写 store_id，而营收报表按 store_id 关联停车场，这里补上
+            order.setStoreId(parkingId);
+        }
+        orOrderDao.save(order);
+
+        // 订单明细同步，避免主表与明细金额不一致
+        OrOrderDetail detail = orOrderDetailDao.selectByBusinessId(carLogId);
+        if (detail != null) {
+            detail.setProductPrice(payAmount);
+            detail.setTotalAmount(payAmount);
+            detail.setDiscountAmount(BigDecimal.ZERO);
+            orOrderDetailDao.save(detail);
+        }
+        return order;
+    }
+
 }

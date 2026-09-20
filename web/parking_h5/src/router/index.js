@@ -133,6 +133,16 @@ const routes = [
     },
   },
   {
+    // 扫码出场（重新设计的出场缴费页，二维码地址指向这里）
+    path: '/app/:appId/scanExit',
+    name: 'scanExit',
+    component: () => import('@/views/scanExit/ScanExit.vue'),
+    props: true,
+    meta: {
+      title: '扫码出场',
+    },
+  },
+  {
     // 错误页面
     path: '/:pathMatch(.*)*',
     name: 'notFound',

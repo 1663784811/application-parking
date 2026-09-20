@@ -424,11 +424,12 @@ const resolveAppId = (channel) => {
 }
 
 // 构造通道出场扫码 H5 链接（扫码后进入对应通道的出场流程）
+// 指向重新设计的扫码出场页 scanExit；旧链接 parkingExit 仍可访问，已印出去的二维码不受影响
 const buildChannelQrUrl = (channel) => {
   const appId = resolveAppId(channel)
   const code = channel.code ? encodeURIComponent(channel.code) : ''
   console.log(channel)
-  return `${H5_BASE_URL}/#/app/${appId}/parkingExit?channelId=${channel.id}&parkingId=${channel.parkingId}`
+  return `${H5_BASE_URL}/#/app/${appId}/scanExit?channelId=${channel.id}&parkingId=${channel.parkingId}`
 }
 
 // 打开二维码弹窗（appId 缺失时阻断，避免生成无效链接）

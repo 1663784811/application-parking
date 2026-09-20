@@ -56,6 +56,7 @@
 <script setup>
 import { reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { showToast } from 'vant'
 
 const state = reactive({
   // TODO: 接口获取附近停车场列表（getParkingList）
@@ -87,11 +88,12 @@ const route = useRoute()
 const router = useRouter()
 
 const handleScan = () => {
-  // 进入扫码出场页（真实环境先调相机扫码，再带参跳转）
-  router.push({
-    name: 'scanExit',
-    params: { appId: route.params.appId },
-  })
+  // 本 H5 还没有扫码能力：调起相机需要微信 JS-SDK / 支付宝 JSAPI，
+  // 两者都要公众号/应用凭证 + 后端签名接口，目前都不具备。
+  // 而出场页必须带 parkingId/channelId 才能查费用，扫不出参数跳过去也是空跑，
+  // 所以这里如实提示车主用相机扫出口通道的二维码。
+  // 接入扫码后，把这里换成「取扫码结果 URL → 解析 parkingId/channelId → 跳 parkingExit」。
+  showToast('请扫描出口通道的二维码进入缴费')
 }
 
 const handleNavigate = (item) => {

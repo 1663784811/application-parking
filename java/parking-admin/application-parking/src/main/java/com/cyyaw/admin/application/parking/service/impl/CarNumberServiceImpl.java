@@ -2,7 +2,9 @@ package com.cyyaw.admin.application.parking.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.cyyaw.admin.application.common.mqtt.IotService;
+import com.cyyaw.admin.application.parking.CostUtil;
 import com.cyyaw.admin.application.parking.service.CarNumberService;
+import com.cyyaw.admin.application.parking.service.ParkingExitService;
 import com.cyyaw.admin.application.parking.service.PkCarLogService;
 import com.cyyaw.admin.dao.parking.PkCarLogDao;
 import com.cyyaw.admin.dao.parking.PkChannelDao;
@@ -23,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,6 +58,9 @@ public class CarNumberServiceImpl implements CarNumberService {
 
     @Autowired
     private InfOrder infOrder;
+
+    @Autowired
+    private ParkingExitService parkingExitService;
 
 
     @Override
@@ -113,9 +119,9 @@ public class CarNumberServiceImpl implements CarNumberService {
                 oldLog.setStatus(1);              // 1=已出场
                 oldLog.setOutTime(LocalDateTime.now());
                 pkCarLogService.save(oldLog);
-                // 结束订单：当前停车流程尚未接入订单（application-order），且 PkCarLog 与 OrOrder
-                // 之间无关联字段，待订单流建立 car_log_id 关联并在 application-parking 暴露接口后在此关闭。
-                // 查询订单
+                // 旧记录对应的订单也要收尾：按实际时长结算金额并标注结束原因，
+                // 否则这笔订单会永远挂在初始的 0 元上（关联链路见 ParkingExitService#settleStaleOrder）
+                parkingExitService.settleStaleOrder(oldLog);
             }
         }
         // 生成 日志记录、
@@ -154,19 +160,49 @@ public class CarNumberServiceImpl implements CarNumberService {
         }
     }
 
+    /**
+     * 出场识别。登记「该车正在本通道等待缴费出场」，按规则算出应缴金额：
+     * 金额为 0 直接免费放行；金额大于 0 则不开闸，等车主扫码支付后由
+     * ParkingExitService#completeExit 放行。
+     */
     private void carOutParking(Long parkingId, String carNumber, String carType, IotDevice device, String code) {
+        PkCarLog carLog = pkCarLogService.selectByParkingIdAndCarNumber(parkingId, carNumber);
+        if (carLog == null) {
+            // 没有入场记录（识别漏拍/未登记），无法计费，直接放行避免堵车
+            log.warn("出场识别：停车场 {} 未找到车牌 {} 的在场记录，直接开闸", parkingId, carNumber);
+            iotService.ctlBarrierGate(code, true);
+            return;
+        }
+        // 登记待出场通道，H5 扫通道码时据此带出车牌
+        carLog.setOutChannelId(channelIdOf(device));
+        carLog.setOutDeviceCode(code);
+        carLog.setOutRecognizeTime(LocalDateTime.now());
+        pkCarLogService.save(carLog);
 
-        // 查找订单
+        OrOrder order = parkingExitService.refreshOrder(carLog);
+        if (order == null) {
+            log.warn("出场识别：停车记录 {} 没有关联订单，直接开闸", carLog.getId());
+            iotService.ctlBarrierGate(code, true);
+            return;
+        }
+        BigDecimal amount = order.getPayAmount() == null ? BigDecimal.ZERO : order.getPayAmount();
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            // 免费放行：金额为 0 视同已结清，结束记录并开闸
+            parkingExitService.completeExit(order.getId(), null, null);
+            return;
+        }
+        // 待缴费：不开闸，显示屏提示车主扫码支付
+        iotService.ctlScreen(code, carNumber + " 停车" + CostUtil.formatDuration(carLog.getEntryTime(), LocalDateTime.now())
+                + ",请支付" + amount.setScale(2, RoundingMode.HALF_UP) + "元");
+    }
 
-
-        // 判断订单是不已支付
-
-        //
-
-
-        // 开闸
-        iotService.ctlBarrierGate(code, true);
-
+    /**
+     * 取设备绑定的通道ID（出场记录要落到具体通道上）。
+     */
+    private Long channelIdOf(IotDevice device) {
+        PkParkingDevice binding = pkParkingDeviceDao.selectOne(
+                new QueryWrapper<PkParkingDevice>().eq("device_id", device.getId()), false);
+        return binding == null ? null : binding.getChannelId();
     }
 
 }

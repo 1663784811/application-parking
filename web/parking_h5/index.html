@@ -3,7 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- maximum-scale + user-scalable：禁掉浏览器自带的双指/双击缩放（Android、微信/支付宝 webview 都认）。
+         iOS Safari 从 10 起会忽略 user-scalable=no，双击缩放由 App.vue 里的 touch-action 兜底 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>parking_h5</title>
   </head>
   <body>

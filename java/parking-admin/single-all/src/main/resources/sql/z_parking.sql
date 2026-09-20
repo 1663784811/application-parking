@@ -493,6 +493,9 @@ CREATE TABLE `pk_car_log` (
   `out_time` datetime DEFAULT NULL COMMENT '出场时间',
   `status` int DEFAULT NULL COMMENT '状态{0:场内,1:已出场}',
   `car_type` varchar(20) DEFAULT NULL COMMENT '车辆类型',
+  `out_channel_id` bigint DEFAULT NULL COMMENT '出场通道ID',
+  `out_device_code` varchar(64) DEFAULT NULL COMMENT '出场识别设备编码',
+  `out_recognize_time` datetime DEFAULT NULL COMMENT '出场识别时间',
   `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `note` varchar(255) DEFAULT '' COMMENT '备注',
@@ -501,7 +504,8 @@ CREATE TABLE `pk_car_log` (
   KEY `idx_parking_id` (`parking_id`),
   KEY `idx_car_number` (`car_number`),
   KEY `idx_status` (`status`),
-  KEY `idx_entry_time` (`entry_time`)
+  KEY `idx_entry_time` (`entry_time`),
+  KEY `idx_out_channel_id` (`out_channel_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='停车记录';
 
 

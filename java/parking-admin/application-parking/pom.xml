@@ -88,8 +88,12 @@
             <scope>compile</scope>
         </dependency>
 
-
-
+        <!-- 费率引擎为纯逻辑，用 JUnit 单测覆盖（不需要 Spring 上下文） -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
 
 
 
