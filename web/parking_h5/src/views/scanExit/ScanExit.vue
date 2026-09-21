@@ -233,7 +233,8 @@ const loadChannelVehicle = () => {
     // 停车场入口二维码（不带通道）：由车主手动输入车牌
     return
   }
-  getChannelVehicle({ parkingId: state.parkingId, channelId: state.channelId }).then((res) => {
+  // 只按通道查：停车场由通道反查，不用带 parkingId
+  getChannelVehicle({ channelId: state.channelId }).then((res) => {
     const vehicle = res.data
     if (!vehicle || !vehicle.carNumber) {
       return

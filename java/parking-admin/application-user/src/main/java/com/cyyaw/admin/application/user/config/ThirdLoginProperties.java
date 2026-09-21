@@ -62,6 +62,12 @@ public class ThirdLoginProperties {
         private String gateway = "https://openapi.alipay.com/gateway.do";
 
         /**
+         * 授权页地址（只用来拼跳转链接，走的是 openauth 域名，与上面的 API 网关不是一回事；
+         * 沙箱换成 https://openauth.alipaydev.com/oauth2/publicAppAuthorize.htm）
+         */
+        private String authUrl = "https://openauth.alipay.com/oauth2/publicAppAuthorize.htm";
+
+        /**
          * 签名算法
          */
         private String signType = "RSA2";

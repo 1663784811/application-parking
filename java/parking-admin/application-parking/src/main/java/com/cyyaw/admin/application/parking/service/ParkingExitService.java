@@ -12,11 +12,13 @@ public interface ParkingExitService {
 
     /**
      * 接口1：查询某出场通道当前正在等待缴费出场的车辆。
+     * <p>
+     * 只认通道：停车场由通道反查（车单上带着 parking_id），二维码里的 parkingId 不参与查询。
      *
      * @param channelId 通道ID，为空表示扫的是停车场二维码（不带通道），返回 null
      * @return 待出场车辆，没有则返回 null
      */
-    ExitChannelVehicleVO findChannelVehicle(Long parkingId, Long channelId);
+    ExitChannelVehicleVO findChannelVehicle(Long channelId);
 
     /**
      * 接口2：按车牌查询当前停车场待缴的停车费订单。查不到在场记录时返回 null。

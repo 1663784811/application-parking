@@ -1,4 +1,5 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
+import { showToast } from 'vant'
 
 const routes = [
   {
@@ -154,8 +155,43 @@ const router = createRouter({
   routes,
 })
 
-// 路由守卫：设置页面标题、验证 appId
-router.beforeEach((to) => {
+/**
+ * 消费第三方授权凭证：oauth.html 把 code / auth_code 从 query 搬进 hash 后，在这里换登录态。
+ * 必须赶在目标页挂载之前完成 —— 页面自己的 onMounted 就会调业务接口，
+ * 晚一步就是没有 JWT 的裸奔请求（出场三接口不在白名单，直接 6001/6010）。
+ *
+ * @return 需要重定向的 location（摘掉凭证），无事可做返回 undefined
+ */
+const consumeAuthCode = async (to) => {
+  // 微信回跳带 code，支付宝回跳带 auth_code
+  const { code, auth_code: authCode } = to.query
+  if (!code && !authCode) {
+    return undefined
+  }
+  // 动态引入：这条路径只在平台回跳时走一次，别为它把 axios 拖进入口包
+  const [{ wechatMpLogin, alipayLogin }, { loginInfo }] = await Promise.all([
+    import('@/api/thirdAuth'),
+    import('@/stores/loginInfo'),
+  ])
+  try {
+    // 后端两个登录接口的入参字段都叫 code，支付宝那边填的是 auth_code
+    const res = code
+      ? await wechatMpLogin({ appId: to.params.appId, code })
+      : await alipayLogin({ appId: to.params.appId, code: authCode })
+    const data = res?.data || {}
+    if (data.jwtToken) {
+      loginInfo().setToken(data.jwtToken, data.refreshToken)
+    }
+  } catch (err) {
+    showToast(err?.msg || '登录失败')
+  }
+  // 凭证都是一次性的，成功失败都得从地址栏摘掉，免得刷新时拿旧值重放
+  const { code: _code, auth_code: _authCode, ...restQuery } = to.query
+  return { path: to.path, query: restQuery, replace: true }
+}
+
+// 路由守卫：设置页面标题、验证 appId、换第三方登录态
+router.beforeEach(async (to) => {
   // 用 meta.title 作为页面标题
   const title = to.meta?.title
   if (title) {
@@ -169,6 +205,8 @@ router.beforeEach((to) => {
       return { name: 'welcome' }
     }
   }
+
+  return consumeAuthCode(to)
 })
 
 export default router

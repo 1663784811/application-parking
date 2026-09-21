@@ -17,8 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * H5 扫码缴费出场接口（业务流程_h5.md）。
  * <p>
- * 页面 /app/{appId}/parkingExit?parkingId=&channelId= 打开后：
- * ① 页面加载调 {@code /channelVehicle} 带出该通道正在等待出场的车辆；
+ * 页面 /app/{appId}/scanExit?parkingId=&channelId= 打开后：
+ * ① 页面加载调 {@code /channelVehicle} 带出该通道正在等待出场的车辆（只认 channelId）；
  * ② 车牌输入完整后调 {@code /order} 查费用；
  * ③ 确认支付调 {@code /pay}。
  * <p>
@@ -32,10 +32,10 @@ public class ParkingExitController {
 
     private final ParkingExitService parkingExitService;
 
-    @Operation(summary = "查询通道当前要出场的车辆", description = "页面加载时调用；channelId 为空（停车场二维码）时返回空数据")
+    @Operation(summary = "查询通道当前要出场的车辆", description = "页面加载时调用；只需 channelId，为空（停车场二维码）时返回空数据")
     @GetMapping("/channelVehicle")
-    public BaseResult<ExitChannelVehicleVO> channelVehicle(Long parkingId, Long channelId) {
-        return BaseResult.ok(parkingExitService.findChannelVehicle(parkingId, channelId));
+    public BaseResult<ExitChannelVehicleVO> channelVehicle(Long channelId) {
+        return BaseResult.ok(parkingExitService.findChannelVehicle(channelId));
     }
 
     @Operation(summary = "查询停车费用订单", description = "车牌输入完整时调用；按当前时间实时计费")

@@ -74,19 +74,13 @@ public class ParkingExitServiceImpl implements ParkingExitService {
     private IotService iotService;
 
     @Override
-    public ExitChannelVehicleVO findChannelVehicle(Long parkingId, Long channelId) {
+    public ExitChannelVehicleVO findChannelVehicle(Long channelId) {
         if (channelId == null) {
             // 停车场二维码（不带通道）：由车主手动输入车牌
             return null;
         }
         PkCarLog carLog = pkCarLogDao.selectWaitingExitByChannelId(channelId);
         if (carLog == null) {
-            return null;
-        }
-        // 二维码里的停车场与车单所属停车场不一致，说明扫的不是本场的码
-        if (parkingId != null && carLog.getParkingId() != null && !parkingId.equals(carLog.getParkingId())) {
-            log.warn("通道待出场车辆与二维码停车场不匹配：channelId={}, 二维码停车场={}, 车单停车场={}",
-                    channelId, parkingId, carLog.getParkingId());
             return null;
         }
         ExitChannelVehicleVO vo = new ExitChannelVehicleVO();

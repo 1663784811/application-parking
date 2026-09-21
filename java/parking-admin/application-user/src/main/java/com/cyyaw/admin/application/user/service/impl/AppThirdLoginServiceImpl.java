@@ -12,6 +12,7 @@ import com.alipay.api.response.AlipayUserInfoShareResponse;
 import com.cyyaw.admin.application.user.service.AppLoginService;
 import com.cyyaw.admin.application.user.service.AppThirdLoginService;
 import com.cyyaw.admin.application.user.service.AuAppService;
+import com.cyyaw.admin.application.user.config.ThirdLoginProperties;
 import com.cyyaw.admin.application.user.service.AuUserService;
 import com.cyyaw.admin.common.WebErrCodeEnum;
 import com.cyyaw.admin.common.WebException;
@@ -38,6 +39,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+
 /**
  * 第三方登录。
  * <p>
@@ -48,6 +52,14 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 public class AppThirdLoginServiceImpl implements AppThirdLoginService {
+
+    /** 微信静默授权：不弹窗，只拿 openid。要昵称头像才传 snsapi_userinfo */
+    private static final String WECHAT_SCOPE_SILENT = "snsapi_base";
+    /** 支付宝静默授权：不弹窗，只拿 user_id。要昵称头像才传 auth_userinfo */
+    private static final String ALIPAY_SCOPE_SILENT = "auth_base";
+
+    @Autowired
+    private ThirdLoginProperties thirdLoginProperties;
 
     @Autowired
     private AuUserThirdDao auUserThirdDao;
@@ -144,13 +156,33 @@ public class AppThirdLoginServiceImpl implements AppThirdLoginService {
     }
 
     @Override
-    public String wechatMpAuthUrl(Long appId, String redirectUri, String state) {
+    public String wechatMpAuthUrl(Long appId, String redirectUri, String state, String scope) {
         requireApp(appId);
-        if (StrUtil.isBlank(redirectUri)) {
-            WebException.fail(WebErrCodeEnum.WEB_LOGINERR, "参数错误");
-        }
+        requireRedirectUri(redirectUri);
         WxMpService wxMpService = requireWxMpService();
-        return wxMpService.getOAuth2Service().buildAuthorizationUrl(redirectUri, "snsapi_userinfo", state);
+        // 默认静默授权：出场缴费只要 openid，不需要弹窗去拿昵称头像
+        String useScope = StrUtil.isBlank(scope) ? WECHAT_SCOPE_SILENT : scope;
+        // WxJava 只编码 redirectUri，state 是原样拼进授权链接的（见 WxOAuth2ServiceImpl#buildAuthorizationUrl），
+        // 所以这里必须自己编码 —— 否则目标路由里的 ? & 会把授权链接拆坏
+        String safeState = StrUtil.isBlank(state) ? "" : URLEncoder.encode(state, StandardCharsets.UTF_8);
+        return wxMpService.getOAuth2Service().buildAuthorizationUrl(redirectUri, useScope, safeState);
+    }
+
+    @Override
+    public String alipayAuthUrl(Long appId, String redirectUri, String state, String scope) {
+        requireApp(appId);
+        requireRedirectUri(redirectUri);
+        ThirdLoginProperties.Alipay alipay = requireAlipayConfig();
+        String useScope = StrUtil.isBlank(scope) ? ALIPAY_SCOPE_SILENT : scope;
+        // 支付宝没有 SDK 侧的拼链接方法，按官方格式自己拼（auth_base 静默 / auth_userinfo 弹窗）
+        StringBuilder url = new StringBuilder(alipay.getAuthUrl())
+                .append("?app_id=").append(alipay.getAppId())
+                .append("&scope=").append(useScope)
+                .append("&redirect_uri=").append(URLEncoder.encode(redirectUri, StandardCharsets.UTF_8));
+        if (StrUtil.isNotBlank(state)) {
+            url.append("&state=").append(URLEncoder.encode(state, StandardCharsets.UTF_8));
+        }
+        return url.toString();
     }
 
     @Override
@@ -324,6 +356,21 @@ public class AppThirdLoginServiceImpl implements AppThirdLoginService {
             WebException.fail(WebErrCodeEnum.WEB_LOGINERR, "支付宝登录未配置");
         }
         return alipayClient;
+    }
+
+    /**
+     * 拼授权链接只要 app_id，用不到 AlipayClient；
+     * 但先走一遍 requireAlipayClient 判空，"配没配"只留一个判断口径。
+     */
+    private ThirdLoginProperties.Alipay requireAlipayConfig() {
+        requireAlipayClient();
+        return thirdLoginProperties.getAlipay();
+    }
+
+    private void requireRedirectUri(String redirectUri) {
+        if (StrUtil.isBlank(redirectUri)) {
+            WebException.fail(WebErrCodeEnum.WEB_LOGINERR, "参数错误");
+        }
     }
 
 }

@@ -47,6 +47,8 @@ cyyaw:
       alipay-public-key:
       gateway: https://openapi.alipay.com/gateway.do
       sign-type: RSA2
+      # 授权页地址（沙箱换成 https://openauth.alipaydev.com/oauth2/publicAppAuthorize.htm）
+      auth-url: https://openauth.alipay.com/oauth2/publicAppAuthorize.htm
 
 
 

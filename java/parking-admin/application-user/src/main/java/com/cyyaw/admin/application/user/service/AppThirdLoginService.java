@@ -21,13 +21,18 @@ public interface AppThirdLoginService {
     LoginRest wechatMpLogin(UserLoginByWechatMpRequest request);
 
     /**
-     * 微信公众号网页授权链接
+     * 微信公众号网页授权链接。scope 不传默认静默授权（只拿 openid，不弹窗）。
      */
-    String wechatMpAuthUrl(Long appId, String redirectUri, String state);
+    String wechatMpAuthUrl(Long appId, String redirectUri, String state, String scope);
 
     /**
      * 支付宝登录（没绑过就自动注册）
      */
     LoginRest alipayLogin(UserLoginByAlipayRequest request);
+
+    /**
+     * 支付宝网页授权链接。scope 不传默认静默授权（只拿 user_id，不弹窗）。
+     */
+    String alipayAuthUrl(Long appId, String redirectUri, String state, String scope);
 
 }

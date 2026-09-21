@@ -34,17 +34,24 @@ public class ThirdLoginController {
     }
 
     @GetMapping("/wechatMpAuthUrl")
-    @Operation(summary = "获取微信公众号网页授权链接", description = "redirectUri 传前端回调页面地址，微信会带 code 回跳")
-    public BaseResult<String> wechatMpAuthUrl(Long appId, String redirectUri, String state) {
-        String url = appThirdLoginService.wechatMpAuthUrl(appId, redirectUri, state);
+    @Operation(summary = "获取微信公众号网页授权链接", description = "redirectUri 传前端回调页面地址，微信会带 code 回跳；scope 不传默认 snsapi_base 静默授权")
+    public BaseResult<String> wechatMpAuthUrl(Long appId, String redirectUri, String state, String scope) {
+        String url = appThirdLoginService.wechatMpAuthUrl(appId, redirectUri, state, scope);
         return BaseResult.ok(url);
     }
 
     @PostMapping("/alipayLogin")
-    @Operation(summary = "用户登录-支付宝登录(或注册)", description = "支付宝登录(或注册)。code 由支付宝授权获取")
+    @Operation(summary = "用户登录-支付宝登录(或注册)", description = "支付宝登录(或注册)。code 传授权回调带回的 auth_code")
     public BaseResult<LoginRest> alipayLogin(@RequestBody UserLoginByAlipayRequest request) {
         LoginRest login = appThirdLoginService.alipayLogin(request);
         return BaseResult.ok(login, "登录成功");
+    }
+
+    @GetMapping("/alipayAuthUrl")
+    @Operation(summary = "获取支付宝网页授权链接", description = "redirectUri 传前端回调页面地址，支付宝会带 auth_code 回跳；scope 不传默认 auth_base 静默授权")
+    public BaseResult<String> alipayAuthUrl(Long appId, String redirectUri, String state, String scope) {
+        String url = appThirdLoginService.alipayAuthUrl(appId, redirectUri, state, scope);
+        return BaseResult.ok(url);
     }
 
 }
