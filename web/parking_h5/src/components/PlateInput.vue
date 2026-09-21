@@ -3,15 +3,12 @@
     <div class="plate-cells">
       <!-- 省份前缀 -->
       <span class="plate-cell plate-cell--prefix">{{ prefix }}</span>
-      <!-- 7 个号牌位：0-5 常规位，6 为新能源位 -->
+      <!-- 7 个号牌位：常规车牌用到第 6 位，新能源车再补第 7 位 -->
       <span
         v-for="(ch, i) in slots"
         :key="i"
         class="plate-cell"
-        :class="{
-          'is-energy': i === 6,
-          'is-active': i === number.length && number.length < 7,
-        }"
+        :class="{ 'is-active': i === number.length && number.length < 7 }"
       >{{ ch }}</span>
     </div>
 
@@ -49,12 +46,7 @@ const slots = computed(() =>
 
 <style scoped lang="less">
 .plate-input {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 16px;
-  padding: 16px;
-  border-bottom: 1px dashed var(--border-primary);
+  width: 100%;
 
   .plate-cells {
     display: flex;
@@ -65,7 +57,7 @@ const slots = computed(() =>
 
   .plate-cell {
     flex: 1;
-    height: 40px;
+    height: 44px;
     min-width: 0;
     display: flex;
     align-items: center;
@@ -74,29 +66,21 @@ const slots = computed(() =>
     font-weight: 600;
     font-family: 'PingFang SC', sans-serif;
     color: var(--text-primary);
-    background: var(--bg-secondary);
+    background: var(--bg-primary);
     border: 1px solid var(--border-primary);
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
 
-    // 省份前缀：主色底
+    // 省份前缀：主色底，与后面的字符格拉开区分
     &.plate-cell--prefix {
-      color: var(--bg-primary);
+      color: var(--on-brand-primary);
       background: var(--brand-primary);
       border-color: var(--brand-primary);
     }
 
-    // 新能源位：更窄、虚线、浅绿
-    &.is-energy {
-      flex: 0.6;
-      border-style: dashed;
-      background: var(--brand-primary-5);
-      border-color: var(--brand-primary-4);
-    }
-
-    // 下一个待输入位高亮
+    // 下一个待输入位：主色描边加粗，不用 box-shadow 撑宽，避免格子宽度抖动
     &.is-active {
       border-color: var(--brand-primary);
-      box-shadow: 0 0 0 1px var(--brand-primary);
+      box-shadow: inset 0 0 0 1px var(--brand-primary);
     }
   }
 }

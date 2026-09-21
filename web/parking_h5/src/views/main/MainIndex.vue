@@ -92,7 +92,7 @@ const handleScan = () => {
   // 两者都要公众号/应用凭证 + 后端签名接口，目前都不具备。
   // 而出场页必须带 parkingId/channelId 才能查费用，扫不出参数跳过去也是空跑，
   // 所以这里如实提示车主用相机扫出口通道的二维码。
-  // 接入扫码后，把这里换成「取扫码结果 URL → 解析 parkingId/channelId → 跳 parkingExit」。
+  // 接入扫码后，把这里换成「取扫码结果 URL → 解析 parkingId/channelId → 跳 scanExit」。
   showToast('请扫描出口通道的二维码进入缴费')
 }
 

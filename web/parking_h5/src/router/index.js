@@ -123,24 +123,20 @@ const routes = [
     },
   },
   {
-    // 停车出场
-    path: '/app/:appId/parkingExit',
-    name: 'parkingExit',
-    component: () => import('@/views/parkingExit/ParkingExit.vue'),
-    props: true,
-    meta: {
-      title: '停车出场',
-    },
-  },
-  {
-    // 扫码出场（重新设计的出场缴费页，二维码地址指向这里）
+    // 出场缴费（输入车牌 → 查费用 → 支付，单页完成，二维码地址指向这里）
     path: '/app/:appId/scanExit',
     name: 'scanExit',
     component: () => import('@/views/scanExit/ScanExit.vue'),
     props: true,
     meta: {
-      title: '扫码出场',
+      title: '输入车牌',
     },
+  },
+  {
+    // 旧出场页路由：出场流程已合并进 scanExit，早先印出去的二维码仍指向这里，
+    // 原样带参转到新页面，别让旧码扫出一片空白
+    path: '/app/:appId/parkingExit',
+    redirect: (to) => ({ name: 'scanExit', params: to.params, query: to.query }),
   },
   {
     // 错误页面

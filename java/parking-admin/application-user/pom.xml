@@ -103,6 +103,48 @@
             <artifactId>micrometer-core</artifactId>
         </dependency>
 
+        <!-- 微信 SDK：小程序登录 -->
+        <dependency>
+            <groupId>com.github.binarywang</groupId>
+            <artifactId>weixin-java-miniapp</artifactId>
+            <version>4.8.0</version>
+        </dependency>
+
+        <!-- 微信 SDK：公众号网页授权登录 -->
+        <dependency>
+            <groupId>com.github.binarywang</groupId>
+            <artifactId>weixin-java-mp</artifactId>
+            <version>4.8.0</version>
+        </dependency>
+
+        <!-- 支付宝 SDK：登录换 code -->
+        <dependency>
+            <groupId>com.alipay.sdk</groupId>
+            <artifactId>alipay-sdk-java</artifactId>
+            <version>4.40.523.ALL</version>
+            <exclusions>
+                <!-- spring-jcl 已经提供了 commons-logging 的 API，重复的类会让日志桥接错乱 -->
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+                <!-- 与 weixin-java-common 传递进来的 org.dom4j:dom4j:2.1.3 同包名不同 groupId，必须排掉一个 -->
+                <exclusion>
+                    <groupId>dom4j</groupId>
+                    <artifactId>dom4j</artifactId>
+                </exclusion>
+                <!--
+                  与 weixin-java-mp 传递进来的 org.bouncycastle:bcprov-jdk18on 同包名（org.bouncycastle.*），
+                  两个都在会导致重复类、到底加载哪个取决于 classpath 顺序。
+                  支付宝这边只有 SM2/SM4/AntCert/KMS 那几个类用到它，都不在登录链路上，排掉即可。
+                -->
+                <exclusion>
+                    <groupId>org.bouncycastle</groupId>
+                    <artifactId>bcprov-jdk15on</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
 
     </dependencies>
 

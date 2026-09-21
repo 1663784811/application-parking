@@ -8,108 +8,118 @@
     />
 
     <template v-else>
-      <div class="page-scroll">
-        <!-- 品牌头图：停车场名 + 当前车牌 -->
-        <header class="hero">
-          <div class="hero-glow"></div>
+      <!-- 顶部只有返回 + 标题：查到费用后标题跟着变成「车辆信息」 -->
+      <van-nav-bar
+        :title="state.orderId ? '车辆信息' : '输入车牌'"
+        left-arrow
+        @click-left="handleBack"
+      />
 
-          <div class="hero-bar">
-            <div class="back-btn" @click="handleBack">
-              <van-icon name="arrow-left"/>
-            </div>
-            <span class="hero-bar-title">扫码出场</span>
-          </div>
+      <!-- 一、还没查到费用：输入车牌 -->
+      <div v-if="!state.orderId" class="page-body">
+        <!-- 车辆线性图标 -->
+        <div class="car-icon">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <!-- 座舱 -->
+            <path d="M6.6 11.4l1.7-3.1a1.7 1.7 0 0 1 1.5-.8h4.4a1.7 1.7 0 0 1 1.5.8l1.7 3.1"/>
+            <!-- 车身：底边在轮子处断开，避免压线 -->
+            <path d="M4 15.4v-2.5a1.5 1.5 0 0 1 1.5-1.5h13a1.5 1.5 0 0 1 1.5 1.5v2.5"/>
+            <path d="M4 15.4h2.2M10 15.4h4M17.8 15.4H20"/>
+            <!-- 前后轮 -->
+            <circle cx="8.1" cy="15.4" r="1.9"/>
+            <circle cx="15.9" cy="15.4" r="1.9"/>
+          </svg>
+        </div>
 
-          <div class="hero-body">
-            <h1 class="parking-name">{{ state.parkingName || '停车场' }}</h1>
-            <p class="hero-tip">{{ heroTip }}</p>
+        <p class="page-title">请输入您的车牌号</p>
 
-            <!-- 车牌徽标：通道识别到的车牌直接展示在这里，车主一眼确认对不对 -->
-            <div class="plate-badge">
-              <span class="plate-prefix">{{ state.platePrefix }}</span>
-              <span class="plate-number">{{ state.plateNumber || '待识别' }}</span>
-            </div>
-          </div>
-        </header>
+        <PlateInput v-model:prefix="state.platePrefix" v-model:number="state.plateNumber"/>
 
-        <!-- 悬浮卡片：上移压住头图，形成层次 -->
-        <section class="card">
-          <!-- 一、还没查到订单：核对自己车牌 → 查询费用 -->
-          <template v-if="!state.orderId">
-            <p class="card-hint">核对车牌号，新能源车牌为 7 位</p>
-            <PlateInput v-model:prefix="state.platePrefix" v-model:number="state.plateNumber"/>
-            <van-button
-              v-if="plateComplete"
-              class="query-btn"
-              block
-              :loading="state.loading"
-              @click="queryOrderInfo"
-            >
-              查询停车费用
-            </van-button>
-          </template>
+        <p class="energy-tip">新能源车请在车牌号输入“新”</p>
 
-          <!-- 二、查到订单：费用与明细 -->
-          <template v-else>
-            <div class="amount-block">
-              <div class="amount-main">
-                <span class="amount-label">停车费用</span>
-                <div class="amount-value"><em>¥</em>{{ state.amount }}</div>
-              </div>
-              <span class="duration-chip">{{ state.duration }}</span>
-            </div>
-
-            <div class="divider"></div>
-
-            <div class="info-list">
-              <div class="info-item">
-                <span class="label">停车场</span>
-                <span class="value">{{ state.parkingName }}</span>
-              </div>
-              <div class="info-item">
-                <span class="label">车牌号</span>
-                <span class="value">{{ fullPlate() }}</span>
-              </div>
-              <div class="info-item">
-                <span class="label">入场时间</span>
-                <span class="value">{{ state.entryTime }}</span>
-              </div>
-              <div class="info-item">
-                <span class="label">停车时长</span>
-                <span class="value">{{ state.duration }}</span>
-              </div>
-            </div>
-
-            <div class="reset-line" @click="handleResetPlate">
-              <van-icon name="replay"/>
-              <span>车牌不对？重新输入</span>
-            </div>
-          </template>
-        </section>
-      </div>
-
-      <!-- 吸底支付条：查到订单才出现 -->
-      <footer v-if="state.orderId" class="pay-bar">
-        <p class="countdown">
-          <van-icon name="clock-o"/>
-          <span>请在 {{ state.expiredTime || '30分钟' }}内完成支付，超时需重新查询</span>
-        </p>
+        <!-- 车牌满 6 位才能查，查询即接口2，金额由服务端算 -->
         <van-button
-          class="pay-btn"
+          class="query-btn"
           block
           round
-          :loading="state.paying"
-          @click="handlePay"
+          :loading="state.loading"
+          :disabled="!plateComplete"
+          @click="queryOrderInfo"
         >
-          立即支付 ¥{{ state.amount }}
+          查询
         </van-button>
-      </footer>
+      </div>
+
+      <!-- 二、查到费用：车辆信息 + 支付 -->
+      <template v-else>
+        <div class="page-body page-body--info">
+          <div class="amount-block">
+            <div class="amount-main">
+              <span class="amount-label">停车费用</span>
+              <div class="amount-value"><em>¥</em>{{ state.amount }}</div>
+            </div>
+            <span class="duration-chip">{{ state.duration }}</span>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="info-list">
+            <div class="info-item">
+              <span class="label">车牌号</span>
+              <span class="value">{{ fullPlate() }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">停车场</span>
+              <span class="value">{{ state.parkingName || '-' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">入场时间</span>
+              <span class="value">{{ state.entryTime || '-' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">停车时长</span>
+              <span class="value">{{ state.duration || '-' }}</span>
+            </div>
+          </div>
+
+          <!-- 车牌输错时退回输入态，保留已输的车牌让车主改 -->
+          <div class="reset-line" @click="handleResetPlate">
+            <van-icon name="replay"/>
+            <span>车牌不对？重新输入</span>
+          </div>
+        </div>
+
+        <!-- 吸底支付条：查到订单才出现 -->
+        <footer class="pay-bar">
+          <p class="countdown">
+            <van-icon name="clock-o"/>
+            <span>请在 {{ state.expiredTime || '30分钟' }}内完成支付，超时需重新查询</span>
+          </p>
+          <van-button
+            class="pay-btn"
+            block
+            round
+            :loading="state.paying"
+            @click="handlePay"
+          >
+            立即支付 ¥{{ state.amount }}
+          </van-button>
+        </footer>
+      </template>
     </template>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, reactive, watch } from 'vue'
+import { computed, onMounted, onUnmounted, reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { showLoadingToast, closeToast, showToast } from 'vant'
 import PlateInput from '@/components/PlateInput.vue'
@@ -122,12 +132,11 @@ const state = reactive({
   // 二维码带进来的参数
   parkingId: '',
   channelId: '',
-  // 查询到的订单
-  orderId: '',
   // 车牌
   platePrefix: '京',
   plateNumber: '',
-  // 订单信息
+  // 查到的订单
+  orderId: '',
   parkingName: '',
   entryTime: '',
   duration: '',
@@ -144,23 +153,12 @@ const state = reactive({
 // 车牌主体满 6 位（车身标准 6 位，新能源补第 7 位）即可查询
 const plateComplete = computed(() => state.plateNumber.length >= 6)
 
-// 头图提示语：跟着页面走到哪一步变化
-const heroTip = computed(() => {
-  if (state.orderId) {
-    return '订单已核对，请尽快完成缴费'
-  }
-  if (plateComplete.value) {
-    return '请核对车牌，查询本次停车费用'
-  }
-  return '请输入要出场车辆的车牌号'
-})
-
 const fullPlate = () => `${state.platePrefix || ''}${state.plateNumber || ''}`
 
-// 清空订单信息：车牌改动、查询失败、重新输入时都要回到"未查询"状态。
-// 注意 parkingName 不清：它属于"这是哪个停车场"，不属于订单，清掉头图会变空
+// 清空订单信息：车牌改动、查询失败、重新输入时都要回到"未查询"状态
 const clearOrder = () => {
   state.orderId = ''
+  state.parkingName = ''
   state.entryTime = ''
   state.duration = ''
   state.amount = '0.00'
@@ -200,7 +198,7 @@ const startCountdown = (expireTime) => {
   state.countdownTimer = setInterval(tick, 1000)
 }
 
-// 接口2：按车牌查询本次停车费用，查到后页面切到"费用明细 + 支付"形态
+// 接口2：按车牌查询本次停车费用，查到后页面切到"车辆信息 + 支付"形态
 const queryOrderInfo = () => {
   if (!state.parkingId) {
     showToast('缺少停车场参数')
@@ -209,8 +207,14 @@ const queryOrderInfo = () => {
   state.loading = true
   getExitOrder({ parkingId: state.parkingId, carNumber: fullPlate() }).then((res) => {
     const order = res.data || {}
-    state.orderId = order.orderId || ''
-    state.parkingName = order.parkingName || state.parkingName
+    if (!order.orderId) {
+      // 成功但没有订单号：当成没查到，别静默留在输入态
+      clearOrder()
+      showToast('未查询到该车牌的在场记录')
+      return
+    }
+    state.orderId = order.orderId
+    state.parkingName = order.parkingName || ''
     state.entryTime = order.entryTime || ''
     state.duration = order.duration || ''
     state.amount = order.amount == null ? '0.00' : Number(order.amount).toFixed(2)
@@ -223,7 +227,7 @@ const queryOrderInfo = () => {
   })
 }
 
-// 接口1：通道二维码进来时带出该通道当前要出场的车辆，省去车主输车牌
+// 接口1：通道二维码进来时带出该通道当前要出场的车辆，省去车主手输车牌
 const loadChannelVehicle = () => {
   if (!state.channelId) {
     // 停车场入口二维码（不带通道）：由车主手动输入车牌
@@ -279,13 +283,6 @@ const handleBack = () => {
   router.replace({ name: 'mainIndex', params: { appId: route.params.appId } })
 }
 
-// 车牌被改残或清空时，之前查出来的订单作废，避免旧金额残留在屏幕上
-watch(() => state.plateNumber, (newVal) => {
-  if (!newVal || newVal.length < 6) {
-    clearOrder()
-  }
-})
-
 onMounted(() => {
   state.parkingId = route.query.parkingId || ''
   state.channelId = route.query.channelId || ''
@@ -306,131 +303,73 @@ onUnmounted(() => {
   flex-direction: column;
   flex: 1;
   overflow: hidden;
-  background: var(--bg-secondary);
+  background: var(--bg-primary);
 
-  .page-scroll {
+  .page-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     flex: 1;
     overflow: auto;
-  }
+    padding: 40px 20px calc(24px + env(safe-area-inset-bottom, 0));
 
-  /* ====== 品牌头图 ====== */
-  .hero {
-    position: relative;
-    padding: calc(var(--safe-top) + 8px) 20px 64px;
-    overflow: hidden;
-    background: var(--gradient-primary);
-    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
-
-    /* 右上角柔光装饰，让渐变不那么平 */
-    .hero-glow {
-      position: absolute;
-      top: -70px;
-      right: -50px;
-      width: 200px;
-      height: 200px;
-      background: var(--on-brand-glass);
-      border-radius: 50%;
-    }
-
-    .hero-bar {
-      position: relative;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-
-      .back-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 32px;
-        height: 32px;
-        font-size: 18px;
-        color: var(--on-brand-primary);
-        background: var(--on-brand-glass);
-        border-radius: 50%;
-      }
-
-      .hero-bar-title {
-        font-size: 16px;
-        font-weight: 600;
-        color: var(--on-brand-primary);
-      }
-    }
-
-    .hero-body {
-      position: relative;
-      margin-top: 20px;
-
-      .parking-name {
-        font-size: 22px;
-        font-weight: 700;
-        color: var(--on-brand-primary);
-      }
-
-      .hero-tip {
-        margin-top: 6px;
-        font-size: 13px;
-        color: var(--on-brand-tertiary);
-      }
-
-      .plate-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        margin-top: 18px;
-        padding: 8px 16px;
-        background: var(--on-brand-glass);
-        border: 1px solid var(--on-brand-glass-strong);
-        border-radius: var(--radius-sm);
-
-        .plate-prefix {
-          font-size: 16px;
-          font-weight: 600;
-          color: var(--on-brand-tertiary);
-        }
-
-        .plate-number {
-          font-size: 20px;
-          font-weight: 700;
-          letter-spacing: 2px;
-          color: var(--on-brand-primary);
-        }
-      }
+    /* 车辆信息态：内容是一整块信息卡，不需要顶部那圈留白 */
+    &.page-body--info {
+      padding-top: 16px;
     }
   }
 
-  /* ====== 悬浮卡片 ====== */
-  .card {
-    position: relative;
-    margin: -48px 16px 16px;
-    padding: 20px;
-    background: var(--bg-primary);
-    border-radius: var(--radius-lg);
-    box-shadow: 0 8px 24px var(--shadow-medium);
+  /* ====== 输入车牌态 ====== */
+  .car-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 72px;
+    height: 72px;
+    color: var(--brand-primary);
+    border-radius: 50%;
 
-    .card-hint {
-      margin-bottom: 12px;
-      font-size: 13px;
-      color: var(--text-tertiary);
-    }
-
-    /* 查询按钮：品牌绿描边款，与头图的主色呼应又不抢支付按钮的主次 */
-    .query-btn {
-      margin-top: 4px;
-      font-weight: 600;
-      border-radius: var(--radius-sm);
-      --van-button-default-height: 44px;
-      --van-button-default-background: var(--brand-primary-5);
-      --van-button-default-color: var(--brand-primary-1);
-      --van-button-default-border-color: var(--brand-primary-2);
+    svg {
+      width: 80px;
+      height: 80px;
     }
   }
 
-  /* ====== 费用区 ====== */
+  .page-title {
+    margin-top: 20px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .plate-input {
+    margin-top: 28px;
+  }
+
+  .energy-tip {
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--text-tertiary);
+  }
+
+  /* 查询按钮：宽度接近屏幕两侧边距，主色实心圆角 */
+  .query-btn {
+    margin-top: 36px;
+    font-size: 17px;
+    font-weight: 600;
+    --van-button-default-height: 48px;
+    --van-button-default-background: var(--brand-primary);
+    --van-button-default-color: var(--on-brand-primary);
+    --van-button-default-border-color: transparent;
+    /* 禁用态交给 Vant 默认的灰底灰字：主色浅绿上压白字对比度不够 */
+  }
+
+  /* ====== 车辆信息态 ====== */
   .amount-block {
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
+    width: 100%;
 
     .amount-label {
       font-size: 13px;
@@ -461,16 +400,19 @@ onUnmounted(() => {
   }
 
   .divider {
+    width: 100%;
     height: 1px;
     margin: 16px 0;
     background: var(--border-secondary);
   }
 
   .info-list {
+    width: 100%;
+
     .info-item {
       display: flex;
       justify-content: space-between;
-      padding: 8px 0;
+      padding: 10px 0;
       font-size: 14px;
 
       .label {
@@ -488,8 +430,9 @@ onUnmounted(() => {
     align-items: center;
     justify-content: center;
     gap: 4px;
-    margin-top: 16px;
-    padding-top: 16px;
+    width: 100%;
+    margin-top: 20px;
+    padding-top: 20px;
     font-size: 13px;
     color: var(--text-tertiary);
     border-top: 1px dashed var(--border-primary);
@@ -515,7 +458,7 @@ onUnmounted(() => {
       font-size: 17px;
       font-weight: 600;
       --van-button-default-height: 48px;
-      --van-button-default-background: var(--gradient-primary);
+      --van-button-default-background: var(--brand-primary);
       --van-button-default-color: var(--on-brand-primary);
       --van-button-default-border-color: transparent;
     }

@@ -30,6 +30,23 @@ cyyaw:
         username: admin
         password: 123456
         clientId: sssddd
+  # 第三方登录。凭据留空则对应的登录方式不可用（不会建 Bean），应用照常启动
+  third-login:
+    wechat:
+      # 微信小程序
+      mini-app-id:
+      mini-secret:
+      # 微信公众号（网页授权）
+      mp-app-id:
+      mp-secret:
+    alipay:
+      app-id:
+      # 应用私钥（PKCS8，去掉头尾和换行）
+      private-key:
+      # 支付宝公钥
+      alipay-public-key:
+      gateway: https://openapi.alipay.com/gateway.do
+      sign-type: RSA2
 
 
 

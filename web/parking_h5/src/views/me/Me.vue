@@ -91,12 +91,13 @@ const state = reactive({
   cardCount: 3,
 })
 
-// 已实现的菜单页：coupon/vehicle/cardPackage/parkingExit
+// 已实现的菜单页：coupon/vehicle/cardPackage/scanExit
+// 停车出场指向出场缴费页（scanExit），没有 parkingId 时该页会提示扫码进入
 const menuItems = [
   { icon: 'coupon-o', label: '优惠券', name: 'coupon' },
   { icon: 'wallet-o', label: '我的车辆', name: 'vehicle' },
   { icon: 'card-o', label: '卡包', name: 'cardPackage' },
-  { icon: 'parking-o', label: '停车出场', name: 'parkingExit' },
+  { icon: 'parking-o', label: '停车出场', name: 'scanExit' },
   { icon: 'orders-o', label: '我的订单', name: 'order' },
   { icon: 'cross', label: '退出登录', name: 'logout' },
 ]
