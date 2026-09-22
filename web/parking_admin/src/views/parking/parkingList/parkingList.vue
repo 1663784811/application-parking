@@ -91,7 +91,7 @@
         <template #action="{ row }">
           <Button type="text" size="small" @click="handleEdit(row)">编辑</Button>
           <Button type="text" size="small" @click="handleSetRules(row)">设置收费规则</Button>
-          <Button type="text" size="small" @click="handleViewSpaces(row)">查看车位</Button>
+          <Button type="text" size="small" @click="handleViewInLotVehicles(row)">查看在场车辆</Button>
           <Button type="text" size="small" @click="handleDelete(row)" class="text-danger">
             删除
           </Button>
@@ -569,8 +569,8 @@ const handleDelete = async (row) => {
   })
 }
 
-// 查看车位
-const handleViewSpaces = (row) => {
+// 查看该停车场的在场车辆
+const handleViewInLotVehicles = (row) => {
   router.push({ name: 'spaceManagement', query: { parkingId: row.id } })
 }
 

@@ -84,7 +84,7 @@ const routes = [
         name: 'spaceManagement',
         component: () => import('@/views/parking/spaceManagement/spaceManagement.vue'),
         meta: {
-          title: '实时车位',
+          title: '在场车辆',
           showParkingSidebar: true
         }
       },

@@ -44,6 +44,9 @@ public class PkCarLogController {
         if (carNumber != null && !carNumber.isEmpty()) {
             wrapper.like("car_number", carNumber);
         }
+        if (query.getStatus() != null) {
+            wrapper.eq("status", query.getStatus());
+        }
         wrapper.orderByDesc("entry_time");
         Page<PkCarLog> pageResult = pkCarLogService.findPage(page, size, wrapper);
         BaseResult.Result result = new BaseResult.Result(page, size, pageResult.getTotal());

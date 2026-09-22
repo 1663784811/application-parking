@@ -14,4 +14,7 @@ public class PkCarLogQueryDTO extends PageDTO {
 
     @Schema(description = "车牌号模糊关键词")
     private String carNumber;
+
+    @Schema(description = "状态{0:场内,1:已出场}；不传查全部")
+    private Integer status;
 }

@@ -17,35 +17,9 @@
         </div>
 
         <div class="filter-item">
-          <Select
-              v-model="state.searchForm.status"
-              placeholder="车位状态"
-              class="filter-select"
-              clearable
-          >
-            <Option :value="0">空闲</Option>
-            <Option :value="1">占用</Option>
-            <Option :value="2">故障</Option>
-          </Select>
-        </div>
-
-        <div class="filter-item">
-          <Select
-              v-model="state.searchForm.type"
-              placeholder="车位类型"
-              class="filter-select"
-              clearable
-          >
-            <Option :value="1">固定</Option>
-            <Option :value="2">临时</Option>
-            <Option :value="3">无障碍</Option>
-          </Select>
-        </div>
-
-        <div class="filter-item">
           <Input
-              v-model="state.searchForm.keyword"
-              placeholder="搜索车位编号"
+              v-model="state.searchForm.carNumber"
+              placeholder="搜索车牌"
               class="filter-input"
               clearable
               @on-enter="handleSearch"
@@ -73,164 +47,104 @@
 
     <!-- 统计卡片 -->
     <div class="stats-row">
+      <div class="stat-item stat-inlot">
+        <span class="stat-dot"></span>
+        <span class="stat-label">在场车辆</span>
+        <span class="stat-value">{{ state.stats.inLot }}</span>
+      </div>
+      <div class="stat-item stat-total">
+        <span class="stat-dot"></span>
+        <span class="stat-label">总车位</span>
+        <span class="stat-value">{{ state.stats.total }}</span>
+      </div>
       <div class="stat-item stat-free">
         <span class="stat-dot"></span>
-        <span class="stat-label">空闲</span>
+        <span class="stat-label">空余车位</span>
         <span class="stat-value">{{ state.stats.free }}</span>
       </div>
-      <div class="stat-item stat-fixed">
+      <div class="stat-item stat-rate">
         <span class="stat-dot"></span>
-        <span class="stat-label">固定车占用</span>
-        <span class="stat-value">{{ state.stats.fixed }}</span>
-      </div>
-      <div class="stat-item stat-temp">
-        <span class="stat-dot"></span>
-        <span class="stat-label">临时车占用</span>
-        <span class="stat-value">{{ state.stats.temp }}</span>
-      </div>
-      <div class="stat-item stat-fault">
-        <span class="stat-dot"></span>
-        <span class="stat-label">故障</span>
-        <span class="stat-value">{{ state.stats.fault }}</span>
+        <span class="stat-label">占用率</span>
+        <span class="stat-value">{{ state.stats.rate }}%</span>
       </div>
     </div>
 
-    <!-- 平面图视图 -->
+    <!-- 在场车辆看板 -->
     <div class="grid-container">
       <div class="grid-legend">
         <div class="legend-item">
-          <span class="legend-color color-free"></span>
-          <span>空闲</span>
+          <span class="legend-color color-inlot"></span>
+          <span>在场</span>
         </div>
         <div class="legend-item">
-          <span class="legend-color color-occupied"></span>
-          <span>占用</span>
-        </div>
-        <div class="legend-item">
-          <span class="legend-color color-fault"></span>
-          <span>故障</span>
+          <span class="legend-color color-waiting"></span>
+          <span>待缴费</span>
         </div>
       </div>
       <div class="parking-grid">
         <div
-            v-for="space in state.gridData"
-            :key="space.id"
-            class="space-grid-item"
-            :class="'space-' + getStatusClass(space.status)"
-            @click="handleSpaceClick(space)"
-            :title="getSpaceTitle(space)"
+            v-for="car in state.gridData"
+            :key="car.id"
+            class="car-grid-item"
+            :class="'car-' + getCarClass(car)"
+            :title="getCarTitle(car)"
         >
-          <span class="space-no">{{ space.spaceNo }}</span>
-          <span class="space-plate" v-if="space.plate">{{ space.plate }}</span>
+          <span class="car-plate">{{ car.carNumber || '无牌车' }}</span>
+          <span class="car-entry">{{ formatEntryTime(car.entryTime) }}</span>
         </div>
       </div>
     </div>
-
-    <!-- 分配弹窗 -->
-    <Modal v-model="state.assignModalVisible" title="分配车位" width="1000">
-      <Form :model="state.assignForm" :label-width="100" class="modal-form-2col">
-        <FormItem label="车位编号">
-          <Input :value="state.currentSpace?.spaceNo" disabled/>
-        </FormItem>
-        <FormItem label="绑定车主" prop="memberId">
-          <Select v-model="state.assignForm.memberId" placeholder="请选择车主" filterable>
-            <Option v-for="item in state.memberList" :key="item.id" :value="item.id">
-              {{ item.name }} - {{ item.plate }}
-            </Option>
-          </Select>
-        </FormItem>
-        <FormItem label="有效期至" class="modal-form-full">
-          <DatePicker
-              v-model="state.assignForm.expireDate"
-              type="date"
-              placeholder="请选择有效期"
-              style="min-width: 100%"
-          />
-        </FormItem>
-      </Form>
-      <template #footer>
-        <Button @click="state.assignModalVisible = false">取消</Button>
-        <Button type="primary" @click="handleAssignSubmit">确定</Button>
-      </template>
-    </Modal>
   </div>
 </template>
 
 <script setup>
 import {reactive, onMounted} from 'vue'
 import {useCommonStore} from '@/stores/common.js'
-import {parkingApi, memberApi, spaceApi} from '@/api'
+import {parkingApi, inLotApi} from '@/api'
 import {
   Button,
-  DatePicker,
-  Form,
-  FormItem,
   Icon,
   Input,
   Message,
-  Modal,
   Option,
   Select
 } from 'view-ui-plus'
 
 const commonStore = useCommonStore()
 
+// 看板一次性拉取的在场车辆条数上限；result.total 仍是该停车场的真实在场总数
+const IN_LOT_PAGE_SIZE = 1000
+
 const state = reactive({
   searchForm: {
     parkingId: commonStore.state.selectedParkingIds.length > 0
       ? commonStore.state.selectedParkingIds[0]
       : commonStore.state.currentParking?.id || null,
-    status: null,
-    type: null,
-    keyword: ''
+    carNumber: ''
   },
 
   gridData: [],
 
   stats: {
+    inLot: 0,
+    total: 0,
     free: 0,
-    fixed: 0,
-    temp: 0,
-    fault: 0
+    rate: 0
   },
 
   parkingList: commonStore.state.parkingList.length > 0
     ? commonStore.state.parkingList
-    : [],
-
-  memberList: [],
-
-  assignModalVisible: false,
-  currentSpace: null,
-  assignForm: {
-    memberId: null,
-    expireDate: ''
-  }
+    : []
 })
 
-const pad = (n) => String(n).padStart(2, '0')
-const toDateStr = (d) => {
-  if (!d) return null
-  const dt = d instanceof Date ? d : new Date(d)
-  if (isNaN(dt.getTime())) return null
-  return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`
-}
+// 待缴费：出场通道摄像头已识别到该车（此时 status 仍为 0，缴费放行后才写 outTime）
+const getCarClass = (car) => (car.outChannelId ? 'waiting' : 'inlot')
 
-const getStatusClass = (status) => {
-  const map = {0: 'free', 1: 'occupied', 2: 'fault'}
-  return map[status] || 'free'
-}
+const formatEntryTime = (t) => (t ? String(t).slice(11, 16) : '-')
 
-const getStatusText = (status) => {
-  const map = {0: '空闲', 1: '占用', 2: '故障'}
-  return map[status] || '-'
-}
-
-const getSpaceTitle = (space) => {
-  if (space.plate) {
-    return `${space.spaceNo} - ${space.plate}`
-  }
-  return `${space.spaceNo} - ${getStatusText(space.status)}`
+const getCarTitle = (car) => {
+  const plate = car.carNumber || '无牌车'
+  return `${plate} · 入场 ${car.entryTime || '-'}${car.outChannelId ? ' · 待缴费' : ''}`
 }
 
 const loadParkingList = async () => {
@@ -248,15 +162,32 @@ const loadParkingList = async () => {
 }
 
 const loadData = async () => {
-  const {parkingId, status, type, keyword} = state.searchForm
-  const params = {parkingId, status, type, keyword}
+  const {parkingId, carNumber} = state.searchForm
+  if (!parkingId) {
+    state.gridData = []
+    state.stats = {inLot: 0, total: 0, free: 0, rate: 0}
+    return
+  }
   try {
-    const [listRes, statRes] = await Promise.all([
-      spaceApi.getSpaceList(params),
-      parkingId ? spaceApi.getSpaceStats(parkingId) : Promise.resolve(null)
+    const [listRes, detailRes] = await Promise.all([
+      inLotApi.getInLotList({
+        parkingId,
+        status: 0,
+        size: IN_LOT_PAGE_SIZE,
+        carNumber: carNumber || undefined
+      }),
+      parkingApi.getParkingDetail(parkingId)
     ])
     state.gridData = listRes.data || []
-    state.stats = statRes?.data || {free: 0, fixed: 0, temp: 0, fault: 0}
+    // 按车牌搜索时以实际命中条数为准，否则用分页 total（不受拉取上限影响）
+    const inLot = carNumber ? state.gridData.length : Number(listRes.result?.total ?? state.gridData.length)
+    const total = Number(detailRes.data?.capacity ?? 0)
+    state.stats = {
+      inLot,
+      total,
+      free: Math.max(0, total - inLot),
+      rate: total > 0 ? Math.round(inLot * 100 / total) : 0
+    }
   } catch (e) { /* authRequest 已提示 */ }
 }
 
@@ -268,9 +199,7 @@ const handleReset = () => {
   const ids = commonStore.state.selectedParkingIds
   state.searchForm = {
     parkingId: ids.length > 0 ? ids[0] : commonStore.state.currentParking?.id || null,
-    status: null,
-    type: null,
-    keyword: ''
+    carNumber: ''
   }
   loadData()
 }
@@ -278,78 +207,6 @@ const handleReset = () => {
 const handleRefreshGrid = async () => {
   await loadData()
   Message.success('已刷新')
-}
-
-const handleAssign = async (space) => {
-  state.currentSpace = space
-  state.assignForm = {memberId: null, expireDate: ''}
-  if (state.memberList.length === 0) {
-    try {
-      const res = await memberApi.getMemberList({size: 1000})
-      state.memberList = res.data || []
-    } catch (e) { /* ignore */ }
-  }
-  state.assignModalVisible = true
-}
-
-const handleAssignSubmit = async () => {
-  if (!state.assignForm.memberId) {
-    Message.warning('请选择车主')
-    return
-  }
-  const member = state.memberList.find(m => m.id === state.assignForm.memberId)
-  const payload = {
-    id: state.currentSpace.id,
-    memberId: member.id,
-    memberName: member.name,
-    plate: member.plate,
-    expireDate: state.assignForm.expireDate ? toDateStr(state.assignForm.expireDate) : null
-  }
-  try {
-    await spaceApi.assignSpace(payload)
-    Message.success('分配成功')
-    state.assignModalVisible = false
-    await loadData()
-  } catch (e) { /* authRequest 已提示 */ }
-}
-
-const handleUnbind = (space) => {
-  Modal.confirm({
-    title: '确认解绑',
-    content: `确定要解绑车位"${space.spaceNo}"吗？`,
-    onOk: async () => {
-      try {
-        await spaceApi.unbindSpace(space.id)
-        Message.success('解绑成功')
-        await loadData()
-      } catch (e) { /* ignore */ }
-    }
-  })
-}
-
-const handleReportRepair = (space) => {
-  Modal.confirm({
-    title: '确认报修',
-    content: `确定要对车位"${space.spaceNo}"进行报修吗？`,
-    onOk: async () => {
-      try {
-        await spaceApi.reportRepair(space.id)
-        Message.success('报修成功')
-        await loadData()
-      } catch (e) { /* ignore */ }
-    }
-  })
-}
-
-const handleSpaceClick = (space) => {
-  state.currentSpace = space
-  if (space.status === 0) {
-    handleAssign(space)
-  } else if (space.status === 1) {
-    handleUnbind(space)
-  } else if (space.status === 2) {
-    handleReportRepair(space)
-  }
 }
 
 onMounted(() => {
@@ -421,20 +278,20 @@ onMounted(() => {
       }
     }
 
+    .stat-inlot .stat-dot {
+      background-color: #165DFF;
+    }
+
+    .stat-total .stat-dot {
+      background-color: #86909C;
+    }
+
     .stat-free .stat-dot {
       background-color: #00B42A;
     }
 
-    .stat-fixed .stat-dot {
-      background-color: #165DFF;
-    }
-
-    .stat-temp .stat-dot {
+    .stat-rate .stat-dot {
       background-color: #FF7D00;
-    }
-
-    .stat-fault .stat-dot {
-      background-color: #86909C;
     }
   }
 
@@ -464,16 +321,12 @@ onMounted(() => {
           border-radius: 2px;
         }
 
-        .color-free {
-          background-color: #00B42A;
-        }
-
-        .color-occupied {
+        .color-inlot {
           background-color: #165DFF;
         }
 
-        .color-fault {
-          background-color: #86909C;
+        .color-waiting {
+          background-color: #FF7D00;
         }
       }
     }
@@ -483,14 +336,13 @@ onMounted(() => {
       grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
       gap: var(--spacing-md);
 
-      .space-grid-item {
+      .car-grid-item {
         aspect-ratio: 1;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         border-radius: var(--border-radius-base);
-        cursor: pointer;
         transition: transform 0.2s, box-shadow 0.2s;
         color: #fff;
         font-size: var(--font-size-sm);
@@ -500,26 +352,22 @@ onMounted(() => {
           box-shadow: var(--shadow-medium);
         }
 
-        .space-no {
+        .car-plate {
           font-weight: 600;
           margin-bottom: 4px;
         }
 
-        .space-plate {
+        .car-entry {
           font-size: var(--font-size-xs);
         }
       }
 
-      .space-free {
-        background-color: #00B42A;
-      }
-
-      .space-occupied {
+      .car-inlot {
         background-color: #165DFF;
       }
 
-      .space-fault {
-        background-color: #86909C;
+      .car-waiting {
+        background-color: #FF7D00;
       }
     }
   }

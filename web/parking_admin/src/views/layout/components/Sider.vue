@@ -108,7 +108,7 @@ const menuList = [
     children: [
       {
         name: 'spaceManagement',
-        title: '实时车位',
+        title: '在场车辆',
         path: '/parking/spaceManagement'
       },
       {

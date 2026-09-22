@@ -21,24 +21,13 @@ export const parkingApi = {
   getParkingDetail: (id) => authRequest.get(`/admin/parking/parking/find/${id}`)
 }
 
-// ========== 车位管理 ==========
-export const spaceApi = {
-  // 车位列表（按停车场/状态/类型/编号筛选，返回全部匹配车位，平面图）
-  getSpaceList: (params) => authRequest.get('/admin/parking/space/list', { params }),
-  // 车位详情
-  getSpaceDetail: (id) => authRequest.get(`/admin/parking/space/find/${id}`),
-  // 新增/更新车位
-  saveSpace: (data) => authRequest.post('/admin/parking/space/save', data),
-  // 分配车位（绑定会员/车牌/有效期，状态置为占用）
-  assignSpace: (data) => authRequest.post('/admin/parking/space/assign', data),
-  // 解绑车位（清除绑定，状态置为空闲）
-  unbindSpace: (id) => authRequest.post(`/admin/parking/space/unbind/${id}`),
-  // 车位报修（状态置为故障）
-  reportRepair: (id) => authRequest.post(`/admin/parking/space/repair/${id}`),
-  // 车位状态统计：{ free, fixed, temp, fault }
-  getSpaceStats: (parkingId) => authRequest.get(`/admin/parking/space/stats/${parkingId}`),
-  // 删除车位
-  deleteSpace: (id) => authRequest.delete(`/admin/parking/space/delete/${id}`)
+// ========== 在场车辆 ==========
+// 在场 = pk_car_log 中 status=0 的记录；总车位取 pk_parking.capacity
+export const inLotApi = {
+  // 在场车辆列表（status=0；返回体 result.total 即该停车场在场车辆总数）
+  getInLotList: (params) => authRequest.get('/admin/parking/carLog/list', { params }),
+  // 在场车辆数（按停车场；status 缺省即 0）
+  getInLotCount: (parkingId) => authRequest.get(`/admin/parking/carLog/statusCount/${parkingId}`)
 }
 
 // ========== 通行记录 ==========
