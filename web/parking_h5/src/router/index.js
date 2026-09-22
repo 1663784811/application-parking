@@ -9,6 +9,7 @@ const routes = [
     component: () => import('@/views/welcome/Welcome.vue'),
     meta: {
       title: '欢迎',
+      public: true,
     },
   },
   {
@@ -19,6 +20,7 @@ const routes = [
     props: true,
     meta: {
       title: '登录',
+        public: true,
     },
   },
   {
@@ -146,6 +148,7 @@ const routes = [
     component: () => import('@/views/error/NotFound.vue'),
     meta: {
       title: '页面不存在',
+      public: true,
     },
   },
 ]
@@ -156,7 +159,7 @@ const router = createRouter({
 })
 
 /**
- * 消费第三方授权凭证：oauth.html 把 code / auth_code 从 query 搬进 hash 后，在这里换登录态。
+ * 消费第三方授权凭证：平台回跳把 code / auth_code 带到地址上后，在这里换登录态。
  * 必须赶在目标页挂载之前完成 —— 页面自己的 onMounted 就会调业务接口，
  * 晚一步就是没有 JWT 的裸奔请求（出场三接口不在白名单，直接 6001/6010）。
  *
@@ -181,6 +184,8 @@ const consumeAuthCode = async (to) => {
     const data = res?.data || {}
     if (data.jwtToken) {
       loginInfo().setToken(data.jwtToken, data.refreshToken)
+      // 不 await：用户信息是给"我的"页面用的，别为它多等一个来回再跳转
+      loginInfo().fetchUserInfo()
     }
   } catch (err) {
     showToast(err?.msg || '登录失败')
@@ -190,7 +195,7 @@ const consumeAuthCode = async (to) => {
   return { path: to.path, query: restQuery, replace: true }
 }
 
-// 路由守卫：设置页面标题、验证 appId、换第三方登录态
+// 路由守卫：设置页面标题、验证 appId、换第三方登录态、拦截未登录
 router.beforeEach(async (to) => {
   // 用 meta.title 作为页面标题
   const title = to.meta?.title
@@ -206,7 +211,31 @@ router.beforeEach(async (to) => {
     }
   }
 
-  return consumeAuthCode(to)
+  // 顺序要紧：平台回跳的 code 必须先换成 token，再判登录态。
+  // 反过来的话 /app/1/scanExit?code=xxx 会在换到 token 之前就被判成未登录踢去登录页，code 白拿
+  const authRedirect = await consumeAuthCode(to)
+  if (authRedirect) {
+    return authRedirect
+  }
+
+  // 未登录跳登录页。默认一律要登录，只有声明了 meta.public 的页面（欢迎页、登录页、404）放行 ——
+  // 反过来写（声明了才拦）容易漏，新加的路由会默认裸奔
+  if (!to.meta?.public) {
+    if (!to.params.appId) {
+      // 兜底：带 :appId 的路由上面已校验过，这里防的是拼不出 login 路径直接白屏
+      return { name: 'welcome' }
+    }
+    // 动态引入：静态 import 会顺着 stores/loginInfo → api/app → axios 把 axios 拖进入口包
+    const { loginInfo } = await import('@/stores/loginInfo')
+    if (!loginInfo().isLogin) {
+      // 带上 redirect，登录后回到原本想去的页面 —— 扫码出场的深链不能丢
+      return {
+        name: 'login',
+        params: { appId: to.params.appId },
+        query: { redirect: to.fullPath },
+      }
+    }
+  }
 })
 
 export default router

@@ -192,6 +192,12 @@ const canSendCode = computed(
 )
 
 onMounted(() => {
+  // 已登录还进到登录页（返回手势、收藏的链接、外部跳转）：直接送去 redirect 或首页，
+  // 别让用户对着一张没用的表单再登一次。
+  // 这里刻意不 return —— 下面的 fetchApp 是给目标页备 appInfo 的，跳走了照样需要
+  if (loginInfoStore.isLogin) {
+    goAfterLogin()
+  }
   // 恢复记住的手机号（非模拟登录时生效）
   const saved = localStorage.getItem(REMEMBER_KEY)
   if (saved && !MOCK_LOGIN) {
@@ -232,13 +238,24 @@ const onSendCode = () => {
   })
 }
 
+// 登录成功后的去向：优先回守卫带过来的 redirect（用户原本想去的页面，比如扫码出场），
+// 没有就回首页。只认站内路径 —— 别让 ?redirect=//evil.com 这种把页面带出去
+const goAfterLogin = () => {
+  const redirect = route.query.redirect
+  if (typeof redirect === 'string' && redirect.startsWith('/')) {
+    router.replace(redirect)
+    return
+  }
+  router.replace({name: 'mainIndex', params: {appId: route.params.appId}})
+}
+
 // 提交登录
 const onSubmit = () => {
   // 模拟登录：直接写入假 token 跳转，不请求接口
   if (MOCK_LOGIN) {
     handleRemember()
     loginInfoStore.setToken('mock-token', 'mock-refresh-token')
-    router.replace({name: 'mainIndex', params: {appId: route.params.appId}})
+    goAfterLogin()
     return
   }
   if (!codeSent.value) {
@@ -255,7 +272,9 @@ const onSubmit = () => {
     // 业务数据: { jwtToken, refreshToken }
     handleRemember()
     loginInfoStore.setToken(res.data.jwtToken, res.data.refreshToken)
-    router.replace({name: 'mainIndex', params: {appId: route.params.appId}})
+    // 不 await：昵称晚一步到没关系，"我的"页面用的是 computed，数据回来自己会刷上去
+    loginInfoStore.fetchUserInfo()
+    goAfterLogin()
   }).catch((err) => {
     showToast(err?.msg || '登录失败')
   }).finally(() => {

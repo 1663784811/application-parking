@@ -64,7 +64,7 @@
                     android:layout_weight="1"
                     android:background="@drawable/bg_dialog_input"
                     android:gravity="center_vertical"
-                    android:hint="tcp://192.168.1.100:1883"
+                    android:hint="tcp://192.168.83.38:1883"
                     android:inputType="textUri"
                     android:maxLines="1"
                     android:paddingStart="8dp"

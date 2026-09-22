@@ -154,12 +154,12 @@ public class MainActivity extends BaseActivity {
     private static final String KEY_SIGNALING_SERVER = "signaling_server";
 
     // 默认值：首次启动写入 SharedPreferences，使设置面板的信息持久化保存
-    private static final String DEFAULT_MQTT_ADDRESS = "tcp://192.168.222.38:1883";
+    private static final String DEFAULT_MQTT_ADDRESS = "tcp://192.168.83.38:1883";
     private static final String DEFAULT_MQTT_USERNAME = "admin";
     private static final String DEFAULT_MQTT_PASSWORD = "123456";
     private static final String DEFAULT_MQTT_CLIENT_ID = "aaa";
-    private static final String DEFAULT_LPR_CALLBACK = "http://192.168.222.38:18080/api/plate/recognize";
-    private static final String DEFAULT_SIGNALING_SERVER = "ws://192.168.222.38:8080";
+    private static final String DEFAULT_LPR_CALLBACK = "http://192.168.83.38:18080/api/plate/recognize";
+    private static final String DEFAULT_SIGNALING_SERVER = "ws://192.168.83.38:8080";
     private static final boolean DEFAULT_TIMESTAMP_VISIBLE = true;
     private static final String DEFAULT_CAMERA_ID = "CAM-001";
     private static final String DEFAULT_BARRIER_ID = "B-001";

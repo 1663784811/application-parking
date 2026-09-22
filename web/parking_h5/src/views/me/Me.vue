@@ -8,15 +8,15 @@
             width="72"
             height="72"
             fit="cover"
-            :src="state.avatar"
+            :src="avatar"
           />
           <div v-if="state.isVip" class="vip-badge">
             <van-icon name="vip-card-o" />
           </div>
         </div>
         <div class="info">
-          <h3 class="nickname">{{ state.nickname }}</h3>
-          <p class="account">账号：{{ state.account }}</p>
+          <h3 class="nickname">{{ nickname }}</h3>
+          <p v-if="account" class="account">账号：{{ account }}</p>
           <p v-if="state.memberType" class="member-type">{{ state.memberType }}</p>
         </div>
       </div>
@@ -67,7 +67,7 @@
 </template>
 
 <script setup>
-import { reactive } from 'vue'
+import { computed, reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { showConfirmDialog } from 'vant'
 import { useLoginInfoStore } from '@/stores/loginInfo'
@@ -76,11 +76,20 @@ const route = useRoute()
 const router = useRouter()
 const loginInfoStore = useLoginInfoStore()
 
+// 默认头像（用户没设头像时兜底）
+const DEFAULT_AVATAR = 'https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg'
+
+// 用户信息取自登录态 store：登录成功 / 授权回跳后由 fetchUserInfo 写入，且已持久化，刷新也在。
+// 用 computed 而不是快照 —— 请求和页面挂载谁先谁后不确定，晚到的数据得能刷上去
+const baseInfo = computed(() => loginInfoStore.userInfo?.baseInfo || {})
+// 昵称字段是 nickName（后端个人中心接口的 AuUser 结构里没有 name）
+const nickname = computed(() => baseInfo.value.nickName || '未登录')
+// 头像字段：普通用户(AuUser)是 face，管理员/门店管理员是 avatar，两个都认
+const avatar = computed(() => baseInfo.value.face || baseInfo.value.avatar || DEFAULT_AVATAR)
+const account = computed(() => baseInfo.value.phone || baseInfo.value.account || '')
+
+// TODO: 下面的会员标识与各项统计仍是占位数据，待接口
 const state = reactive({
-  // TODO: 接口获取用户信息及统计（getUserInfo）
-  avatar: 'https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg',
-  nickname: loginInfoStore.userInfo?.baseInfo?.name || '未登录',
-  account: '13800138000',
   memberType: 'VIP会员',
   isVip: true,
   parkingTimes: 128,

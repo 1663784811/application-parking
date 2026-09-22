@@ -442,29 +442,6 @@ CREATE TABLE `pk_channel` (
   KEY `idx_type` (`type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='停车场通道';
 
--- 车位
-CREATE TABLE `pk_space` (
-  `id` bigint NOT NULL COMMENT 'id',
-  `en_id` bigint NOT NULL DEFAULT 0 COMMENT '所属企业ID',
-  `app_id` bigint DEFAULT NULL COMMENT '应用ID',
-  `parking_id` bigint DEFAULT NULL COMMENT '停车场ID',
-  `space_no` varchar(64) DEFAULT NULL COMMENT '车位编号',
-  `area` varchar(32) DEFAULT NULL COMMENT '区域',
-  `space_type` int DEFAULT NULL COMMENT '车位类型{1:固定,2:临时,3:无障碍}',
-  `status` int NOT NULL DEFAULT 0 COMMENT '状态{0:空闲,1:占用,2:故障}',
-  `member_id` bigint DEFAULT NULL COMMENT '绑定会员ID',
-  `member_name` varchar(64) DEFAULT NULL COMMENT '绑定车主姓名',
-  `plate` varchar(32) DEFAULT NULL COMMENT '绑定车牌',
-  `expire_date` date DEFAULT NULL COMMENT '有效期至',
-  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  `note` varchar(255) DEFAULT '' COMMENT '备注',
-  `del_time` int NOT NULL DEFAULT 0 COMMENT '删除时间',
-  PRIMARY KEY (`id`),
-  KEY `idx_parking_id` (`parking_id`),
-  KEY `idx_space_no` (`space_no`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='车位';
-
 -- 停车场收费规则
 CREATE TABLE `pk_cost_rules` (
   `id` bigint NOT NULL COMMENT 'id',
