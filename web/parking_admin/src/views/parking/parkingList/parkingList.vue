@@ -200,8 +200,14 @@
           <Tag :color="typeColor(row.type)">{{ typeText(row.type) }}</Tag>
         </template>
         <template #timeRange="{ row }">
-          <span v-if="row.startTime && row.endTime">{{ row.startTime }} ~ {{ row.endTime }}</span>
-          <span v-else-if="row.rule_time != null">{{ row.rule_time }} 分钟</span>
+          <!-- 计费时段：时段（未设=全天）+ 计费单位 -->
+          <template v-if="row.type === 2">
+            <span v-if="row.startTime && row.endTime">{{ row.startTime }} ~ {{ row.endTime }}</span>
+            <span v-else class="text-secondary">全天</span>
+            <span v-if="row.rule_time != null"> · 每 {{ row.rule_time }} 分钟</span>
+          </template>
+          <!-- 首段收费：阶梯档位时长 -->
+          <span v-else-if="row.type === 0 && row.rule_time != null">{{ row.rule_time }} 分钟</span>
           <span v-else class="text-secondary">—</span>
         </template>
         <template #amount="{ row }">
@@ -250,8 +256,14 @@
           <Tag :color="typeColor(row.type)">{{ typeText(row.type) }}</Tag>
         </template>
         <template #timeRange="{ row }">
-          <span v-if="row.startTime && row.endTime">{{ row.startTime }} ~ {{ row.endTime }}</span>
-          <span v-else-if="row.rule_time != null">{{ row.rule_time }} 分钟</span>
+          <!-- 计费时段：时段（未设=全天）+ 计费单位 -->
+          <template v-if="row.type === 2">
+            <span v-if="row.startTime && row.endTime">{{ row.startTime }} ~ {{ row.endTime }}</span>
+            <span v-else class="text-secondary">全天</span>
+            <span v-if="row.rule_time != null"> · 每 {{ row.rule_time }} 分钟</span>
+          </template>
+          <!-- 首段收费：阶梯档位时长 -->
+          <span v-else-if="row.type === 0 && row.rule_time != null">{{ row.rule_time }} 分钟</span>
           <span v-else class="text-secondary">—</span>
         </template>
         <template #amount="{ row }">

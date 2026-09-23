@@ -42,8 +42,16 @@
           <Tag :color="typeColor(row.type)">{{ typeText(row.type) }}</Tag>
         </template>
         <template #timeRange="{ row }">
-          <span v-if="row.startTime && row.endTime">{{ row.startTime }} ~ {{ row.endTime }}</span>
-          <span v-else-if="row.rule_time != null">{{ row.rule_time }} 分钟</span>
+          <!-- 计费时段：未设开始/结束时间 = 全天适用 -->
+          <template v-if="row.type === 2">
+            <span v-if="row.startTime && row.endTime">{{ row.startTime }} ~ {{ row.endTime }}</span>
+            <span v-else class="text-secondary">全天</span>
+          </template>
+          <span v-else class="text-secondary">—</span>
+        </template>
+        <!-- ruleTime 两种语义：首段收费(0)=阶梯档位时长；计费时段(2)=计费单位 -->
+        <template #ruleTime="{ row }">
+          <span v-if="(row.type === 0 || row.type === 2) && row.ruleTime != null">{{ row.ruleTime }} 分钟</span>
           <span v-else class="text-secondary">—</span>
         </template>
         <template #amount="{ row }">
@@ -109,8 +117,13 @@
             <Input v-model="state.form.endTime" placeholder="如 20:00:00" class="time-input" />
           </FormItem>
         </template>
-        <FormItem v-if="state.form.type === 0" label="首段时长" prop="rule_time">
-          <InputNumber v-model="state.form.rule_time" :min="0" placeholder="分钟" class="form-number" />
+        <!-- ruleTime 两种语义：首段收费(0)=阶梯档位时长；计费时段(2)=计费单位，按 ceil(分钟数/单位) 计费 -->
+        <FormItem
+          v-if="state.form.type === 0 || state.form.type === 2"
+          :label="state.form.type === 0 ? '首段时长' : '计费单位'"
+          prop="ruleTime"
+        >
+          <InputNumber v-model="state.form.ruleTime" :min="0" placeholder="分钟" class="form-number" />
           <span class="unit">分钟</span>
         </FormItem>
         <FormItem label="金额" prop="amount">
@@ -205,7 +218,7 @@ const state = reactive({
     type: 2,
     startTime: '',
     endTime: '',
-    rule_time: null,
+    ruleTime: null,
     amount: 0,
     week: null,
     effectiveStartTime: null,
@@ -220,13 +233,16 @@ const columns = [
   { field: 'name', title: '规则名称', key: 'name', minWidth: 160 },
   { field: 'carType', title: '车辆类型', slot: 'carType', minWidth: 110, align: 'center' },
   { field: 'type', title: '收费类型', slot: 'type', minWidth: 120, align: 'center' },
-  { field: 'timeRange', title: '计费时段/时长', slot: 'timeRange', minWidth: 180 },
+  { field: 'timeRange', title: '计费时段', slot: 'timeRange', minWidth: 180 },
+  // field 仅作列显隐标识；接口返回的字段名是下划线的 ruleTime，故 slot 内读 row.ruleTime
+  { field: 'ruleTime', title: '首段时长/计费单位', slot: 'ruleTime', minWidth: 150, align: 'center' },
   { field: 'amount', title: '金额', slot: 'amount', minWidth: 110, align: 'right' },
   { field: 'effective', title: '生效日期', slot: 'effective', minWidth: 200 },
   { title: '操作', slot: 'action', minWidth: 140, fixed: 'right' }
 ]
 
-const { visibleFields, colSettingVisible, displayColumns, resetColumns } = useTableColumns(columns, 'chargeRuleConfig:columnVisible')
+// 键加 :v2：新增了 ruleTime 列，旧键存的是不含该列的可见列表，会让新列默认不显示
+const { visibleFields, colSettingVisible, displayColumns, resetColumns } = useTableColumns(columns, 'chargeRuleConfig:columnVisible:v2')
 
 const carTypeText = (carType) => {
   const map = { '0': '小型汽车', '1': '中型汽车', '2': '大型汽车' }
@@ -292,8 +308,9 @@ const handleTypeChange = (val) => {
     state.form.startTime = ''
     state.form.endTime = ''
   }
-  if (val !== 0) {
-    state.form.rule_time = null
+  // 首段收费(0)与计费时段(2)都要用 ruleTime，封顶类型才清空
+  if (val !== 0 && val !== 2) {
+    state.form.ruleTime = null
   }
 }
 
@@ -327,7 +344,7 @@ const handleAdd = () => {
     type: 2,
     startTime: '',
     endTime: '',
-    rule_time: null,
+    ruleTime: null,
     amount: 0,
     week: null,
     effectiveStartTime: null,
@@ -366,7 +383,7 @@ const handleSubmit = async () => {
     Message.warning('请填写计费时段的开始与结束时间')
     return
   }
-  if (state.form.type === 0 && state.form.rule_time == null) {
+  if (state.form.type === 0 && state.form.ruleTime == null) {
     Message.warning('请填写首段时长')
     return
   }

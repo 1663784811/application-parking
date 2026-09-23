@@ -55,7 +55,7 @@ public class PkCostRules extends BaseEntity {
     private LocalTime endTime;
 
     @Column(name = "rule_time", columnDefinition = "int COMMENT '规则时长(分钟)'")
-    private Integer rule_time;
+    private Integer ruleTime;
 
     @Column(name = "amount", columnDefinition = "decimal(18,2) COMMENT '金额'")
     private BigDecimal amount;

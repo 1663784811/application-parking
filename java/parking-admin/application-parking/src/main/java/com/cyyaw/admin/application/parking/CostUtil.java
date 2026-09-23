@@ -21,14 +21,14 @@ import java.util.Map;
  * 规则来自停车场配置的 {@link PkCostRules} 列表（一条规则可被多个停车场复用），
  * 按收费类型分四步计算：
  * <ol>
- *   <li><b>首段收费(type=0)</b>：阶梯，可配多档，按 {@code rule_time} 升序。
- *       第 i 档的起算点 = 第 i-1 档的 {@code rule_time}（首档为 0），
+ *   <li><b>首段收费(type=0)</b>：阶梯，可配多档，按 {@code ruleTime} 升序。
+ *       第 i 档的起算点 = 第 i-1 档的 {@code ruleTime}（首档为 0），
  *       停车时长超过起算点则累加该档 {@code amount}。
- *       于是「免费 15 分钟」= {@code rule_time=15, amount=0}，
- *       「首小时 5 元」= {@code rule_time=60, amount=5}：停 10 分钟收 0 元、停 40 分钟收 5 元。</li>
- *   <li><b>计费时段(type=2)</b>：超出首段覆盖时长（最高档的 {@code rule_time}）的分钟进入此步。
+ *       于是「免费 15 分钟」= {@code ruleTime=15, amount=0}，
+ *       「首小时 5 元」= {@code ruleTime=60, amount=5}：停 10 分钟收 0 元、停 40 分钟收 5 元。</li>
+ *   <li><b>计费时段(type=2)</b>：超出首段覆盖时长（最高档的 {@code ruleTime}）的分钟进入此步。
  *       未设 {@code start_time/end_time} 表示全天适用；设了则只对该时段内的分钟计费（支持跨天，如 22:00–06:00）。
- *       每个规则对落在自己时段内的分钟数按 {@code ceil(分钟数 / rule_time) * amount} 收费。</li>
+ *       每个规则对落在自己时段内的分钟数按 {@code ceil(分钟数 / ruleTime) * amount} 收费。</li>
  *   <li><b>每天封顶(type=3)</b>：按自然日切分，每天取 {@code min(当天费用, amount)} 再求和。</li>
  *   <li><b>每次封顶(type=5)</b>：总费用取 {@code min(总费用, amount)}。</li>
  * </ol>
@@ -69,14 +69,14 @@ public class CostUtil {
         // 总时长（分钟），不足一分钟按一分钟
         long totalMinutes = (Duration.between(entryTime, exitTime).getSeconds() + 59) / 60;
 
-        // ---- 首段收费：阶梯累加，起算点取上一档的 rule_time ----
+        // ---- 首段收费：阶梯累加，起算点取上一档的 ruleTime ----
         List<PkCostRules> segments = new ArrayList<>();
         for (PkCostRules rule : matched) {
             if (isType(rule, TYPE_FIRST_SEGMENT)) {
                 segments.add(rule);
             }
         }
-        segments.sort(Comparator.comparingLong(r -> minutes(r.getRule_time())));
+        segments.sort(Comparator.comparingLong(r -> minutes(r.getRuleTime())));
 
         // 首段只对入场当天生效，且该天的星期须命中规则
         LocalDate entryDate = entryTime.toLocalDate();
@@ -84,7 +84,7 @@ public class CostUtil {
         long coveredMinutes = 0;
         long previousRuleTime = 0;
         for (PkCostRules segment : segments) {
-            long ruleTime = minutes(segment.getRule_time());
+            long ruleTime = minutes(segment.getRuleTime());
             if (weekMatches(segment, entryDate) && totalMinutes > previousRuleTime) {
                 firstSegmentCost = firstSegmentCost.add(amount(segment));
             }
@@ -140,6 +140,23 @@ public class CostUtil {
             total = sessionCap;
         }
         return total.setScale(2, RoundingMode.HALF_UP);
+    }
+
+    /**
+     * 判断给定时刻是否存在适用于该车型的规则。
+     * <p>
+     * 供看板区分「真 0 元」（例如免费时段）与「压根没有适用费率」——
+     * 后者 {@link #computeCost} 同样返回 0，但展示成 "¥0.00" 会误导人。
+     *
+     * @param carType   本次车辆类型，可为空表示不限
+     * @param rules     该停车场配置的收费规则，可为空
+     * @param exitTime  参考时刻（筛选规则有效期用）
+     */
+    public static boolean hasApplicableRules(String carType, List<PkCostRules> rules, LocalDateTime exitTime) {
+        if (exitTime == null) {
+            return false;
+        }
+        return !filterRules(rules, carType, exitTime).isEmpty();
     }
 
     /**
@@ -261,7 +278,7 @@ public class CostUtil {
         if (minutes <= 0) {
             return BigDecimal.ZERO;
         }
-        long unit = minutes(rule.getRule_time());
+        long unit = minutes(rule.getRuleTime());
         if (unit <= 0) {
             // 没配计费单位时长，整段按一次收费
             return amount(rule);
@@ -291,7 +308,7 @@ public class CostUtil {
         return rule.getType() != null && rule.getType() == type;
     }
 
-    /** rule_time 为 null 或负数时按 0 处理 */
+    /** ruleTime 为 null 或负数时按 0 处理 */
     private static long minutes(Integer ruleTime) {
         return ruleTime == null || ruleTime < 0 ? 0 : ruleTime;
     }

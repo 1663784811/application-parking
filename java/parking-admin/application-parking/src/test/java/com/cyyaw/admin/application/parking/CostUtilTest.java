@@ -202,7 +202,7 @@ class CostUtilTest {
     private static PkCostRules base(int type, Integer ruleTime, String amount) {
         PkCostRules rule = new PkCostRules();
         rule.setType(type);
-        rule.setRule_time(ruleTime);
+        rule.setruleTime(ruleTime);
         rule.setAmount(new BigDecimal(amount));
         rule.setCarType("0"); // 默认小型汽车
         rule.setDelTime(0);
