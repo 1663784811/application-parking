@@ -27,7 +27,10 @@ export const inLotApi = {
   // 在场车辆列表（status=0；返回体 result.total 即该停车场在场车辆总数）
   getInLotList: (params) => authRequest.get('/admin/parking/carLog/list', { params }),
   // 在场车辆数（按停车场；status 缺省即 0）
-  getInLotCount: (parkingId) => authRequest.get(`/admin/parking/carLog/statusCount/${parkingId}`)
+  getInLotCount: (parkingId) => authRequest.get(`/admin/parking/carLog/statusCount/${parkingId}`),
+  // 在场车辆看板：一次返回在场车辆明细（已停时长 + 实时预估费用）+ 在场总数 + 总车位。
+  // 只读接口：费用由服务端按 pk_cost_rules 现算，不生成订单；命中数超上限时 truncated=true
+  getInLotBoard: (params) => authRequest.get('/admin/parking/board/inLot', { params })
 }
 
 // ========== 通行记录 ==========

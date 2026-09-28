@@ -28,64 +28,114 @@
         <h3>附近停车场</h3>
       </div>
 
-      <div
-        v-for="item in state.parkingList"
-        :key="item.id"
-        class="parking-card"
-      >
-        <img class="parking-img" :src="item.image" :alt="item.name" />
-        <div class="parking-info">
-          <h4 class="name">{{ item.name }}</h4>
-          <p class="address">{{ item.address }}</p>
-          <div class="tags">
-            <span class="tag" :class="{ 'tag-green': item.remainSpaces > 10 }">
-              剩余 {{ item.remainSpaces }} 位
-            </span>
-            <span class="distance">{{ item.distance }}</span>
+      <!-- 加载中 -->
+      <van-skeleton
+        v-if="state.loading"
+        title
+        :row="3"
+        :row-width="['100%', '60%', '40%']"
+      />
+
+      <!-- 空态：停车场要么没建、要么都设成了「不对外开放」 -->
+      <van-empty
+        v-else-if="!state.parkingList.length"
+        description="附近暂无停车场"
+      />
+
+      <template v-else>
+        <div
+          v-for="item in state.parkingList"
+          :key="item.id"
+          class="parking-card"
+          @click="handleParkingClick(item)"
+        >
+          <img
+            v-if="item.image"
+            class="parking-img"
+            :src="item.image"
+            :alt="item.name"
+          />
+          <!-- 没配图时给品牌色渐变底 + 图标，别留一块空白 -->
+          <div v-else class="parking-img parking-img--empty">
+            <van-icon name="parking-o" size="28" />
+          </div>
+          <div class="parking-info">
+            <h4 class="name">{{ item.name }}</h4>
+            <p class="address">{{ item.address }}</p>
+            <div class="tags">
+              <span class="tag" :class="{ 'tag-green': item.remainSpaces > 10 }">
+                剩余 {{ item.remainSpaces }} 位
+              </span>
+              <!-- 未授权定位 / 该场未配坐标时后端不返回距离，此时不显示 -->
+              <span v-if="item.distance" class="distance">{{ item.distance }}</span>
+            </div>
+          </div>
+          <div class="nav-btn" @click.stop="handleNavigate(item)">
+            <van-icon name="location" size="18" />
+            <span>导航</span>
           </div>
         </div>
-        <div class="nav-btn" @click="handleNavigate(item)">
-          <van-icon name="location" size="18" />
-          <span>导航</span>
-        </div>
-      </div>
+      </template>
     </div>
   </div>
 </template>
 
 <script setup>
-import { reactive } from 'vue'
+import { computed, onMounted, reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { showToast } from 'vant'
-
-const state = reactive({
-  // TODO: 接口获取附近停车场列表（getParkingList）
-  parkingList: [
-    { id: '1', name: '万达广场停车场', address: '朝阳区建国路93号', remainSpaces: 56, totalSpaces: 200, price: '5', distance: '500m', image: '' },
-    { id: '2', name: '国贸中心地下停车场', address: '朝阳区建国门外大街1号', remainSpaces: 12, totalSpaces: 150, price: '8', distance: '1.2km', image: '' },
-    { id: '3', name: '银泰中心停车场', address: '朝阳区建国门外大街2号', remainSpaces: 88, totalSpaces: 300, price: '6', distance: '800m', image: '' },
-    { id: '4', name: '华贸中心停车场', address: '朝阳区建国路89号', remainSpaces: 3, totalSpaces: 100, price: '7', distance: '1km', image: '' },
-    { id: '5', name: 'SKP-S购物中心停车场', address: '朝阳区建国路87号', remainSpaces: 42, totalSpaces: 250, price: '10', distance: '1.5km', image: '' },
-    { id: '6', name: '华润大厦停车场', address: '朝阳区姚家园路68号', remainSpaces: 0, totalSpaces: 80, price: '6', distance: '2km', image: '' },
-    { id: '7', name: '东方新天地停车场', address: '东城区东长安街1号', remainSpaces: 35, totalSpaces: 180, price: '8', distance: '2.3km', image: '' },
-    { id: '8', name: '来福士广场停车场', address: '东城区东直门南大街1号', remainSpaces: 67, totalSpaces: 200, price: '7', distance: '2.5km', image: '' },
-    { id: '9', name: '三里屯SOHO停车场', address: '朝阳区工人体育场北路8号', remainSpaces: 28, totalSpaces: 150, price: '9', distance: '2.8km', image: '' },
-    { id: '10', name: '太古里南区停车场', address: '朝阳区三里屯路19号', remainSpaces: 15, totalSpaces: 120, price: '10', distance: '3km', image: '' },
-    { id: '11', name: '颐堤港停车场', address: '朝阳区酒仙桥路18号', remainSpaces: 73, totalSpaces: 280, price: '6', distance: '3.2km', image: '' },
-    { id: '12', name: '朝阳大悦城停车场', address: '朝阳区朝阳北路101号', remainSpaces: 45, totalSpaces: 350, price: '5', distance: '3.5km', image: '' },
-    { id: '13', name: '合生汇停车场', address: '朝阳区西大望路21号', remainSpaces: 92, totalSpaces: 400, price: '4', distance: '3.8km', image: '' },
-    { id: '14', name: '蓝色港湾停车场', address: '朝阳区朝阳公园路6号', remainSpaces: 38, totalSpaces: 200, price: '7', distance: '4km', image: '' },
-    { id: '15', name: '侨福芳草地停车场', address: '朝阳区东大桥路9号', remainSpaces: 22, totalSpaces: 100, price: '8', distance: '4.2km', image: '' },
-    { id: '16', name: '国贸商城停车场', address: '朝阳区建国门外大街1号', remainSpaces: 55, totalSpaces: 500, price: '8', distance: '1.8km', image: '' },
-    { id: '17', name: '燕莎友谊商城停车场', address: '朝阳区亮马桥路52号', remainSpaces: 18, totalSpaces: 150, price: '6', distance: '4.5km', image: '' },
-    { id: '18', name: '凤凰汇停车场', address: '朝阳区三元桥凤凰城', remainSpaces: 60, totalSpaces: 220, price: '7', distance: '5km', image: '' },
-    { id: '19', name: '凯德MALL太阳宫停车场', address: '朝阳区太阳宫中路12号', remainSpaces: 85, totalSpaces: 300, price: '5', distance: '5.5km', image: '' },
-    { id: '20', name: '望京SOHO停车场', address: '朝阳区望京街10号', remainSpaces: 40, totalSpaces: 250, price: '6', distance: '6km', image: '' },
-  ],
-})
+import { getParkingList } from '@/api/appParking'
 
 const route = useRoute()
 const router = useRouter()
+
+// appId 贯穿全路由，列表要按当前应用过滤
+const appId = computed(() => route.params.appId)
+
+const state = reactive({
+  parkingList: [],
+  loading: true,
+})
+
+/**
+ * 取当前位置。拿不到就当作没有定位 —— 权限被拒、超时、浏览器不支持都属于正常情况，
+ * 后端本来就把 lng/lat 设计成可选，绝不为了「有距离」把首页卡住或假装定位成功。
+ *
+ * @return {Promise<{lng: number, lat: number} | null>}
+ */
+const getPosition = () => {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) {
+      resolve(null)
+      return
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lng: pos.coords.longitude, lat: pos.coords.latitude }),
+      () => resolve(null),
+      { timeout: 5000, maximumAge: 60000 },
+    )
+  })
+}
+
+const loadParkingList = async () => {
+  state.loading = true
+  try {
+    const position = await getPosition()
+    const res = await getParkingList({
+      appId: appId.value,
+      ...(position ? { lng: position.lng, lat: position.lat } : {}),
+    })
+    // 拦截器已把 BaseResult 解包，列表在 data 里
+    state.parkingList = res?.data || []
+  } catch (err) {
+    state.parkingList = []
+    showToast(err?.msg || '停车场列表加载失败')
+  } finally {
+    state.loading = false
+  }
+}
+
+onMounted(loadParkingList)
 
 const handleScan = () => {
   // 本 H5 还没有扫码能力：调起相机需要微信 JS-SDK / 支付宝 JSAPI，
@@ -96,8 +146,17 @@ const handleScan = () => {
   showToast('请扫描出口通道的二维码进入缴费')
 }
 
+// 点卡片直接进该停车场的出场缴费页：带上真实 parkingId，ScanExit 靠它定位停车场
+const handleParkingClick = (item) => {
+  router.push({
+    name: 'scanExit',
+    params: { appId: appId.value },
+    query: { parkingId: item.id },
+  })
+}
+
 const handleNavigate = (item) => {
-  // TODO: 调用地图导航
+  // TODO: 调用地图导航（需要地图 SDK 凭证，暂缺）
   console.log('导航到:', item.name)
 }
 </script>
@@ -192,10 +251,21 @@ const handleNavigate = (item) => {
       border-radius: 8px;
       object-fit: cover;
       background: var(--bg-tertiary);
+      flex-shrink: 0;
+    }
+
+    // 没配图时的占位块：品牌色浅渐变 + 图标
+    .parking-img--empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--gradient-primary-light);
+      color: var(--brand-primary);
     }
 
     .parking-info {
       flex: 1;
+      min-width: 0;
       display: flex;
       flex-direction: column;
       justify-content: space-between;

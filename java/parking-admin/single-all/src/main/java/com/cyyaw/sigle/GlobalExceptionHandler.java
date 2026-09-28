@@ -2,11 +2,13 @@ package com.cyyaw.sigle;
 
 import com.cyyaw.admin.common.BaseResult;
 import com.cyyaw.admin.common.WebException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -26,7 +28,10 @@ public class GlobalExceptionHandler {
             res.setMsg(webException.getMsg());
             return res;
         }
-        e.printStackTrace();
+        // 走日志而不用 printStackTrace()：stderr 不受 logback 接管，
+        // 异常堆栈只落在控制台、日志文件里什么都没有，事后排查不了。
+        // 响应体仍统一是 4000 操作失败，不向调用方泄露内部细节。
+        log.error("接口未捕获异常", e);
         return BaseResult.fail();
     }
 

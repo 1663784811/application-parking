@@ -159,6 +159,25 @@
             <Radio :label="0">停用</Radio>
           </RadioGroup>
         </FormItem>
+
+        <!-- 图片用 URL 输入而非 <Upload>：后端上传接口（/common/file/upload）实测不可用，
+             挂个上传按钮只会是个假按钮；值与 au_app.logo 一致为单个 URL 字符串 -->
+        <FormItem label="停车场图片" class="modal-form-full">
+          <Input
+            v-model="state.formData.image"
+            placeholder="图片 URL，选填（H5 首页停车场卡片展示）"
+          >
+            <template #prefix>
+              <Icon type="ios-image" />
+            </template>
+          </Input>
+          <img
+            v-if="state.formData.image"
+            :src="state.formData.image"
+            class="parking-image-preview"
+            alt="停车场图片预览"
+          />
+        </FormItem>
       </Form>
 
       <template #footer>
@@ -457,6 +476,7 @@ const state = reactive({
     id: null,
     name: '',
     address: '',
+    image: '',
     longitude: '',
     latitude: '',
     totalSpaces: 100,
@@ -539,6 +559,7 @@ const handleAdd = () => {
     id: null,
     name: '',
     address: '',
+    image: '',
     longitude: '',
     latitude: '',
     totalSpaces: 100,
@@ -556,6 +577,7 @@ const handleEdit = (row) => {
     id: row.id,
     name: row.name,
     address: row.address,
+    image: row.image || '',
     longitude: lng ? lng.trim() : '',
     latitude: lat ? lat.trim() : '',
     totalSpaces: row.capacity,
@@ -694,6 +716,7 @@ const handleSubmit = async () => {
     const params = {
       name: state.formData.name,
       address: state.formData.address,
+      image: state.formData.image || '',
       longLat: state.formData.longitude && state.formData.latitude
         ? `${state.formData.longitude},${state.formData.latitude}`
         : '',
@@ -794,5 +817,17 @@ onMounted(() => {
   .rule-modal-tip {
     color: var(--text-color-secondary);
   }
+}
+
+// 停车场图片预览。Modal 内容 teleport 到 body，样式不能挂在 .parking-list-page 下
+.parking-image-preview {
+  display: block;
+  width: 160px;
+  height: 100px;
+  margin-top: var(--spacing-sm);
+  object-fit: cover;
+  border: 1px solid var(--border-color-base);
+  border-radius: var(--border-radius-base);
+  background-color: var(--bg-color-secondary);
 }
 </style>

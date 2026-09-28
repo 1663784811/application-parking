@@ -29,6 +29,9 @@ public class PkParking extends BaseEntity {
     @Column(name = "address", columnDefinition = "varchar(255) COMMENT '位置'")
     private String address;
 
+    @Column(name = "image", columnDefinition = "varchar(255) COMMENT '停车场图片'")
+    private String image;
+
     @Column(name = "capacity", columnDefinition = "int COMMENT '车位容量'")
     private Integer capacity;
 

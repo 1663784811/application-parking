@@ -413,6 +413,7 @@ CREATE TABLE `pk_parking` (
   `name` varchar(255) DEFAULT NULL COMMENT '停车场名称',
   `long_lat` varchar(64) DEFAULT NULL COMMENT '经纬度',
   `address` varchar(255) DEFAULT NULL COMMENT '位置',
+  `image` varchar(255) DEFAULT NULL COMMENT '停车场图片',
   `capacity` int DEFAULT NULL COMMENT '车位容量',
   `opening_up` int DEFAULT NULL COMMENT '是否对外开放{0:对外开放,1:不开放}',
   `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',

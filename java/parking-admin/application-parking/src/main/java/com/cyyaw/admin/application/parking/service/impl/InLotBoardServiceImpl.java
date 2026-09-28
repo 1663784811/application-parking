@@ -6,7 +6,6 @@ import com.cyyaw.admin.application.parking.CostUtil;
 import com.cyyaw.admin.application.parking.service.InLotBoardService;
 import com.cyyaw.admin.application.parking.service.PkCarLogService;
 import com.cyyaw.admin.application.parking.service.PkParkingService;
-import com.cyyaw.admin.dao.parking.PkCarLogDao;
 import com.cyyaw.admin.dao.parking.PkCostRulesDao;
 import com.cyyaw.admin.entity.dto.parking.InLotBoardVO;
 import com.cyyaw.admin.entity.dto.parking.InLotCarVO;
@@ -40,9 +39,6 @@ public class InLotBoardServiceImpl implements InLotBoardService {
 
     @Autowired
     private PkCarLogService pkCarLogService;
-
-    @Autowired
-    private PkCarLogDao pkCarLogDao;
 
     @Autowired
     private PkParkingService pkParkingService;
@@ -105,14 +101,12 @@ public class InLotBoardServiceImpl implements InLotBoardService {
     /**
      * 在场车辆总数：与列表用同一套过滤条件（status=0 且未逻辑删除），
      * 保证统计卡片上的数字和看板上画出来的车是同一口径。
+     * <p>
+     * 条件已收敛到 {@link PkCarLogService#countInLot}，H5 首页的剩余车位也走它，
+     * 两处口径不会再各自漂移（这里不再自己拼 wrapper）。
      */
     private long countInLot(Long parkingId) {
-        QueryWrapper<PkCarLog> countWrapper = new QueryWrapper<>();
-        countWrapper.eq("parking_id", parkingId);
-        countWrapper.eq("status", STATUS_IN);
-        countWrapper.eq("del_time", 0);
-        long total = pkCarLogDao.selectCount(countWrapper);
-        return total;
+        return pkCarLogService.countInLot(parkingId);
     }
 
     /**

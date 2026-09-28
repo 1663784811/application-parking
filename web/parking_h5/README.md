@@ -114,6 +114,10 @@ cardPackage | coupon | parkingExit | scanExit
 | `POST /api/common/verify/getVerifyPhoneCode` | 发短信验证码（手机号+指纹） | ✅ 免登录 |
 | `POST /api/app/login/phoneLogin` | 手机验证码登录/注册 | ✅ 免登录 |
 | `POST /api/common/token/refreshToken` | 刷新短 token | ✅（`/common/**`） |
+| `GET  /api/app/parking/list?appId=&lng=&lat=` | 首页附近停车场（剩余车位/距离） | ❌ 需登录 |
+
+> `/app/parking/list` 的 `lng`/`lat` 可选：两者都传后端才用 `GeographicUtil` 算距离并按距离升序，
+> 缺省则按创建时间倒序、不返回 `distance`。定位拿不到（拒绝授权/超时/浏览器不支持）走的就是缺省路径。
 
 免登录白名单在后端 `SecurityConfig.java`，还有 `/admin/login/**`、`/store/login/**`、`/internal/**`、`/app/product/**` 等。
 
@@ -121,16 +125,22 @@ cardPackage | coupon | parkingExit | scanExit
 
 **已接后端：** `welcome`、`login`（含指纹、60s 倒计时、记住手机号）、
 `parkingExit`（扫码缴费出场：通道带出车牌、按车牌查费用、支付）、
-`scanExit`（重新设计的出场缴费页：品牌头图 + 悬浮卡片，车牌核对 → 查费用 → 吸底支付）。
+`scanExit`（重新设计的出场缴费页：品牌头图 + 悬浮卡片，车牌核对 → 查费用 → 吸底支付）、
+`mainIndex` 首页附近停车场列表。
 `scanExit` 与 `parkingExit` 后端接口完全相同（都走 `src/api/parkingExit.js` 的三个接口），
 区别只在交互与视觉；**通道二维码已改指 `scanExit`**（`parking_admin` 的 `channelList.vue`），
 旧链接 `parkingExit` 保留可用，已印出去的二维码不受影响。
+
+首页列表接口在 `src/api/appParking.js`（`app.js` 禁改，新接口不往里加）。
+卡片带真实 `pk_parking.id`，**点击卡片直接进该停车场的出场缴费页**
+（`/app/:appId/scanExit?parkingId=<真实ID>`），是除扫二维码之外的第二个入口。
+卡片不显示价格：费率是首段/时段/封顶的阶梯组合，没有单一单价可展示，真实金额以出场查询为准。
 
 **仍是本地 mock 数据**（`reactive` 里硬编码 + `TODO` 注释），UI 已完成、接口未接：
 
 | 页面 | 文件 | 待接 |
 | --- | --- | --- |
-| 首页 | `views/main/MainIndex.vue` | 附近停车场列表、地图导航 |
+| 首页 | `views/main/MainIndex.vue` | 地图导航（需地图 SDK 凭证）、扫码 |
 | 我的 | `views/me/Me.vue` | 用户信息 + 停车次数/时长/优惠券等统计 |
 | 订单列表/详情 | `views/order/Order.vue`、`OrderDetail.vue` | 列表、详情、删除、支付 |
 | 车辆列表/新增/编辑 | `views/vehicle/Vehicle.vue`、`VehicleAdd.vue`、`VehicleEdit.vue` | 增删改查（可用 `commonSave`） |
@@ -153,7 +163,16 @@ cardPackage | coupon | parkingExit | scanExit
 4. **支付未实现**：`parkingExit` 调接口3 会拿到「支付通道未接入」；`OrderDetail` 的支付仍是 `setTimeout` 假成功。微信/支付宝统一下单（含商户号、回调验签）全项目不存在。
 5. **`userInfo` 字段未取**：登录成功后只存了 token，没有调 `/api/common/token/findUserInfo` 回填 `userInfo`。
 6. **`uploadFile` 暂无调用方**（出场/车辆图片未接入），上传接口与 `/file` 代理待验证。
-7. **附近停车场是 mock 数据**：`MainIndex.parkingList` 里的 id 是 `'1'`~`'20'` 的假值，不是真实的 `pk_parking.id`，所以停车场卡片暂时接不了出场页。
+7. ~~**附近停车场是 mock 数据**~~ **已修**：改调 `GET /api/app/parking/list`，卡片带真实
+   `pk_parking.id`，可点进出场缴费页。遗留两点：
+   - **`pk_parking.long_lat` 是自由文本，无格式约定**。接口按 `"经度,纬度"` 解析（与
+     `parkingList.vue` 的经/纬度两个输入框拼串的口径一致），解析失败或超出合法范围的当「无坐标」，
+     不参与距离排序。**但这道范围校验挡不住占位值**：库里现有数据是 `"23,12"`，两个数各自都在
+     合法范围内，会被当成真实坐标参与计算（实测广州到该点算出 9537.8km）。要让距离可用，
+     得先在管理端把坐标填成真值。
+   - **卡片图依赖 `pk_parking.image`**（本次新增字段），管理端用 URL 输入框录入、不是上传
+     （后端上传接口 `/common/file/upload` 实测返回 4000 操作失败，且全项目无 Java 端上传代码，
+     该接口不在本仓库源码内）。没配图时卡片回落品牌色渐变占位。
 
 ## 构建与部署
 
