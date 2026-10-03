@@ -1,5 +1,6 @@
 package com.cyyaw.admin.application.parking;
 
+import com.cyyaw.admin.dao.parking.PkCostRulesDao;
 import com.cyyaw.admin.entity.module.parking.PkCostRules;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -66,7 +67,7 @@ class CostUtilTest {
         // 20:00 入场，次日 00:30 出场：20:00-21:00 首段 5 元，
         // 21:00-22:00 白天时段 3 元，22:00-00:30 夜间 150 分钟 -> 3 个单位 * 2 = 6 元
         LocalDateTime entry = LocalDateTime.of(2026, 3, 4, 20, 0);
-        assertEquals(14, compute(entry, entry.plusMinutes(270), null, rules));
+        assertEquals(14, compute(entry, entry.plusMinutes(270), rules));
     }
 
     @Test
@@ -92,21 +93,30 @@ class CostUtilTest {
 
         // 跨两天：每天 50 元封顶共 100，再被每次封顶压到 80
         LocalDateTime entry = LocalDateTime.of(2026, 3, 4, 23, 0);
-        assertEquals(80, compute(entry, entry.plusHours(4), null, rules));
+        assertEquals(80, compute(entry, entry.plusHours(4), rules));
     }
 
     @Test
-    @DisplayName("车辆类型不匹配的规则不参与计费")
+    @DisplayName("车型过滤在取规则时完成（PkCostRulesDao.matchCarType）")
     void carTypeFilter() {
-        PkCostRules onlyBig = firstSegment(0, "10.00");
-        onlyBig.setCarType("2"); // 大型汽车
-        List<PkCostRules> rules = Arrays.asList(firstSegment(0, "5.00"), onlyBig);
+        PkCostRules small = firstSegment(0, "5.00");
+        PkCostRules big = firstSegment(0, "10.00");
+        big.setCarType("2"); // 大型汽车
+        List<PkCostRules> rules = Arrays.asList(small, big);
 
-        assertEquals(5, compute(ENTRY, ENTRY.plusMinutes(30), "0", rules), "小型车走自己的规则");
-        assertEquals(10, compute(ENTRY, ENTRY.plusMinutes(30), "2", rules), "大型车走大型车规则");
-        // car_type 在库里是 NOT NULL，若车型未知就把限定车型的规则全排除会导致费用恒为 0，
-        // 因此车型未知时不做车型过滤，让所有规则参与计费。
-        assertEquals(15, compute(ENTRY, ENTRY.plusMinutes(30), null, rules), "车型未知时不按车型过滤");
+        assertEquals(5, compute(ENTRY, ENTRY.plusMinutes(30), PkCostRulesDao.matchCarType(rules, "0")),
+                "小型车只走自己的规则");
+        assertEquals(10, compute(ENTRY, ENTRY.plusMinutes(30), PkCostRulesDao.matchCarType(rules, "2")),
+                "大型车走大型车规则");
+        // pk_car_log.car_type 可空：车型未知时不过滤，让所有规则参与计费，
+        // 否则限定车型的规则被全排除会导致费用恒为 0
+        assertEquals(15, compute(ENTRY, ENTRY.plusMinutes(30), PkCostRulesDao.matchCarType(rules, null)),
+                "车型未知时不按车型过滤");
+        // 规则侧 car_type 为空视为不限车型：不限车型的规则对所有车生效
+        PkCostRules anyType = firstSegment(0, "8.00");
+        anyType.setCarType("");
+        assertEquals(18, compute(ENTRY, ENTRY.plusMinutes(30), PkCostRulesDao.matchCarType(
+                Arrays.asList(big, anyType), "2")), "不限车型规则 + 大型车规则合计 10 + 8");
     }
 
     @Test
@@ -117,10 +127,10 @@ class CostUtilTest {
         List<PkCostRules> rules = Collections.singletonList(sundayOnly);
 
         // ENTRY 是 2026-03-04 周三
-        assertEquals(0, compute(ENTRY, ENTRY.plusMinutes(30), null, rules));
+        assertEquals(0, compute(ENTRY, ENTRY.plusMinutes(30), rules));
         // 2026-03-08 是周日
         assertEquals(10, compute(LocalDateTime.of(2026, 3, 8, 10, 0),
-                LocalDateTime.of(2026, 3, 8, 10, 30), null, rules));
+                LocalDateTime.of(2026, 3, 8, 10, 30), rules));
     }
 
     @Test
@@ -128,11 +138,11 @@ class CostUtilTest {
     void effectiveRangeFilter() {
         PkCostRules expired = firstSegment(0, "10.00");
         expired.setEffectiveEndTime(ENTRY.toLocalDate().minusDays(1));
-        assertEquals(0, compute(ENTRY, ENTRY.plusMinutes(30), null, Collections.singletonList(expired)));
+        assertEquals(0, compute(ENTRY, ENTRY.plusMinutes(30), Collections.singletonList(expired)));
 
         PkCostRules future = firstSegment(0, "10.00");
         future.setEffectiveStartTime(ENTRY.toLocalDate().plusDays(1));
-        assertEquals(0, compute(ENTRY, ENTRY.plusMinutes(30), null, Collections.singletonList(future)));
+        assertEquals(0, compute(ENTRY, ENTRY.plusMinutes(30), Collections.singletonList(future)));
     }
 
     @Test
@@ -140,16 +150,16 @@ class CostUtilTest {
     void deletedRule() {
         PkCostRules deleted = firstSegment(0, "10.00");
         deleted.setDelTime(1);
-        assertEquals(0, compute(ENTRY, ENTRY.plusMinutes(30), null, Collections.singletonList(deleted)));
+        assertEquals(0, compute(ENTRY, ENTRY.plusMinutes(30), Collections.singletonList(deleted)));
     }
 
     @Test
     @DisplayName("出场时间不晚于入场时间时费用为 0")
     void invalidRange() {
         List<PkCostRules> rules = Collections.singletonList(firstSegment(0, "10.00"));
-        assertEquals(0, compute(ENTRY, ENTRY, null, rules));
-        assertEquals(0, compute(ENTRY, ENTRY.minusMinutes(10), null, rules));
-        assertEquals(0, CostUtil.computeCost(null, ENTRY, null, rules).intValueExact());
+        assertEquals(0, compute(ENTRY, ENTRY, rules));
+        assertEquals(0, compute(ENTRY, ENTRY.minusMinutes(10), rules));
+        assertEquals(0, CostUtil.computeCost(null, ENTRY, rules).getTotalAmount().intValueExact());
     }
 
     @Test
@@ -165,11 +175,11 @@ class CostUtilTest {
 
     /** 返回 int 而非 BigDecimal，断言时才不会踩到 scale（5 与 5.00）比较的坑 */
     private static int cost(long minutes, List<PkCostRules> rules) {
-        return compute(ENTRY, ENTRY.plusMinutes(minutes), null, rules);
+        return compute(ENTRY, ENTRY.plusMinutes(minutes), rules);
     }
 
-    private static int compute(LocalDateTime entry, LocalDateTime exit, String carType, List<PkCostRules> rules) {
-        return CostUtil.computeCost(entry, exit, carType, rules).intValueExact();
+    private static int compute(LocalDateTime entry, LocalDateTime exit, List<PkCostRules> rules) {
+        return CostUtil.computeCost(entry, exit, rules).getTotalAmount().intValueExact();
     }
 
     /** 首段收费档 */
@@ -202,7 +212,7 @@ class CostUtilTest {
     private static PkCostRules base(int type, Integer ruleTime, String amount) {
         PkCostRules rule = new PkCostRules();
         rule.setType(type);
-        rule.setruleTime(ruleTime);
+        rule.setRuleTime(ruleTime);
         rule.setAmount(new BigDecimal(amount));
         rule.setCarType("0"); // 默认小型汽车
         rule.setDelTime(0);

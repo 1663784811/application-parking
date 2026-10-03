@@ -23,6 +23,7 @@
 
     <modules>
         <module>../cloud-application-gateway</module>
+        <module>../cloud-application-user</module>
     </modules>
 
     <dependencies>

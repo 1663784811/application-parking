@@ -1,6 +1,5 @@
 package com.cyyaw.admin.application.parking;
 
-
 import com.cyyaw.admin.entity.module.parking.PkCostRules;
 
 import java.math.BigDecimal;
@@ -9,7 +8,9 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -35,6 +36,10 @@ import java.util.Map;
  * 封顶在其余计费之后应用，每天封顶先于每次封顶。没有任何规则命中则费用为 0。
  * <p>
  * 说明：金额单位与 {@code pk_cost_rules.amount} 一致（元，两位小数）；时长不足一分钟按一分钟计。
+ * <p>
+ * {@link #computeCost} 除金额外还产出 {@link ParkingCostDetails} 逐段明细，用于向车主展示
+ * "这笔钱是怎么算出来的"。封顶（每天/每次）在明细之上削减金额，不产生明细，
+ * 故封顶生效时明细金额之和会大于 {@code totalAmount}。
  */
 public class CostUtil {
 
@@ -48,23 +53,25 @@ public class CostUtil {
     public static final int TYPE_SESSION_CAP = 5;
 
     /**
-     * 计算停车费用。
+     * 计算停车费用，返回金额与逐段收费明细。
      *
      * @param entryTime 入场时间
      * @param exitTime  出场时间
-     * @param carType   本次车辆类型（与 {@code pk_cost_rules.car_type} 对应），可为空表示不限
-     * @param rules     该停车场配置的收费规则，可为空
-     * @return 应收金额，恒不为 null
+     * @param rules     本次参与计费的收费规则，可为空
+     * @return 结算结果，恒不为 null；入参非法或无命中规则时 {@code totalAmount} 为 0、明细为空
      */
-    public static BigDecimal computeCost(LocalDateTime entryTime, LocalDateTime exitTime,
-                                         String carType, List<PkCostRules> rules) {
+    public static ParkingCost computeCost(LocalDateTime entryTime, LocalDateTime exitTime,
+                                          List<PkCostRules> rules) {
+        ParkingCost result = new ParkingCost();
         if (entryTime == null || exitTime == null || !exitTime.isAfter(entryTime)) {
-            return BigDecimal.ZERO;
+            result.setTotalAmount(BigDecimal.ZERO);
+            return result;
         }
-        // 出场时间为参考点：规则有效期、星期、车型都按它筛，不按入场时间
-        List<PkCostRules> matched = filterRules(rules, carType, exitTime);
+        // 出场时间为参考点：规则有效期、星期都按它筛，不按入场时间
+        List<PkCostRules> matched = filterRules(rules, exitTime);
         if (matched.isEmpty()) {
-            return BigDecimal.ZERO;
+            result.setTotalAmount(BigDecimal.ZERO);
+            return result;
         }
 
         // 总时长（分钟），整除前 +59 即向上取整：不足一分钟也按一分钟
@@ -86,10 +93,14 @@ public class CostUtil {
         // 注意这里即使本档星期不命中也照填 —— 时长被"覆盖"是事实，只是不收费。
         long coveredMinutes = 0;
         long previousRuleTime = 0;
+        // 首段每命中一档产出一条明细，区间落在它覆盖的时长范围内
+        List<ParkingCostDetails> details = new ArrayList<>();
         for (PkCostRules segment : segments) {
             long ruleTime = minutes(segment.getRuleTime());
             if (weekMatches(segment, entryDate) && totalMinutes > previousRuleTime) {
                 firstSegmentCost = firstSegmentCost.add(amount(segment));
+                details.add(buildDetail(segment,
+                        entryTime.plusMinutes(previousRuleTime), entryTime.plusMinutes(ruleTime)));
             }
             previousRuleTime = ruleTime;
             coveredMinutes = ruleTime;
@@ -104,7 +115,7 @@ public class CostUtil {
         }
         // 逐分钟归类：i 是相对入场时刻的分钟偏移，每个分钟只归到一个规则（时段不重叠计费）。
         // LinkedHashMap 保序，后续按自然日汇总时顺序稳定。
-        Map<LocalDate, Map<PkCostRules, Long>> periodMinutes = new LinkedHashMap<>();
+        Map<LocalDate, Map<PkCostRules, List<Long>>> periodMinutes = new LinkedHashMap<>();
         for (long i = coveredMinutes; i < totalMinutes; i++) {
             LocalDateTime moment = entryTime.plusMinutes(i);
             LocalDate date = moment.toLocalDate();
@@ -114,18 +125,23 @@ public class CostUtil {
                 continue;
             }
             periodMinutes.computeIfAbsent(date, k -> new LinkedHashMap<>())
-                    .merge(hit, 1L, Long::sum);
+                    .computeIfAbsent(hit, k -> new ArrayList<>()).add(i);
         }
 
         // ---- 按自然日汇总，并在每天应用「每天封顶」 ----
         // 每天封顶按天独立生效，跨天的两次封顶互不影响，故先逐日封顶再累加。
         BigDecimal dailyCap = minAmount(matched, TYPE_DAILY_CAP);
         BigDecimal total = BigDecimal.ZERO;
-        for (Map.Entry<LocalDate, Map<PkCostRules, Long>> dayEntry : periodMinutes.entrySet()) {
+        for (Map.Entry<LocalDate, Map<PkCostRules, List<Long>>> dayEntry : periodMinutes.entrySet()) {
             // 首段费只归入场当天；后续自然日只计时段费
             BigDecimal dayCost = dayEntry.getKey().equals(entryDate) ? firstSegmentCost : BigDecimal.ZERO;
-            for (Map.Entry<PkCostRules, Long> ruleEntry : dayEntry.getValue().entrySet()) {
-                dayCost = dayCost.add(periodCost(ruleEntry.getKey(), ruleEntry.getValue()));
+            for (Map.Entry<PkCostRules, List<Long>> ruleEntry : dayEntry.getValue().entrySet()) {
+                long mins = ruleEntry.getValue().size();
+                dayCost = dayCost.add(periodCost(ruleEntry.getKey(), mins));
+                // 同一天同一规则可能落在多个不连续的时间窗内，区间用「实际起止」而非逐段
+                List<Long> offsets = ruleEntry.getValue();
+                details.add(buildDetail(ruleEntry.getKey(),
+                        entryTime.plusMinutes(offsets.get(0)), entryTime.plusMinutes(offsets.get(offsets.size() - 1) + 1)));
             }
             if (dailyCap != null && dayCost.compareTo(dailyCap) > 0) {
                 dayCost = dailyCap;
@@ -147,24 +163,38 @@ public class CostUtil {
         if (sessionCap != null && total.compareTo(sessionCap) > 0) {
             total = sessionCap;
         }
-        return total.setScale(2, RoundingMode.HALF_UP);
+        result.setTotalAmount(total.setScale(2, RoundingMode.HALF_UP));
+        result.setParkingCostDetails(details);
+        return result;
     }
 
     /**
-     * 判断给定时刻是否存在适用于该车型的规则。
+     * 构造一条收费明细。金额为 0 的区间（如免费时长档）也保留，便于展示"为什么没收费"。
+     */
+    private static ParkingCostDetails buildDetail(PkCostRules rule, LocalDateTime start, LocalDateTime end) {
+        ParkingCostDetails detail = new ParkingCostDetails();
+        detail.setRuleId(rule.getId());
+        detail.setRuleName(rule.getName());
+        detail.setStartTime(Date.from(start.atZone(ZoneId.systemDefault()).toInstant()));
+        detail.setEndTime(Date.from(end.atZone(ZoneId.systemDefault()).toInstant()));
+        detail.setAmount(amount(rule));
+        return detail;
+    }
+
+    /**
+     * 判断给定时刻是否存在适用的规则。
      * <p>
      * 供看板区分「真 0 元」（例如免费时段）与「压根没有适用费率」——
      * 后者 {@link #computeCost} 同样返回 0，但展示成 "¥0.00" 会误导人。
      *
-     * @param carType   本次车辆类型，可为空表示不限
-     * @param rules     该停车场配置的收费规则，可为空
-     * @param exitTime  参考时刻（筛选规则有效期用）
+     * @param rules    本次参与计费的收费规则，可为空
+     * @param exitTime 参考时刻（筛选规则有效期用）
      */
-    public static boolean hasApplicableRules(String carType, List<PkCostRules> rules, LocalDateTime exitTime) {
+    public static boolean hasApplicableRules(List<PkCostRules> rules, LocalDateTime exitTime) {
         if (exitTime == null) {
             return false;
         }
-        return !filterRules(rules, carType, exitTime).isEmpty();
+        return !filterRules(rules, exitTime).isEmpty();
     }
 
     /**
@@ -187,10 +217,12 @@ public class CostUtil {
     }
 
     /**
-     * 全局筛选：未删除、车辆类型匹配、规则有效期覆盖出场日期。
+     * 全局筛选：未删除、规则有效期覆盖出场日期。
      * 星期(week)不在此处过滤 —— 它按自然日逐天判定，见 {@link #weekMatches}。
+     * 车型不再过滤：规则按 {@code pk_cost_rules.car_type} 区分车型，由调用方在取规则时
+     * 按本次车辆类型筛好再传入。
      */
-    private static List<PkCostRules> filterRules(List<PkCostRules> rules, String carType, LocalDateTime exitTime) {
+    private static List<PkCostRules> filterRules(List<PkCostRules> rules, LocalDateTime exitTime) {
         List<PkCostRules> matched = new ArrayList<>();
         if (rules == null) {
             return matched;
@@ -201,13 +233,6 @@ public class CostUtil {
                 continue;
             }
             if (rule.getDelTime() != null && rule.getDelTime() != 0) {
-                continue;
-            }
-            // car_type 为空视为不限车型
-            String ruleCarType = rule.getCarType();
-            if (ruleCarType != null && !ruleCarType.isBlank()
-                    && carType != null && !carType.isBlank()
-                    && !ruleCarType.trim().equalsIgnoreCase(carType.trim())) {
                 continue;
             }
             if (rule.getEffectiveStartTime() != null && exitDate.isBefore(rule.getEffectiveStartTime())) {

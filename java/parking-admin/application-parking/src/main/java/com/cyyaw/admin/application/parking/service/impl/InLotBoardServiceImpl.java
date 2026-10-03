@@ -125,11 +125,13 @@ public class InLotBoardServiceImpl implements InLotBoardService {
         car.setDurationMinutes(Duration.between(entryTime, now).toMinutes());
         // 出场摄像头已识别 = 待缴费（status 仍为 0，缴完费放行才写出场时间）
         car.setWaiting(carLog.getOutChannelId() != null);
-        // 有无适用规则要区分开："真 0 元（免费时段）"与"压根没有适用费率"
-        boolean matched = CostUtil.hasApplicableRules(carLog.getCarType(), rules, now);
+        // 有无适用规则要区分开："真 0 元（免费时段）"与"压根没有适用费率"。
+        // 同一停车场多车型混停时各车用各自费率；规则在上层按停车场取一次，这里只筛车型
+        List<PkCostRules> carRules = PkCostRulesDao.matchCarType(rules, carLog.getCarType());
+        boolean matched = CostUtil.hasApplicableRules(carRules, now);
         car.setRuleMatched(matched);
         car.setAmount(matched
-                ? CostUtil.computeCost(entryTime, now, carLog.getCarType(), rules)
+                ? CostUtil.computeCost(entryTime, now, carRules).getTotalAmount()
                 : BigDecimal.ZERO);
         return car;
     }
