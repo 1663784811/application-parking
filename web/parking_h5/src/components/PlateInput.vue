@@ -3,13 +3,17 @@
     <div class="plate-cells">
       <!-- 省份前缀 -->
       <span class="plate-cell plate-cell--prefix">{{ prefix }}</span>
-      <!-- 7 个号牌位：常规车牌用到第 6 位，新能源车再补第 7 位 -->
+      <!-- 7 个号牌位：常规车牌用到第 6 位，新能源车第 7 位补“新”；
+           第 7 位空着就留浅色“新”作提示（含已输满 6 位时），别留一个说不清的灰框 -->
       <span
         v-for="(ch, i) in slots"
         :key="i"
         class="plate-cell"
         :class="{ 'is-active': i === number.length && number.length < 7 }"
-      >{{ ch }}</span>
+      >
+        <span v-if="ch">{{ ch }}</span>
+        <span v-else-if="i === 6" class="plate-hint">新</span>
+      </span>
     </div>
 
     <PlateKeyboard
@@ -75,6 +79,13 @@ const slots = computed(() =>
       color: var(--on-brand-primary);
       background: var(--brand-primary);
       border-color: var(--brand-primary);
+    }
+
+    // 第 7 位占位提示“新”：比已输字符更淡，看得出是提示不是已输入
+    .plate-hint {
+      color: var(--text-disabled);
+      opacity: 0.55;
+      font-weight: 400;
     }
 
     // 下一个待输入位：主色描边加粗，不用 box-shadow 撑宽，避免格子宽度抖动

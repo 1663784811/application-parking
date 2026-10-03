@@ -123,6 +123,7 @@ public class ParkingExitServiceImpl implements ParkingExitService {
         // 规则每次重新取：出场前管理员可能刚改过费率
         List<PkCostRules> rules = pkCostRulesDao.selectByParkingId(carLog.getParkingId());
         LocalDateTime entryTime = carLog.getEntryTime() == null ? LocalDateTime.now() : carLog.getEntryTime();
+
         BigDecimal amount = CostUtil.computeCost(entryTime, LocalDateTime.now(), carLog.getCarType(), rules);
         return infOrder.updateOrderAmountByCarLogId(carLog.getId(), carLog.getParkingId(), amount);
     }

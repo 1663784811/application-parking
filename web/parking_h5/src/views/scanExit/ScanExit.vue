@@ -132,8 +132,8 @@ const state = reactive({
   // 二维码带进来的参数
   parkingId: '',
   channelId: '',
-  // 车牌
-  platePrefix: '京',
+  // 车牌（前缀留空，由车主从省份键盘自选，不预置默认省）
+  platePrefix: '',
   plateNumber: '',
   // 查到的订单
   orderId: '',

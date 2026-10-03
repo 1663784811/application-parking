@@ -59,7 +59,7 @@
         </template>
         <template #action="{ row }">
           <Button type="text" size="small" @click="handleDevice(row)">设备</Button>
-          <Button type="text" size="small" @click="handleShowQr(row)">二维码</Button>
+          <Button v-if="isExitChannel(row)" type="text" size="small" @click="handleShowQr(row)">二维码</Button>
           <Button type="text" size="small" @click="handleEdit(row)">编辑</Button>
           <Button type="text" size="small" @click="handleDelete(row)">删除</Button>
         </template>
@@ -400,6 +400,9 @@ const typeText = (type) => {
   return map[type] || '-'
 }
 
+// 仅含出场方向的通道（出口/出入口）才有出场扫码二维码，纯入口通道不展示
+const isExitChannel = (row) => row?.type === 'out' || row?.type === 'inout'
+
 // 停车场ID → 名称（后端实体只存 parkingId，名称由前端按停车场列表映射）
 const parkingName = (parkingId) => {
   if (!parkingId) return '-'
@@ -427,8 +430,6 @@ const resolveAppId = (channel) => {
 // 指向重新设计的扫码出场页 scanExit；旧链接 parkingExit 仍可访问，已印出去的二维码不受影响
 const buildChannelQrUrl = (channel) => {
   const appId = resolveAppId(channel)
-  const code = channel.code ? encodeURIComponent(channel.code) : ''
-  console.log(channel)
   return `${H5_BASE_URL}/#/app/${appId}/scanExit?channelId=${channel.id}&parkingId=${channel.parkingId}`
 }
 

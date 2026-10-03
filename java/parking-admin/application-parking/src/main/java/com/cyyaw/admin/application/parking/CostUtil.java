@@ -61,12 +61,13 @@ public class CostUtil {
         if (entryTime == null || exitTime == null || !exitTime.isAfter(entryTime)) {
             return BigDecimal.ZERO;
         }
+        // 出场时间为参考点：规则有效期、星期、车型都按它筛，不按入场时间
         List<PkCostRules> matched = filterRules(rules, carType, exitTime);
         if (matched.isEmpty()) {
             return BigDecimal.ZERO;
         }
 
-        // 总时长（分钟），不足一分钟按一分钟
+        // 总时长（分钟），整除前 +59 即向上取整：不足一分钟也按一分钟
         long totalMinutes = (Duration.between(entryTime, exitTime).getSeconds() + 59) / 60;
 
         // ---- 首段收费：阶梯累加，起算点取上一档的 ruleTime ----
@@ -81,6 +82,8 @@ public class CostUtil {
         // 首段只对入场当天生效，且该天的星期须命中规则
         LocalDate entryDate = entryTime.toLocalDate();
         BigDecimal firstSegmentCost = BigDecimal.ZERO;
+        // coveredMinutes：首段覆盖到第几分钟，之后的分钟才进计费时段。
+        // 注意这里即使本档星期不命中也照填 —— 时长被"覆盖"是事实，只是不收费。
         long coveredMinutes = 0;
         long previousRuleTime = 0;
         for (PkCostRules segment : segments) {
@@ -99,13 +102,15 @@ public class CostUtil {
                 periodRules.add(rule);
             }
         }
-        // 按天聚合：date -> (规则 -> 落在该规则内的分钟数)
+        // 逐分钟归类：i 是相对入场时刻的分钟偏移，每个分钟只归到一个规则（时段不重叠计费）。
+        // LinkedHashMap 保序，后续按自然日汇总时顺序稳定。
         Map<LocalDate, Map<PkCostRules, Long>> periodMinutes = new LinkedHashMap<>();
         for (long i = coveredMinutes; i < totalMinutes; i++) {
             LocalDateTime moment = entryTime.plusMinutes(i);
             LocalDate date = moment.toLocalDate();
             PkCostRules hit = pickPeriodRule(periodRules, date, moment.toLocalTime());
             if (hit == null) {
+                // 该分钟没有命中任何时段规则：不计费也不归入任何一天
                 continue;
             }
             periodMinutes.computeIfAbsent(date, k -> new LinkedHashMap<>())
@@ -113,9 +118,11 @@ public class CostUtil {
         }
 
         // ---- 按自然日汇总，并在每天应用「每天封顶」 ----
+        // 每天封顶按天独立生效，跨天的两次封顶互不影响，故先逐日封顶再累加。
         BigDecimal dailyCap = minAmount(matched, TYPE_DAILY_CAP);
         BigDecimal total = BigDecimal.ZERO;
         for (Map.Entry<LocalDate, Map<PkCostRules, Long>> dayEntry : periodMinutes.entrySet()) {
+            // 首段费只归入场当天；后续自然日只计时段费
             BigDecimal dayCost = dayEntry.getKey().equals(entryDate) ? firstSegmentCost : BigDecimal.ZERO;
             for (Map.Entry<PkCostRules, Long> ruleEntry : dayEntry.getValue().entrySet()) {
                 dayCost = dayCost.add(periodCost(ruleEntry.getKey(), ruleEntry.getValue()));
@@ -125,7 +132,8 @@ public class CostUtil {
             }
             total = total.add(dayCost);
         }
-        // 首段费可能落在没有计费时段分钟的当天（例如免费放行、或全部时长被首段覆盖）
+        // 首段费可能落在没有任何计费时段分钟的当天（例如免费放行、或全部时长被首段覆盖），
+        // 那种情况该天不会进入上面那个 map，这里单独补算并同样受每天封顶约束
         if (!periodMinutes.containsKey(entryDate)) {
             BigDecimal dayCost = firstSegmentCost;
             if (dailyCap != null && dayCost.compareTo(dailyCap) > 0) {
@@ -289,6 +297,8 @@ public class CostUtil {
 
     /**
      * 取某类封顶规则中最低的封顶金额，没有则返回 null。
+     * <p>
+     * 配了多条封顶规则时取最低值，避免运营端配置重复/历史遗留规则导致封顶虚高。
      */
     private static BigDecimal minAmount(List<PkCostRules> matched, int type) {
         BigDecimal min = null;
