@@ -4,17 +4,8 @@ import com.cyyaw.admin.entity.module.parking.PkCostRules;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.*;
+import java.util.*;
 
 /**
  * 停车费计算。
@@ -60,8 +51,7 @@ public class CostUtil {
      * @param rules     本次参与计费的收费规则，可为空
      * @return 结算结果，恒不为 null；入参非法或无命中规则时 {@code totalAmount} 为 0、明细为空
      */
-    public static ParkingCost computeCost(LocalDateTime entryTime, LocalDateTime exitTime,
-                                          List<PkCostRules> rules) {
+    public static ParkingCost computeCost(LocalDateTime entryTime, LocalDateTime exitTime, List<PkCostRules> rules) {
         ParkingCost result = new ParkingCost();
         if (entryTime == null || exitTime == null || !exitTime.isAfter(entryTime)) {
             result.setTotalAmount(BigDecimal.ZERO);
@@ -99,8 +89,7 @@ public class CostUtil {
             long ruleTime = minutes(segment.getRuleTime());
             if (weekMatches(segment, entryDate) && totalMinutes > previousRuleTime) {
                 firstSegmentCost = firstSegmentCost.add(amount(segment));
-                details.add(buildDetail(segment,
-                        entryTime.plusMinutes(previousRuleTime), entryTime.plusMinutes(ruleTime)));
+                details.add(buildDetail(segment, entryTime.plusMinutes(previousRuleTime), entryTime.plusMinutes(ruleTime)));
             }
             previousRuleTime = ruleTime;
             coveredMinutes = ruleTime;
@@ -124,8 +113,7 @@ public class CostUtil {
                 // 该分钟没有命中任何时段规则：不计费也不归入任何一天
                 continue;
             }
-            periodMinutes.computeIfAbsent(date, k -> new LinkedHashMap<>())
-                    .computeIfAbsent(hit, k -> new ArrayList<>()).add(i);
+            periodMinutes.computeIfAbsent(date, k -> new LinkedHashMap<>()).computeIfAbsent(hit, k -> new ArrayList<>()).add(i);
         }
 
         // ---- 按自然日汇总，并在每天应用「每天封顶」 ----
@@ -140,8 +128,7 @@ public class CostUtil {
                 dayCost = dayCost.add(periodCost(ruleEntry.getKey(), mins));
                 // 同一天同一规则可能落在多个不连续的时间窗内，区间用「实际起止」而非逐段
                 List<Long> offsets = ruleEntry.getValue();
-                details.add(buildDetail(ruleEntry.getKey(),
-                        entryTime.plusMinutes(offsets.get(0)), entryTime.plusMinutes(offsets.get(offsets.size() - 1) + 1)));
+                details.add(buildDetail(ruleEntry.getKey(), entryTime.plusMinutes(offsets.get(0)), entryTime.plusMinutes(offsets.get(offsets.size() - 1) + 1)));
             }
             if (dailyCap != null && dayCost.compareTo(dailyCap) > 0) {
                 dayCost = dailyCap;

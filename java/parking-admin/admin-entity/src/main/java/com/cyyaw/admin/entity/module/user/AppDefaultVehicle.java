@@ -35,7 +35,7 @@ public class AppDefaultVehicle extends BaseEntity {
     @Column(name = "phone", columnDefinition = "varchar(20) COMMENT '手机号（未登录时的归属维度）'")
     private String phone;
 
-    @Column(name = "plate", columnDefinition = "varchar(20) COMMENT '车牌号'")
+    @Column(columnDefinition = "varchar(20) COMMENT '车牌号'")
     private String plate;
 
     @Column(name = "vehicle_type", columnDefinition = "varchar(50) default '小型汽车' COMMENT '车辆类型'")

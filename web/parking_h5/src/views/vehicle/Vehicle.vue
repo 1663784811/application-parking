@@ -28,7 +28,10 @@
         </div>
       </div>
 
-      <van-empty v-if="state.vehicleList.length === 0" description="暂无车辆" />
+      <van-empty
+        v-if="!state.loading && state.vehicleList.length === 0"
+        description="暂无车辆"
+      />
 
       <div class="add-btn">
         <van-button
@@ -46,22 +49,34 @@
 </template>
 
 <script setup>
-import { reactive } from 'vue'
+import { onMounted, reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { showToast, showConfirmDialog } from 'vant'
+import { getMeVehicleList, deleteMeVehicle } from '@/api/appMe'
 
 const route = useRoute()
 const router = useRouter()
 
 const state = reactive({
-  // TODO: 接口获取车辆列表（getVehicleList）
-  vehicleList: [
-    { id: '1', plateNumber: '京A12345', vehicleType: '小型汽车', isDefault: true },
-    { id: '2', plateNumber: '京B67890', vehicleType: '小型汽车', isDefault: false },
-    { id: '3', plateNumber: '京C11111', vehicleType: '新能源汽车', isDefault: false },
-    { id: '4', plateNumber: '京D22222', vehicleType: '小型汽车', isDefault: false },
-    { id: '5', plateNumber: '京E33333', vehicleType: '大型汽车', isDefault: false },
-  ],
+  loading: false,
+  vehicleList: [],
+})
+
+// 没有 keep-alive，onMounted 每次进页面都会跑，
+// 所以从添加/编辑页返回时列表会自动刷一次，不需要单独监听返回
+const loadVehicles = () => {
+  state.loading = true
+  getMeVehicleList().then((res) => {
+    state.vehicleList = res?.data || []
+  }).catch((err) => {
+    showToast(err?.msg || '加载车辆失败')
+  }).finally(() => {
+    state.loading = false
+  })
+}
+
+onMounted(() => {
+  loadVehicles()
 })
 
 const goAdd = () => {
@@ -83,9 +98,14 @@ const handleDelete = (id) => {
     title: '提示',
     message: '确定要删除该车辆吗？',
   }).then(() => {
-    // TODO: 调用删除车辆接口（deleteVehicle）
-    state.vehicleList = state.vehicleList.filter(item => item.id !== id)
-    showToast('删除成功')
+    // 删完重新拉一遍而不是本地 filter：默认车辆标记会在服务端重算，
+    // 本地只删一条会留下过期状态
+    return deleteMeVehicle(id).then(() => {
+      showToast('删除成功')
+      loadVehicles()
+    }).catch((err) => {
+      showToast(err?.msg || '删除失败')
+    })
   }).catch(() => {})
 }
 </script>

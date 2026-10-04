@@ -20,7 +20,8 @@
           <p v-if="state.memberType" class="member-type">{{ state.memberType }}</p>
         </div>
       </div>
-      <div class="header-stats">
+      <van-skeleton v-if="state.loading" title :row="1" class="header-stats-skeleton" />
+      <div v-else class="header-stats">
         <div class="stat-item">
           <span class="value">{{ state.parkingTimes }}</span>
           <span class="label">停车次数</span>
@@ -67,10 +68,11 @@
 </template>
 
 <script setup>
-import { computed, reactive } from 'vue'
+import { computed, onMounted, reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { showConfirmDialog } from 'vant'
+import { showConfirmDialog, showToast } from 'vant'
 import { useLoginInfoStore } from '@/stores/loginInfo'
+import { getMeBoard } from '@/api/appMe'
 
 const route = useRoute()
 const router = useRouter()
@@ -88,16 +90,55 @@ const nickname = computed(() => baseInfo.value.nickName || '未登录')
 const avatar = computed(() => baseInfo.value.face || baseInfo.value.avatar || DEFAULT_AVATAR)
 const account = computed(() => baseInfo.value.phone || baseInfo.value.account || '')
 
-// TODO: 下面的会员标识与各项统计仍是占位数据，待接口
+// 会员标识与各项统计由 /app/user/me/board 一次带回来。
+// 先给零值而不是留空：请求还没回来时头部三格是 0，不会出现空白闪烁
 const state = reactive({
-  memberType: 'VIP会员',
-  isVip: true,
-  parkingTimes: 128,
-  parkingDuration: '256小时',
-  couponCount: 5,
-  orderCount: 20,
-  vehicleCount: 2,
-  cardCount: 3,
+  loading: false,
+  memberType: '',
+  isVip: false,
+  parkingTimes: 0,
+  parkingDuration: '0小时',
+  couponCount: 0,
+  orderCount: 0,
+  vehicleCount: 0,
+  cardCount: 0,
+})
+
+// 后端返回的可能是 null，展示统一落成 0
+const num = (v) => {
+  const n = Number(v)
+  return Number.isFinite(n) ? n : 0
+}
+
+const loadBoard = () => {
+  state.loading = true
+  getMeBoard().then((res) => {
+    const data = res?.data || {}
+    state.isVip = !!data.isVip
+    state.memberType = data.memberType || ''
+    state.parkingTimes = num(data.parkingTimes)
+    state.parkingDuration = data.parkingDuration || '0小时'
+    state.couponCount = num(data.couponCount)
+    state.orderCount = num(data.orderCount)
+    state.vehicleCount = num(data.vehicleCount)
+    state.cardCount = num(data.cardCount)
+  }).catch((err) => {
+    showToast(err?.msg || '加载个人信息失败')
+  }).finally(() => {
+    state.loading = false
+  })
+}
+
+// 个人信息（昵称 / 头像 / 账号）单独取。
+// 登录和回跳时 store 已经拉过，但那边是 fire-and-forget，请求可能还没回来；
+// 而且改了昵称头像要重新进「我的」才看得到，所以进页面补拉一次，晚到的数据由上面的 computed 刷上去
+const loadUserInfo = () => {
+  loginInfoStore.fetchUserInfo()
+}
+
+onMounted(() => {
+  loadUserInfo()
+  loadBoard()
 })
 
 // 已实现的菜单页：coupon/vehicle/cardPackage/scanExit
@@ -199,6 +240,14 @@ const onLogout = () => {
           border-radius: 10px;
         }
       }
+    }
+
+    // 数据回来前的占位，尺寸跟着 header-stats，切换时不跳动
+    .header-stats-skeleton {
+      margin-top: 24px;
+      padding: 16px;
+      background: var(--on-brand-glass);
+      border-radius: 12px;
     }
 
     .header-stats {

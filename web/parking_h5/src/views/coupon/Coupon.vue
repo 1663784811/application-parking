@@ -10,80 +10,85 @@
         :class="`status-${item.status}`"
       >
         <div class="coupon-left" :class="{ disabled: item.status !== 0 }">
-          <span class="amount">{{ formatAmount(item.amount) }}</span>
+          <span class="amount">{{ formatAmount(item) }}</span>
           <span class="condition">{{ item.condition }}</span>
         </div>
         <div class="coupon-right">
           <div class="coupon-info">
             <span class="name">{{ item.name }}</span>
             <span class="desc">{{ item.description }}</span>
-            <span class="expire">有效期至 {{ item.expireTime }}</span>
+            <span class="expire">{{ expireText(item.expireTime) }}</span>
           </div>
           <div class="coupon-actions">
             <van-tag :type="getStatusType(item.status)" size="medium">
               {{ getStatusText(item.status) }}
             </van-tag>
-            <van-icon
-              v-if="item.status !== 1"
-              name="delete-o"
-              class="delete-icon"
-              @click="handleDelete(item.id)"
-            />
           </div>
         </div>
       </div>
 
-      <van-empty v-if="state.couponList.length === 0" description="暂无优惠券" />
+      <van-empty
+        v-if="!state.loading && state.couponList.length === 0"
+        description="暂无优惠券"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
-import { reactive } from 'vue'
+import { onMounted, reactive } from 'vue'
 import { useRouter } from 'vue-router'
-import { showToast, showConfirmDialog } from 'vant'
+import { showToast } from 'vant'
+import { getMeCouponList } from '@/api/appMe'
 
 const router = useRouter()
 
 const state = reactive({
-  // TODO: 接口获取优惠券列表（getCouponList）
-  couponList: [
-    { id: '1', name: '新人专享券', description: '全场通用', amount: 10, condition: '无门槛', expireTime: '2024-12-31', status: 0 },
-    { id: '2', name: '停车满减券', description: '停车费用满50可用', amount: 5, condition: '满50可用', expireTime: '2024-06-30', status: 0 },
-    { id: '3', name: '7折停车券', description: '最高抵扣20元', amount: 0.7, condition: '7折优惠', expireTime: '2024-09-15', status: 0 },
-    { id: '4', name: '平日畅停券', description: '工作日专用', amount: 8, condition: '满30可用', expireTime: '2024-08-20', status: 0 },
-    { id: '5', name: '周末特惠券', description: '仅限周末使用', amount: 15, condition: '满100可用', expireTime: '2024-07-25', status: 0 },
-    { id: '6', name: '夜间停车券', description: '18:00-次日8:00', amount: 20, condition: '满60可用', expireTime: '2024-10-10', status: 1 },
-    { id: '7', name: '会员专享券', description: 'VIP会员专属', amount: 12, condition: '满80可用', expireTime: '2024-11-30', status: 1 },
-    { id: '8', name: '新用户礼包', description: '首次停车可用', amount: 5, condition: '无门槛', expireTime: '2024-05-10', status: 2 },
-    { id: '9', name: '限时秒杀券', description: '限时5折', amount: 0.5, condition: '5折优惠', expireTime: '2024-06-30', status: 2 },
-    { id: '10', name: '老用户回馈', description: '连续使用3次', amount: 10, condition: '满50可用', expireTime: '2024-08-15', status: 0 },
-  ],
+  loading: false,
+  couponList: [],
 })
 
-const formatAmount = (amount) => {
+const loadCoupons = () => {
+  state.loading = true
+  getMeCouponList().then((res) => {
+    state.couponList = res?.data || []
+  }).catch((err) => {
+    showToast(err?.msg || '加载优惠券失败')
+  }).finally(() => {
+    state.loading = false
+  })
+}
+
+onMounted(() => {
+  loadCoupons()
+})
+
+// 金额列按券类型显示：满减是元、折扣是折、免费时长是分钟。
+// 光看 amount 会显示错 —— 免费时长券的 amount 存的是分钟数，不是金额
+const formatAmount = (item) => {
+  const amount = Number(item.amount)
+  if (item.type === 2) {
+    return `${amount * 10}折`
+  }
+  if (item.type === 3) {
+    return `${amount}分钟`
+  }
   return amount >= 1 ? `¥${amount}` : `${amount * 10}折`
 }
 
+// 有效期从平台发放日起算的近似值，没给有效天数就显示长期有效
+const expireText = (expireTime) => {
+  return expireTime ? `有效期至 ${expireTime}` : '长期有效'
+}
+
 const getStatusText = (status) => {
-  const map = { 0: '可用', 1: '已使用', 2: '已过期' }
+  const map = { 0: '可用', 1: '已用尽', 2: '已过期' }
   return map[status] || '未知'
 }
 
 const getStatusType = (status) => {
   const map = { 0: 'success', 1: 'default', 2: 'danger' }
   return map[status] || 'default'
-}
-
-const handleDelete = (id) => {
-  showConfirmDialog({
-    title: '提示',
-    message: '确定要删除该优惠券吗？',
-  }).then(() => {
-    // TODO: 调用删除优惠券接口（deleteCoupon）
-    state.couponList = state.couponList.filter(item => item.id !== id)
-    showToast('删除成功')
-  }).catch(() => {})
 }
 </script>
 

@@ -27,6 +27,9 @@ public class AppCouponVO {
     @Schema(description = "优惠券名称")
     private String name;
 
+    @Schema(description = "优惠券类型{1:满减券,2:折扣券,3:免费时长券}，前端按它决定金额怎么显示")
+    private Integer type;
+
     @Schema(description = "说明：按类型拼出的使用规则文案")
     private String description;
 

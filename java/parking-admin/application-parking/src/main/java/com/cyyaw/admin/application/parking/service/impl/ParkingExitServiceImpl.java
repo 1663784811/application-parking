@@ -2,10 +2,11 @@ package com.cyyaw.admin.application.parking.service.impl;
 
 import com.cyyaw.admin.application.common.mqtt.IotService;
 import com.cyyaw.admin.application.parking.CostUtil;
+import com.cyyaw.admin.application.parking.ParkingCost;
+import com.cyyaw.admin.application.parking.service.ParkingExitService;
 import com.cyyaw.admin.application.parking.service.PkCarLogService;
 import com.cyyaw.admin.application.parking.service.PkChannelService;
 import com.cyyaw.admin.application.parking.service.PkParkingService;
-import com.cyyaw.admin.application.parking.service.ParkingExitService;
 import com.cyyaw.admin.dao.parking.PkCarLogDao;
 import com.cyyaw.admin.dao.parking.PkCostRulesDao;
 import com.cyyaw.admin.entity.dto.parking.ExitChannelVehicleVO;
@@ -121,12 +122,10 @@ public class ParkingExitServiceImpl implements ParkingExitService {
             return null;
         }
         // 规则每次重新取：出场前管理员可能刚改过费率
-        List<PkCostRules> rules = pkCostRulesDao.selectByParkingIdAndCarType(
-                carLog.getParkingId(), carLog.getCarType());
+        List<PkCostRules> rules = pkCostRulesDao.selectByParkingIdAndCarType(carLog.getParkingId(), carLog.getCarType());
         LocalDateTime entryTime = carLog.getEntryTime() == null ? LocalDateTime.now() : carLog.getEntryTime();
-
-        BigDecimal amount = CostUtil.computeCost(entryTime, LocalDateTime.now(), rules)
-                .getTotalAmount();
+        ParkingCost parkingCost = CostUtil.computeCost(entryTime, LocalDateTime.now(), rules);
+        BigDecimal amount = parkingCost.getTotalAmount();
         return infOrder.updateOrderAmountByCarLogId(carLog.getId(), carLog.getParkingId(), amount);
     }
 
@@ -203,8 +202,7 @@ public class ParkingExitServiceImpl implements ParkingExitService {
         // 只是标注结束原因，订单仍保持未支付，留给通行记录页的「补费」处理
         order.setRemark(STALE_ORDER_REMARK);
         infOrder.saveOrder(order);
-        log.info("旧停车记录 {} 已强制结束，订单 {} 按实际时长结算为 {}（未支付）",
-                carLog.getId(), order.getId(), order.getPayAmount());
+        log.info("旧停车记录 {} 已强制结束，订单 {} 按实际时长结算为 {}（未支付）", carLog.getId(), order.getId(), order.getPayAmount());
     }
 
     /**

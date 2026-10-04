@@ -2,8 +2,6 @@ package com.cyyaw.admin.dao.parking;
 
 import com.cyyaw.admin.dao.BaseMapperPlus;
 import com.cyyaw.admin.entity.module.parking.PkCostRules;
-import org.apache.ibatis.annotations.Result;
-import org.apache.ibatis.annotations.Results;
 import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
@@ -18,9 +16,7 @@ public interface PkCostRulesDao extends BaseMapperPlus<PkCostRulesDao, PkCostRul
      * 原生 @Select 会把列 ruleTime 自动映射到属性 ruleTime，而实体字段名就是带下划线的
      * ruleTime，找不到对应属性时该列会被静默丢弃（值为 null），计费结果就错了。
      */
-    @Select("select r.* from pk_cost_rules r " +
-            "inner join pk_parking_cost_rules pr on pr.cost_rules_id = r.id " +
-            "where pr.parking_id = #{parkingId} and pr.del_time = 0 and r.del_time = 0")
+    @Select("select r.* from pk_cost_rules r " + "inner join pk_parking_cost_rules pr on pr.cost_rules_id = r.id " + "where pr.parking_id = #{parkingId} and pr.del_time = 0 and r.del_time = 0")
     List<PkCostRules> selectByParkingId(Long parkingId);
 
     /**
@@ -45,10 +41,7 @@ public interface PkCostRulesDao extends BaseMapperPlus<PkCostRulesDao, PkCostRul
         if (carType == null || carType.isBlank()) {
             return rules;
         }
-        return rules.stream()
-                .filter(r -> r.getCarType() == null || r.getCarType().isBlank()
-                        || r.getCarType().trim().equalsIgnoreCase(carType.trim()))
-                .toList();
+        return rules.stream().filter(r -> r.getCarType() == null || r.getCarType().isBlank() || r.getCarType().trim().equalsIgnoreCase(carType.trim())).toList();
     }
 
 }

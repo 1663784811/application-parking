@@ -20,8 +20,8 @@ public class AppUserBoardVO {
 
     // ================= 会员状态 =================
 
-    @Schema(description = "是否月卡/季卡/年卡会员：有有效期内的 me_member 记录且未冻结")
-    private Boolean member;
+    @Schema(description = "是否会员：有有效期内的 me_member 记录且未冻结")
+    private Boolean isVip;
 
     @Schema(description = "会员类型文案（VIP会员），无有效会员卡时为 null")
     private String memberType;
@@ -35,8 +35,11 @@ public class AppUserBoardVO {
     @Schema(description = "累计停车次数 = 该车主已出场的停车记录数（pk_car_log.status=1）")
     private Long parkingTimes;
 
-    @Schema(description = "累计停车时长小时数（保留 1 位小数），前端自行拼「小时」")
+    @Schema(description = "累计停车时长小时数（保留 1 位小数）")
     private BigDecimal parkingHours;
+
+    @Schema(description = "累计停车时长展示文案，如「256小时」，直接渲染用")
+    private String parkingDuration;
 
     // ================= 列表统计 =================
 
