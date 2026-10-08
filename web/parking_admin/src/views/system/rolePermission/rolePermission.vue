@@ -49,9 +49,9 @@ const state = reactive({
     { title: '工作台', expand: true, children: [{ title: '首页查看' }, { title: '数据统计' }] },
     { title: '停车场管理', expand: true, children: [{ title: '停车场列表' }, { title: '车位管理' }] },
     { title: '车辆通行', expand: true, children: [{ title: '实时监控' }, { title: '通行记录' }, { title: '异常记录' }] },
-    { title: '收费管理', children: [{ title: '收费流水' }, { title: '订单对账' }, { title: '优惠配置' }, { title: '发票管理' }] },
+    { title: '收费管理', children: [{ title: '收费流水' }, { title: '订单对账' }, { title: '优惠配置' }] },
     { title: '会员管理', children: [{ title: '会员列表' }, { title: '套餐配置' }, { title: '续费记录' }] },
-    { title: '设备管理', children: [{ title: '设备列表' }, { title: '故障报修' }] },
+    { title: '设备管理', children: [{ title: '设备列表' }, { title: '物模型' }] },
     { title: '数据报表', children: [{ title: '营收统计' }, { title: '车流量报表' }, { title: '车位利用率' }, { title: '导出报表' }] },
     { title: '系统设置', children: [{ title: '管理员账号' }, { title: '角色权限' }, { title: '收费规则' }, { title: '短信配置' }, { title: '日志管理' }] }
   ],

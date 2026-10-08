@@ -139,14 +139,6 @@ const routes = [
           title: '优惠配置'
         }
       },
-      {
-        path: '/charge/invoiceManage',
-        name: 'invoiceManage',
-        component: () => import('@/views/charge/invoiceManage/invoiceManage.vue'),
-        meta: {
-          title: '发票管理'
-        }
-      },
 
       // 会员管理
       {
@@ -155,6 +147,14 @@ const routes = [
         component: () => import('@/views/member/memberList/memberList.vue'),
         meta: {
           title: '固定车主列表'
+        }
+      },
+      {
+        path: '/member/userManage',
+        name: 'userManage',
+        component: () => import('@/views/member/userManage/userManage.vue'),
+        meta: {
+          title: '用户管理'
         }
       },
       {
@@ -181,14 +181,6 @@ const routes = [
         component: () => import('@/views/device/deviceList/deviceList.vue'),
         meta: {
           title: '设备列表'
-        }
-      },
-      {
-        path: '/device/faultRepair',
-        name: 'faultRepair',
-        component: () => import('@/views/device/faultRepair/faultRepair.vue'),
-        meta: {
-          title: '故障报修'
         }
       },
       {

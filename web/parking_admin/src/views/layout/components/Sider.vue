@@ -1,15 +1,9 @@
 <template>
-  <aside class="layout-sider" :style="{ width: siderWidth }">
+  <aside class="layout-sider" :class="{ 'is-collapsed': isCollapsed }" :style="{ width: siderWidth }">
     <!-- Logo 区域 -->
     <div class="sider-logo">
       <div class="logo-icon">
-        <svg class="logo-svg" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect width="40" height="40" rx="8" fill="#165DFF"/>
-          <path d="M10 28V16C10 13.7909 11.7909 12 14 12H26C28.2091 12 30 13.7909 30 16V28" stroke="white" stroke-width="2" stroke-linecap="round"/>
-          <path d="M10 20H30" stroke="white" stroke-width="2"/>
-          <circle cx="15" cy="23" r="2" fill="white"/>
-          <circle cx="25" cy="23" r="2" fill="white"/>
-        </svg>
+        <Icon type="ios-car" size="26" />
       </div>
       <span v-if="!isCollapsed" class="logo-text">智慧停车场</span>
     </div>
@@ -76,6 +70,31 @@ const menuList = [
         name: 'home',
         title: '首页仪表盘',
         path: '/home'
+      },
+      {
+        name: 'revenueReport',
+        title: '营收统计',
+        path: '/report/revenueReport'
+      },
+      {
+        name: 'trafficReport',
+        title: '车流量报表',
+        path: '/report/trafficReport'
+      },
+      {
+        name: 'spaceUsageReport',
+        title: '车位利用率',
+        path: '/report/spaceUsageReport'
+      },
+      {
+        name: 'memberRevenueReport',
+        title: '月卡营收',
+        path: '/report/memberRevenueReport'
+      },
+      {
+        name: 'exportReport',
+        title: '导出报表',
+        path: '/report/exportReport'
       }
     ]
   },
@@ -147,11 +166,6 @@ const menuList = [
         name: 'couponConfig',
         title: '优惠配置',
         path: '/charge/couponConfig'
-      },
-      {
-        name: 'invoiceManage',
-        title: '发票管理',
-        path: '/charge/invoiceManage'
       }
     ]
   },
@@ -164,6 +178,11 @@ const menuList = [
         name: 'memberList',
         title: '固定车主列表',
         path: '/member/memberList'
+      },
+      {
+        name: 'userManage',
+        title: '用户管理',
+        path: '/member/userManage'
       },
       {
         name: 'packageConfig',
@@ -188,46 +207,9 @@ const menuList = [
         path: '/device/deviceList'
       },
       {
-        name: 'faultRepair',
-        title: '故障报修',
-        path: '/device/faultRepair'
-      },
-      {
         name: 'thingModel',
         title: '物模型',
         path: '/device/thingModel'
-      }
-    ]
-  },
-  {
-    name: 'report',
-    icon: 'ios-stats-chart',
-    title: '数据报表',
-    children: [
-      {
-        name: 'revenueReport',
-        title: '营收统计',
-        path: '/report/revenueReport'
-      },
-      {
-        name: 'trafficReport',
-        title: '车流量报表',
-        path: '/report/trafficReport'
-      },
-      {
-        name: 'spaceUsageReport',
-        title: '车位利用率',
-        path: '/report/spaceUsageReport'
-      },
-      {
-        name: 'memberRevenueReport',
-        title: '月卡营收',
-        path: '/report/memberRevenueReport'
-      },
-      {
-        name: 'exportReport',
-        title: '导出报表',
-        path: '/report/exportReport'
       }
     ]
   },
@@ -313,6 +295,7 @@ const handleMenuSelect = (name) => {
 <style lang="less" scoped>
 .layout-sider {
   position: relative;
+  z-index: 10;
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -330,10 +313,14 @@ const handleMenuSelect = (name) => {
 
     .logo-icon {
       flex-shrink: 0;
+      width: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary-color);
 
-      .logo-svg {
-        width: 36px;
-        height: 36px;
+      .ivu-icon {
+        line-height: 1;
       }
     }
 
@@ -382,6 +369,73 @@ const handleMenuSelect = (name) => {
     .collapse-text {
       margin-left: var(--spacing-sm);
       font-size: var(--font-size-sm);
+    }
+  }
+}
+
+/* 折叠态：侧边栏收窄到 64px 时，菜单只显示图标并居中，
+   子菜单改为浮层向右弹出（position:absolute 逃出 aside / wrapper 的 overflow 裁切） */
+.layout-sider.is-collapsed {
+  overflow: visible;
+
+  .sider-logo {
+    padding: 0;
+    justify-content: center;
+  }
+
+  .sider-menu-wrapper {
+    // 折叠态只有 7 个图标，高度够放得下，不需要纵向滚动；
+    // 必须放开 overflow，否则右侧浮层会被裁掉
+    overflow: visible;
+
+    .ivu-menu-item,
+    .ivu-menu-submenu-title {
+      padding-left: 0 !important;
+      padding-right: 0 !important;
+    }
+
+    .ivu-menu-submenu-title {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .menu-icon {
+      margin-right: 0;
+    }
+
+    .menu-title,
+    .ivu-icon-ios-arrow-up,
+    .ivu-icon-ios-arrow-down,
+    .ivu-icon-ios-arrow-forward {
+      display: none;
+    }
+
+    // 嵌套的纵向子菜单不再占位（否则会顶开下面的兄弟项，且与浮层重叠）
+    .ivu-menu-submenu > .ivu-menu {
+      display: none;
+    }
+
+    // 浮层子菜单：贴住侧边栏右缘（64px）向右展开，向上错 6px 与图标行对齐
+    .ivu-menu-submenu-title .ivu-menu-submenu-title-inner {
+      position: absolute;
+      top: -6px;
+      left: var(--sider-collapsed-width);
+      width: 176px;
+      padding: 8px 24px 10px 20px;
+      background-color: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 0 var(--border-radius-base) var(--border-radius-base) 0;
+      box-shadow: var(--shadow-medium);
+      z-index: 100;
+    }
+
+    // 浮层落在 .ivu-menu-submenu 内部，会被下面全局覆盖的 52px 左内边距顶飞，单独复位；
+    // 特异性须压过全局那条 !important，故带上 is-collapsed 前缀
+    .ivu-menu-submenu .ivu-menu-submenu-title-inner .ivu-menu-item {
+      padding-left: 10px !important;
+      padding-right: 12px !important;
     }
   }
 }

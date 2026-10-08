@@ -74,13 +74,7 @@ export const chargeApi = {
   // 编辑优惠券（与新增同走 /save upsert）
   editCoupon: (data) => authRequest.post('/admin/charge/coupon/save', data),
   // 删除优惠券
-  deleteCoupon: (id) => authRequest.delete(`/admin/charge/coupon/delete/${id}`),
-  // 发票列表
-  getInvoiceList: (params) => authRequest.get('/charge/invoice/list', { params }),
-  // 开票
-  createInvoice: (data) => authRequest.post('/charge/invoice/create', data),
-  // 冲红发票
-  redInvoice: (id) => authRequest.post(`/charge/invoice/red/${id}`)
+  deleteCoupon: (id) => authRequest.delete(`/admin/charge/coupon/delete/${id}`)
 }
 
 // ========== 计费规则 ==========
@@ -176,15 +170,7 @@ export const deviceApi = {
   // 修改设备密码（含账号）
   changePassword: (id, account, password) => authRequest.post(`/admin/device/changePassword/${id}`, { account, password }),
   // 设备数量统计
-  getDeviceStats: () => authRequest.get('/admin/device/stats'),
-  // 故障工单列表（分页）
-  getFaultList: (params) => authRequest.get('/admin/device/fault/list', { params }),
-  // 创建故障工单（根据设备ID报修）
-  createFault: (data) => authRequest.post('/admin/device/fault/create', data),
-  // 处理故障工单（指派/完成）
-  handleFault: (data) => authRequest.post('/admin/device/fault/handle', data),
-  // 故障工单统计
-  getFaultStats: () => authRequest.get('/admin/device/fault/stats')
+  getDeviceStats: () => authRequest.get('/admin/device/stats')
 }
 
 // ========== 物模型 ==========
@@ -333,5 +319,21 @@ export const userApi = {
 
   // 刷新访问令牌：POST /common/token/refreshToken
   // body: { refreshToken } → data = { jwtToken, refreshToken }
-  refreshToken: (data) => authRequest.post('/common/token/refreshToken', data)
+  refreshToken: (data) => authRequest.post('/common/token/refreshToken', data),
+
+  // ---------- 用户管理（会员管理下的用户维护） ----------
+  // 用户列表（分页，按账号/昵称/真实姓名/手机号模糊查询）
+  getUserList: (params) => authRequest.get('/admin/user/list', { params }),
+  // 用户详情
+  getUserDetail: (id) => authRequest.get(`/admin/user/find/${id}`),
+  // 新增用户（密码必填，账号在同一应用内唯一）
+  addUser: (data) => authRequest.post('/admin/user/add', data),
+  // 编辑用户（密码留空则不修改；账号唯一性校验排除当前用户）
+  editUser: (data) => authRequest.put('/admin/user/edit', data),
+  // 删除用户（软删除，标记删除时间）
+  deleteUser: (id) => authRequest.delete(`/admin/user/delete/${id}`),
+  // 重置密码为 123456
+  resetPassword: (id) => authRequest.post(`/admin/user/resetPassword/${id}`),
+  // 用户数量统计
+  getUserStats: () => authRequest.get('/admin/user/stats')
 }

@@ -84,7 +84,6 @@
         </template>
         <template #action="{ row }">
           <Button type="text" size="small" @click="handleViewOrder(row)">查看</Button>
-          <Button type="text" size="small" @click="handleInvoice(row)" v-if="row.payStatus === 2">开发票</Button>
         </template>
       </Table>
 
@@ -152,8 +151,7 @@ import {
   Table,
   Badge,
   Page,
-  Modal,
-  Message
+  Modal
 } from 'view-ui-plus'
 import TableColumnSetting from '@/components/TableColumnSetting.vue'
 import { useTableColumns } from '@/composables/useTableColumns'
@@ -282,10 +280,6 @@ const handleViewOrder = async (row) => {
   } catch (e) {
     console.error('获取订单详情失败', e)
   }
-}
-
-const handleInvoice = (row) => {
-  Message.success('正在开具发票...')
 }
 
 const handlePageChange = (page) => {

@@ -6,56 +6,56 @@
 :root {
   /* ========== 主题色 ========== */
   /* 主色：科技蓝 */
-  --primary-color: #165DFF;
-  --primary-hover-color: #4080FF;
-  --primary-active-color: #0D47A1;
+  --primary-color: #2B5CE6;
+  --primary-hover-color: #4B79F0;
+  --primary-active-color: #1B46B8;
 
   /* 辅助色 */
-  --success-color: #00B42A;
-  --success-hover-color: #23D130;
-  --success-active-color: #008F20;
+  --success-color: #12A95B;
+  --success-hover-color: #26C071;
+  --success-active-color: #0C8747;
 
-  --error-color: #F53F3F;
-  --error-hover-color: #FF7875;
-  --error-active-color: #CB2A2A;
+  --error-color: #E5484D;
+  --error-hover-color: #F27174;
+  --error-active-color: #C4282D;
 
-  --warning-color: #FF7D00;
-  --warning-hover-color: #FF9A3C;
-  --warning-active-color: #CC6400;
+  --warning-color: #F19A2E;
+  --warning-hover-color: #F5B25C;
+  --warning-active-color: #D67C14;
 
   /* ========== 中性色 ========== */
-  /* 标题文字 - #1D2129 */
-  --text-color-title: #1D2129;
-  /* 正文文字 - #4E5969 */
-  --text-color: #4E5969;
-  /* 次要文字 - #86909C */
-  --text-color-secondary: #86909C;
+  /* 标题文字 - #0F1729 */
+  --text-color-title: #0F1729;
+  /* 正文文字 - #3A4353 */
+  --text-color: #3A4353;
+  /* 次要文字 - #7A8394 */
+  --text-color-secondary: #7A8394;
   /* 禁用文字 */
-  --text-color-disabled: #C9CDD4;
+  --text-color-disabled: #BCC3CE;
 
-  /* 页面背景 - #F2F3F5 */
-  --bg-color-page: #F2F3F5;
+  /* 页面背景 - #F5F7FB */
+  --bg-color-page: #F5F7FB;
   /* 卡片底色 - #FFFFFF */
   --bg-color: #FFFFFF;
   /* 悬停背景 */
-  --bg-color-hover: #F2F3F5;
+  --bg-color-hover: #F0F3F8;
 
   /* ========== 边框颜色 ========== */
-  --border-color: #E5E6EB;
-  --border-color-light: #F2F3F5;
-  --border-hover-color: #165DFF;
+  --border-color: #E3E8F0;
+  --border-color-light: #EEF1F6;
+  --border-hover-color: #2B5CE6;
 
   /* ========== 圆角 ========== */
-  --border-radius-sm: 4px;
-  --border-radius-base: 6px;
-  --border-radius-lg: 8px;
-  --border-radius-xl: 12px;
+  --border-radius-sm: 6px;
+  --border-radius-base: 8px;
+  --border-radius-lg: 12px;
+  --border-radius-xl: 16px;
 
   /* ========== 阴影 ========== */
-  --shadow-base: 0 2px 6px 0 rgba(0, 0, 0, 0.06);
-  --shadow-light: 0 1px 4px 0 rgba(0, 0, 0, 0.04);
-  --shadow-medium: 0 4px 12px 0 rgba(0, 0, 0, 0.08);
-  --shadow-heavy: 0 8px 24px 0 rgba(0, 0, 0, 0.12);
+  --shadow-base: 0 1px 2px 0 rgba(16, 24, 40, 0.04), 0 1px 3px 0 rgba(16, 24, 40, 0.06);
+  --shadow-light: 0 1px 2px 0 rgba(16, 24, 40, 0.03);
+  --shadow-medium: 0 4px 12px 0 rgba(16, 24, 40, 0.06), 0 2px 4px 0 rgba(16, 24, 40, 0.04);
+  --shadow-heavy: 0 12px 32px 0 rgba(16, 24, 40, 0.12), 0 4px 8px 0 rgba(16, 24, 40, 0.05);
 
   /* ========== 间距 ========== */
   --spacing-xs: 4px;
@@ -63,46 +63,27 @@
   --spacing-md: 12px;
   --spacing-lg: 16px;
   --spacing-xl: 24px;
-  --spacing-xxl: 32px;
+  --spacing-xxl: 40px;
 
   /* ========== 字体大小 ========== */
   --font-size-xs: 12px;
   --font-size-sm: 14px;
   --font-size-md: 16px;
-  --font-size-lg: 20px;
-  --font-size-xl: 24px;
+  --font-size-lg: 22px;
+  --font-size-xl: 28px;
 
   /* ========== 行高 ========== */
   --line-height-sm: 1.4;
-  --line-height-base: 1.5;
-  --line-height-lg: 1.75;
+  --line-height-base: 1.55;
+  --line-height-lg: 1.7;
 
   /* ========== 侧边栏 ========== */
-  --sider-width: 240px;
+  --sider-width: 232px;
   --sider-collapsed-width: 64px;
 
   /* ========== 头部 ========== */
-  --header-height: 60px;
+  --header-height: 56px;
 
-  /* ========== 功能色 ========== */
-  /* 通行成功 */
-  --通行成功: #00B42A;
-  /* 异常/欠费 */
-  --异常欠费: #F53F3F;
-  /* 临时车/预警 */
-  --临时车预警: #FF7D00;
-  /* 空闲车位 */
-  --车位空闲: #00B42A;
-  /* 固定车占用 */
-  --固定车占用: #165DFF;
-  /* 故障车位 */
-  --故障车位: #86909C;
-  /* 月卡 */
-  --月卡: #722ED1;
-  /* 季卡 */
-  --季卡: #0FC6C2;
-  /* 年卡 */
-  --年卡: #DXB8C6;
 }
 
 /* ========== 全局样式重置 ========== */
@@ -129,11 +110,11 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: #C9CDD4;
+  background-color: var(--text-color-disabled);
   border-radius: 3px;
 
   &:hover {
-    background-color: #86909C;
+    background-color: var(--text-color-secondary);
   }
 }
 
